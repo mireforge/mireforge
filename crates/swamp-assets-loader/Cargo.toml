@@ -1,0 +1,20 @@
+[package]
+name = "swamp-assets-loader"
+version = "0.0.9"
+edition = "2021"
+
+[dependencies]
+swamp-app = { path = "../swamp-app", version = "0.0.9" }
+swamp-loader = { path = "../swamp-loader", version = "0.0.9" }
+message-channel = "0.0.1"
+swamp-assets = { path = "../swamp-assets", version = "0.0.9" }
+swamp-resource = { path = "../swamp-resource", version = "0.0.9" }
+swamp-loader-plugin = { path = "../swamp-loader-plugin", version = "0.0.9" }
+tracing = "0.1.40"
+hashbrown = "0.15.1"
+chunk-reader = "0.0.1"
+
+[dev-dependencies]
+tokio = "1.41.1"
+image = "0.25.5"
+test-log = { version = "0.2.16", features = ["trace"] }

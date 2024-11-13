@@ -1,0 +1,37 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[workspace]
+resolver = "2"
+members = [
+    "crates/examples",
+    "crates/swamp-app",
+    "crates/swamp-wgpu-window",
+    "crates/swamp-wgpu-sprites",
+    "crates/swamp-wgpu",
+    "crates/examples",
+    "crates/swamp-wgpu-math",
+    "crates/swamp",
+    "crates/swamp-window",
+    "crates/swamp-game",
+    "crates/swamp-window-runner",
+    "crates/swamp-boot",
+    "crates/swamp-log",
+    "crates/swamp-game-wgpu",
+    "crates/swamp-basic-input",
+    "crates/swamp-message",
+    "crates/swamp-resource",
+    "crates/swamp-render",
+    "crates/swamp-render-wgpu",
+    "crates/swamp-boot-game",
+    "crates/swamp-screen",
+    "crates/swamp-macros",
+    "crates/swamp-assets",
+    "crates/swamp-assets-loader",
+    "crates/swamp-loader",
+    "crates/swamp-loader-plugin",
+    "crates/swamp-material",
+    "crates/swamp-system-state",
+    "crates/swamp-system",
+    "crates/swamp-system-runner",
+    "crates/swamp-asset-registry",
+    "crates/swamp-font"
+]

@@ -1,0 +1,8 @@
+[package]
+name = "swamp-system-state"
+version = "0.0.9"
+edition = "2021"
+
+[dependencies]
+swamp-resource = { path = "../swamp-resource", version = "0.0.9"}
+swamp-message =  { path = "../swamp-message", version = "0.0.9"}

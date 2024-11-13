@@ -1,0 +1,9 @@
+[package]
+name = "swamp-examples"
+version = "0.0.9"
+edition = "2021"
+
+[dependencies]
+tracing = "0.1.40"
+
+swamp-boot-game = { path = "../swamp-boot-game", version = "0.0.9"}

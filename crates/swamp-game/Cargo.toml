@@ -1,0 +1,18 @@
+[package]
+name = "swamp-game"
+version = "0.0.9"
+edition = "2021"
+
+[dependencies]
+tracing = "0.1.40"
+int_math = "0.0.2"
+
+swamp-render = { path = "../swamp-render", version = "0.0.9" }
+swamp-render-wgpu = { path = "../swamp-render-wgpu", version = "0.0.9" }
+swamp-assets = {path = "../swamp-assets", version = "0.0.9"}
+
+swamp-basic-input = { path = "../swamp-basic-input", version = "0.0.9" }
+monotonic-time-rs = "0.0.5"
+
+[dev-dependencies]
+test-log = "0.2.16"

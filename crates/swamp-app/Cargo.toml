@@ -1,0 +1,24 @@
+[package]
+name = "swamp-app"
+version = "0.0.9"
+edition = "2021"
+license = "MIT"
+description = "Application management for 2D pixel perfect sprite rendering"
+repository = "https://github.com/piot/swamp-render"
+categories = ["game-development"]
+keywords = ["game", "render"]
+
+[dependencies]
+tracing = "0.1.40"
+
+# State, resource and message
+swamp-system-state = { path = "../swamp-system-state", version = "0.0.9"}
+swamp-message = { path = "../swamp-message", version = "0.0.9"}
+swamp-resource = { path = "../swamp-resource", version = "0.0.9"}
+
+# System
+swamp-system-runner = { path = "../swamp-system-runner", version = "0.0.9"}
+swamp-system = {path = "../swamp-system", version = "0.0.9"}
+
+[dev-dependencies]
+test-log = "0.2.16"

@@ -1,0 +1,15 @@
+[package]
+name = "swamp-assets"
+version = "0.0.9"
+edition = "2021"
+license = "MIT"
+description = "store assets in a slot map"
+repository = "https://github.com/piot/swamp-render"
+categories = ["game-development"]
+keywords = ["game", "asset", "storage"]
+
+[dependencies]
+sparse-slot = "0.0.1"
+swamp-macros = { path = "../swamp-macros", version = "0.0.10-dev3"}
+swamp-resource = { path = "../swamp-resource", version = "0.0.9"}
+tracing = "0.1.40"

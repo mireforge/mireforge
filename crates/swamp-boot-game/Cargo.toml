@@ -1,0 +1,14 @@
+[package]
+name = "swamp-boot-game"
+version = "0.0.9"
+edition = "2021"
+
+[dependencies]
+swamp-app = { path = "../swamp-app", version = "0.0.9" }
+swamp-game-wgpu = { path = "../swamp-game-wgpu", version = "0.0.9" }
+swamp-boot = { path = "../swamp-boot", version = "0.0.9" }
+swamp-game = { path = "../swamp-game", version = "0.0.9" }
+swamp-screen = { path = "../swamp-screen", version = "0.0.9" }
+tracing = "0.1.40"
+# swamp_render = { path = "../swamp-render", version = "0.0.9"}
+int_math = "0.0.2"

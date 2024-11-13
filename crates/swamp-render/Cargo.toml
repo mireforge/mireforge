@@ -1,0 +1,13 @@
+[package]
+name = "swamp-render"
+version = "0.0.9"
+edition = "2021"
+license = "MIT"
+description = "standard render types for 2D"
+repository = "https://github.com/piot/swamp-render"
+categories = ["game-development"]
+keywords = ["game", "render"]
+
+[dependencies]
+int_math = "0.0.2"
+monotonic-time-rs = "0.0.5"

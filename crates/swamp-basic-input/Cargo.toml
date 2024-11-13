@@ -1,0 +1,9 @@
+[package]
+name = "swamp-basic-input"
+version = "0.0.9"
+edition = "2021"
+
+[dependencies]
+int_math = "0.0.2"
+
+swamp-message = {path = "../swamp-message", version = "0.0.9"}

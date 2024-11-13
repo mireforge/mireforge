@@ -1,0 +1,15 @@
+[package]
+name = "swamp-font"
+version = "0.0.9"
+edition = "2021"
+
+[dependencies]
+bmf-parser = "0.0.1"
+
+swamp-app = { path = "../swamp-app", version = "0.0.9" } # for the plugin
+swamp-assets-loader = { path = "../swamp-assets-loader", version = "0.0.9" } # to get the loader registry
+swamp-assets = { path = "../swamp-assets", version = "0.0.9" } # to insert the font
+swamp-asset-registry = { path = "../swamp-asset-registry", version = "0.0.9" } # To get the asset name
+
+tracing = "0.1.40"
+int_math = "0.0.2"

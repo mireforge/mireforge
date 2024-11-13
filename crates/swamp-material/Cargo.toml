@@ -1,0 +1,16 @@
+[package]
+name = "swamp-asset-image"
+version = "0.0.9"
+edition = "2021"
+
+[dependencies]
+swamp-app = { path = "../swamp-app", version = "0.0.9" }
+swamp-assets-loader = { path = "../swamp-assets-loader", version = "0.0.9" }
+swamp-wgpu-sprites = { path = "../swamp-wgpu-sprites", version = "0.0.9" }
+swamp-wgpu-window = { path = "../swamp-wgpu-window", version = "0.0.9" }
+swamp-render-wgpu = { path = "../swamp-render-wgpu", version = "0.0.9" }
+swamp-assets = { path = "../swamp-assets", version = "0.0.9" }
+swamp-loader-plugin = { path = "../swamp-loader-plugin", version = "0.0.9" }
+swamp-asset-registry = { path = "../swamp-asset-registry", version = "0.0.9" }
+tracing = "0.1.40"
+image = "0.25.5"

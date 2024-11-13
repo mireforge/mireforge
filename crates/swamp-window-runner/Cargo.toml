@@ -1,0 +1,18 @@
+[package]
+name = "swamp-window-runner"
+version = "0.0.9"
+edition = "2021"
+
+[dependencies]
+swamp-app = { path = "../swamp-app", version = "0.0.9" }
+swamp-window = { path = "../swamp-window", version = "0.0.9" }
+swamp-wgpu-window = { path = "../swamp-wgpu-window", version = "0.0.9" }
+future-runner = { version = "0.0.1", features = ["block"] }
+swamp-log = { path = "../swamp-log", version = "0.0.9" }
+swamp-basic-input = { path = "../swamp-basic-input", version = "0.0.9" }
+swamp-screen = { path = "../swamp-screen", version = "0.0.9" }
+
+winit = "0.30.5"
+int_math = "0.0.2"
+tracing = "0.1.40"
+console_error_panic_hook = "0.1.7"
