@@ -4,6 +4,7 @@ version = "0.0.9"
 edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
+categories = ["game-development"]
 
 [dependencies]
 swamp-system-state = {path = "../swamp-system-state", version = "0.0.9"}
