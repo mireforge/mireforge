@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/swamp/swamp
+ * Licensed under the MIT License. See LICENSE in the project root for license information.
+ */
 use bmf_parser::BMFont;
 use int_math::{URect, UVec2, Vec2};
 use swamp_app::prelude::{App, Plugin, ResourceStorage};
