@@ -5,6 +5,7 @@ edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
 categories = ["game-development"]
+description = "swamp game implementation using wgpu"
 
 [dependencies]
 int_math = "0.0.2" # only for exposing in prelude

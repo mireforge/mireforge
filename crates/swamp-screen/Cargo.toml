@@ -5,6 +5,8 @@ edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
 categories = ["game-development"]
+description = "platform neutral screen and window types"
+
 
 [dependencies]
 swamp-resource = { path = "../swamp-resource", version = "0.0.9"}

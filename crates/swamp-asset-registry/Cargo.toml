@@ -5,6 +5,7 @@ edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
 categories = ["game-development"]
+description = "keeps track of asset lifetimes"
 
 [dependencies]
 swamp-assets = { path = "../swamp-assets", version = "0.0.9" }

@@ -5,6 +5,7 @@ edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
 categories = ["game-development"]
+description = "winit runner for swamp-app"
 
 [dependencies]
 swamp-app = { path = "../swamp-app", version = "0.0.9" }

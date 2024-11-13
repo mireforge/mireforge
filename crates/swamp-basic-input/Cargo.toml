@@ -5,6 +5,8 @@ edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
 categories = ["game-development"]
+description = "platform neutral input types"
+
 
 [dependencies]
 int_math = "0.0.2"

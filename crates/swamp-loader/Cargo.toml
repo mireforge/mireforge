@@ -5,6 +5,8 @@ edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
 categories = ["game-development"]
+description = "Loads assets for swamp"
+
 
 [dependencies]
 message-channel = "0.0.1"
