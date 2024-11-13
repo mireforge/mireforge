@@ -2,6 +2,8 @@
 name = "swamp-window-runner"
 version = "0.0.9"
 edition = "2021"
+repository = "https://github.com/swamp/swamp"
+license = "MIT"
 
 [dependencies]
 swamp-app = { path = "../swamp-app", version = "0.0.9" }

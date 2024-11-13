@@ -4,7 +4,7 @@ version = "0.0.10-dev3"
 edition = "2021"
 license = "MIT"
 description = "swamp macros specific for the swamp game engine"
-repository = "https://github.com/piot/swamp-render"
+repository = "https://github.com/swamp/swamp"
 categories = ["game-development"]
 keywords = ["game", "derive"]
 

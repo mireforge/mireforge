@@ -2,6 +2,8 @@
 name = "swamp-loader-plugin"
 version = "0.0.9"
 edition = "2021"
+repository = "https://github.com/swamp/swamp"
+license = "MIT"
 
 [dependencies]
 tracing = "0.1.40"

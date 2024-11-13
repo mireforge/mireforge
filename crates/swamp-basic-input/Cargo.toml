@@ -2,6 +2,8 @@
 name = "swamp-basic-input"
 version = "0.0.9"
 edition = "2021"
+repository = "https://github.com/swamp/swamp"
+license = "MIT"
 
 [dependencies]
 int_math = "0.0.2"

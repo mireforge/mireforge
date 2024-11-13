@@ -4,7 +4,7 @@ version = "0.0.9"
 edition = "2021"
 license = "MIT"
 description = "wgpu math types"
-repository = "https://github.com/piot/swamp-render"
+repository = "https://github.com/swamp/swamp"
 categories = ["game-development"]
 keywords = ["game", "render", "math"]
 

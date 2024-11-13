@@ -2,6 +2,8 @@
 name = "swamp-game-wgpu"
 version = "0.0.9"
 edition = "2021"
+repository = "https://github.com/swamp/swamp"
+license = "MIT"
 
 [dependencies]
 int_math = "0.0.2" # only for exposing in prelude
