@@ -22,7 +22,7 @@ Add swamp-wgpu-math to your project:
 
 ```toml
 [dependencies]
-swamp-wgpu-math = "0.0.9"
+swamp-wgpu-math = "0.0.10"
 ```
 
 ## License

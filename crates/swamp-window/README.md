@@ -15,5 +15,5 @@ To use `swamp-window`, add it to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-swamp-window = "0.0.9"
+swamp-window = "0.0.10"
 ```

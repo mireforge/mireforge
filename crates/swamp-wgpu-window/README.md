@@ -22,7 +22,7 @@ Add swamp-wgpu-window to your project’s Cargo.toml:
 
 ```toml
 [dependencies]
-swamp-wgpu-window = "0.0.9"
+swamp-wgpu-window = "0.0.10"
 ```
 
 ## License

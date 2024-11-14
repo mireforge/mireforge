@@ -15,7 +15,7 @@ To use `swamp-macros`, add it to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-swamp-macros = "0.0.10-dev3"
+swamp-macros = "0.0.10"
 ```
 
 ## License

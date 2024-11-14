@@ -16,7 +16,7 @@ To use `swamp-loader`, add it to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-swamp-loader = "0.0.9"
+swamp-loader = "0.0.10"
 ```
 
 ## License

@@ -19,7 +19,7 @@ To use `swamp-assets`, add it to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-swamp-assets = "0.0.9"
+swamp-assets = "0.0.10"
 ```
 
 ## License

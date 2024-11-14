@@ -22,7 +22,7 @@ Add swamp-app to your project’s Cargo.toml:
 
 ```toml
 [dependencies]
-swamp-app = "0.0.9"
+swamp-app = "0.0.10"
 ```
 
 ## License

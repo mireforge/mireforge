@@ -16,7 +16,7 @@ To use `swamp-message`, add it to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-swamp-message = "0.0.9"
+swamp-message = "0.0.10"
 ```
 
 ## License

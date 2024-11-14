@@ -23,7 +23,7 @@ Add swamp-resource your project’s Cargo.toml:
 
 ```toml
 [dependencies]
-swamp-resource = "0.0.9"
+swamp-resource = "0.0.10"
 ```
 
 ## License
