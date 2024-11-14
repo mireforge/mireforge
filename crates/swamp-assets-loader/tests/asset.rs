@@ -30,16 +30,14 @@ impl AssetLoader for TestImageLoader {
 
     fn convert_and_insert(
         &self,
-        id: RawAssetIdWithTypeId,
+        id: RawWeakId,
         _octets: &[u8],
         resources: &mut ResourceStorage,
     ) -> Result<(), ConversionError> {
         // TODO: do png conversion
         let image_assets = resources.fetch_mut::<Assets<TestImage>>();
 
-        let typed_id = Id::<TestImage>::from_raw(id);
-
-        image_assets.set(&typed_id, TestImage { width: 320 });
+        image_assets.set_raw(id, TestImage { width: 320 });
 
         Ok(())
     }

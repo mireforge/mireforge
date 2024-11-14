@@ -4,7 +4,7 @@
  */
 use crate::dpi::PhysicalSize;
 use std::sync::Arc;
-use swamp_log::prelude::info;
+use swamp_log::prelude::debug;
 use winit::application::ApplicationHandler;
 use winit::dpi;
 use winit::dpi::PhysicalPosition;
@@ -209,7 +209,7 @@ impl<'a> App<'a> {
 impl ApplicationHandler for App<'_> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.window.is_none() {
-            info!("creating new window");
+            debug!("creating new window");
 
             let window_attributes = WindowAttributes::default()
                 .with_title(self.title.as_str())

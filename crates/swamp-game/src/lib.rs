@@ -7,7 +7,7 @@ pub mod prelude;
 use crate::prelude::Glyph;
 use int_math::{UVec2, Vec2};
 use monotonic_time_rs::Millis;
-use swamp_assets::{AssetName, Id};
+use swamp_assets::prelude::{AssetName, Id};
 use swamp_basic_input::prelude::*;
 use swamp_render_wgpu::prelude::Font;
 use swamp_render_wgpu::{FixedAtlas, FontAndMaterial, Gfx, MaterialRef};
@@ -54,7 +54,7 @@ pub trait Assets {
     ) -> FixedAtlas;
     fn bm_font(&mut self, name: impl Into<AssetName>) -> FontAndMaterial;
 
-    fn font(&self, font_ref: Id<Font>) -> Option<&Font>;
+    fn font(&self, font_ref: &Id<Font>) -> Option<&Font>;
     fn text_glyphs(&self, text: &str, font_ref: &FontAndMaterial) -> Option<Vec<Glyph>>;
 
     fn now(&self) -> Millis;

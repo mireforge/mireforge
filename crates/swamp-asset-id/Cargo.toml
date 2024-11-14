@@ -1,0 +1,9 @@
+[package]
+name = "swamp-asset-id"
+version = "0.0.9"
+edition = "2021"
+
+[dependencies]
+message-channel = "0.0.1"
+tracing = "0.1.40"
+fixstr = "0.0.1"

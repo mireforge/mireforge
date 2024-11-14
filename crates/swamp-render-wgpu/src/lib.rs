@@ -10,9 +10,9 @@ use monotonic_time_rs::{InstantMonotonicClock, Millis, MonotonicClock};
 use std::cmp::Ordering;
 use std::fmt::Debug;
 use std::sync::Arc;
-use swamp_assets::prelude::Asset;
-use swamp_assets::{Assets, Id};
-use swamp_font::{Font, FontRef};
+use swamp_assets::prelude::{Asset, Id, WeakId};
+use swamp_assets::Assets;
+use swamp_font::{Font, FontRef, WeakFontRef};
 use swamp_render::prelude::*;
 use swamp_resource::prelude::Resource;
 use swamp_wgpu_math::Vec4;
@@ -22,9 +22,10 @@ use tracing::trace;
 use wgpu::{BindGroup, BindGroupLayout, Buffer, RenderPass, RenderPipeline};
 
 pub type MaterialRef = Id<Material>;
+pub type WeakMaterialRef = WeakId<Material>;
 
 pub trait FrameLookup {
-    fn lookup(&self, frame: u16) -> (MaterialRef, URect);
+    fn lookup(&self, frame: u16) -> (&MaterialRef, URect);
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -56,12 +57,12 @@ impl FixedAtlas {
 }
 
 impl FrameLookup for FixedAtlas {
-    fn lookup(&self, frame: u16) -> (MaterialRef, URect) {
+    fn lookup(&self, frame: u16) -> (&MaterialRef, URect) {
         let x = frame % self.cell_count_size.x;
         let y = frame / self.cell_count_size.x;
 
         (
-            self.material,
+            &self.material,
             URect::new(
                 x * self.one_cell_size.x,
                 y * self.one_cell_size.y,
@@ -121,14 +122,14 @@ fn to_wgpu_color(c: Color) -> wgpu::Color {
 
 struct RenderItem {
     position: Vec3,
-    material_ref: MaterialRef,
+    material_ref: WeakMaterialRef,
 
     renderable: Renderable,
 }
 
 pub struct Text {
     text: String,
-    font_ref: FontRef,
+    font_ref: WeakFontRef,
 }
 
 enum Renderable {
@@ -165,7 +166,7 @@ pub struct Render {
     origin: Vec2,
 
     // Cache
-    batch_offsets: Vec<(MaterialRef, u32, u32)>,
+    batch_offsets: Vec<(WeakMaterialRef, u32, u32)>,
     viewport: URect,
     clear_color: wgpu::Color,
 
@@ -207,7 +208,7 @@ impl Gfx for Render {
     ) {
         self.items.push(RenderItem {
             position,
-            material_ref: atlas_ref.material.clone(),
+            material_ref: (&atlas_ref.material).into(),
             renderable: Renderable::TileMap(TileMap {
                 tiles_data_grid_size: UVec2::new(width, tiles.len() as u16 / width),
                 cell_count_size: atlas_ref.cell_count_size,
@@ -221,10 +222,10 @@ impl Gfx for Render {
     fn text_draw(&mut self, position: Vec3, text: &str, font_and_mat: &FontAndMaterial) {
         self.items.push(RenderItem {
             position,
-            material_ref: font_and_mat.material_ref,
+            material_ref: (&font_and_mat.material_ref).into(),
             renderable: Renderable::Text(Text {
                 text: text.to_string(),
-                font_ref: font_and_mat.font_ref,
+                font_ref: (&font_and_mat.font_ref).into(),
             }),
         });
     }
@@ -362,7 +363,7 @@ impl Render {
     fn push_sprite(&mut self, position: Vec3, material: &MaterialRef, sprite: Sprite) {
         self.items.push(RenderItem {
             position,
-            material_ref: *material,
+            material_ref: material.into(),
             renderable: Renderable::Sprite(sprite),
         });
     }
@@ -487,7 +488,7 @@ impl Render {
     fn order_render_items_in_batches(&self) -> Vec<Vec<&RenderItem>> {
         let mut material_batches: Vec<Vec<&RenderItem>> = Vec::new();
         let mut current_batch: Vec<&RenderItem> = Vec::new();
-        let mut current_material: Option<&MaterialRef> = None;
+        let mut current_material: Option<&WeakMaterialRef> = None;
 
         for sprite in &self.items {
             if Some(&sprite.material_ref) != current_material {
@@ -513,14 +514,23 @@ impl Render {
         let batches = self.order_render_items_in_batches();
 
         let mut quad_matrix_and_uv: Vec<SpriteInstanceUniform> = Vec::new();
-        let mut batch_vertex_ranges: Vec<(MaterialRef, u32, u32)> = Vec::new();
+        let mut batch_vertex_ranges: Vec<(WeakMaterialRef, u32, u32)> = Vec::new();
 
         for render_items in &batches {
             let quad_index = quad_matrix_and_uv.len() as u32;
             let mut quad_count = 0;
 
-            let material_ref = &render_items.first().unwrap().material_ref;
-            let result = materials.get(material_ref);
+            // Fix: Access material_ref through reference and copy it
+            let weak_material_ref = render_items
+                .first()
+                .map(|item| {
+                    // Force copy semantics by dereferencing the shared reference
+                    let material_ref: WeakId<Material> = item.material_ref;
+                    material_ref
+                })
+                .expect("Render items batch was empty");
+
+            let result = materials.get_weak(weak_material_ref);
             if result.is_none() {
                 // Material is not loaded yet
                 continue;
@@ -551,7 +561,7 @@ impl Render {
                     }
 
                     Renderable::Text(font_and_mat) => {
-                        let result = fonts.get(&font_and_mat.font_ref);
+                        let result = fonts.get_weak(font_and_mat.font_ref);
                         if result.is_none() {
                             continue;
                         }
@@ -626,7 +636,7 @@ impl Render {
                     }
                 }
 
-                batch_vertex_ranges.push((material_ref.clone(), quad_index, quad_count));
+                batch_vertex_ranges.push((weak_material_ref, quad_index, quad_count));
             }
         }
 
@@ -715,17 +725,19 @@ impl Render {
 
         let num_indices = swamp_wgpu_sprites::INDICES.len() as u32;
 
-        for (material_ref, start, count) in &self.batch_offsets {
-            let wgpu_material = materials.get(material_ref).expect("no such material");
+        for &(weak_material_ref, start, count) in self.batch_offsets.iter() {
+            let wgpu_material = materials
+                .get_weak(weak_material_ref)
+                .expect("no such material");
             // Bind the texture and sampler bind group (Bind Group 1)
             render_pass.set_bind_group(1, &wgpu_material.texture_and_sampler_bind_group, &[]);
 
             // Issue the instanced draw call for the batch
             trace!(
                 "swamp_render: {}: instances: {start}..{count}",
-                material_ref
+                weak_material_ref
             );
-            render_pass.draw_indexed(0..num_indices, 0, *start..(start + count));
+            render_pass.draw_indexed(0..num_indices, 0, start..(start + count));
         }
 
         self.items.clear();

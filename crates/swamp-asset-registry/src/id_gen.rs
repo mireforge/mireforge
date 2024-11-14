@@ -4,9 +4,10 @@
  */
 use crate::idx_gen::IndexAllocator;
 use crate::TypeIdMap;
+use message_channel::Sender;
 use std::any::TypeId;
 use std::collections::HashMap;
-use swamp_assets::{Asset, Id, RawAssetId, RawAssetIdWithTypeId};
+use swamp_assets::prelude::{Asset, AssetName, DropMessage, Id, RawAssetId, RawWeakId};
 
 fn get_mut_or_create<K, V, F>(map: &mut HashMap<K, V>, key: K, create: F) -> &mut V
 where
@@ -19,16 +20,18 @@ where
 #[derive(Debug)]
 pub struct IdAssigner {
     allocators: TypeIdMap<IndexAllocator>,
+    sender: Sender<DropMessage>,
 }
 
 impl IdAssigner {
-    pub fn new() -> Self {
+    pub fn new(sender: Sender<DropMessage>) -> Self {
         Self {
             allocators: TypeIdMap::default(),
+            sender,
         }
     }
 
-    pub fn allocate<T: Asset>(&mut self) -> Id<T> {
+    pub fn allocate<T: Asset>(&mut self, asset_name: AssetName) -> Id<T> {
         let allocator = get_mut_or_create(&mut self.allocators, TypeId::of::<T>(), || {
             IndexAllocator::new()
         });
@@ -40,7 +43,7 @@ impl IdAssigner {
             index: index as u16,
         };
 
-        RawAssetIdWithTypeId::with_asset_type::<T>(raw_id).into()
+        Id::<T>::new(raw_id, self.sender.clone(), asset_name)
     }
 
     pub fn remove<T: Asset>(&mut self, id: Id<T>) {
@@ -48,7 +51,7 @@ impl IdAssigner {
             .allocators
             .get_mut(&TypeId::of::<T>())
             .expect("missing asset allocator");
-        let raw_id_with_type_id: RawAssetIdWithTypeId = id.into();
+        let raw_id_with_type_id: RawWeakId = (&id).into();
         let raw_id: RawAssetId = raw_id_with_type_id.into();
         allocator.remove((raw_id.index as usize, raw_id.generation));
     }

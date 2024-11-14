@@ -34,4 +34,4 @@ members = [
     "crates/swamp-system-runner",
     "crates/swamp-asset-registry",
     "crates/swamp-font"
-]
+, "crates/swamp-asset-id"]

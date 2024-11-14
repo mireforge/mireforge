@@ -20,6 +20,9 @@ pub struct AnimationExample {
     old_hero_atlas: FixedAtlas,
     attack_anim: FrameAnimation,
     sleep_anim: FrameAnimation,
+    bat_anim: FrameAnimation,
+    bat_atlas: Option<FixedAtlas>, // Intentionally unload this later
+    tick_count: usize,
 }
 
 impl AnimationExample {}
@@ -34,14 +37,28 @@ impl Application for AnimationExample {
         let attack_anim = FrameAnimation::new(12 * 7, 10, 12, now);
         let sleep_anim = FrameAnimation::new(12 * 11 + 1, 5, 5, now);
 
+        let bat_atlas =
+            assets.frame_fixed_grid_material_png("flying_46x30", (46, 30).into(), (322, 30).into());
+
+        let bat_anim = FrameAnimation::new(0, 7, 12, now);
+
         Self {
             old_hero_atlas,
+            bat_atlas: Some(bat_atlas),
             attack_anim,
             sleep_anim,
+            bat_anim,
+            tick_count: 0,
         }
     }
 
-    fn tick(&mut self, _assets: &mut impl Assets) {}
+    fn tick(&mut self, _assets: &mut impl Assets) {
+        self.tick_count += 1;
+        if self.tick_count > 60 && self.bat_atlas.is_some() {
+            info!("intentionally unload bat atlas");
+            self.bat_atlas.take();
+        }
+    }
 
     fn render(&mut self, gfx: &mut impl Gfx) {
         let now = gfx.now();
@@ -51,6 +68,20 @@ impl Application for AnimationExample {
         gfx.set_origin((0, (VIRTUAL_SCREEN_SIZE.y / 2 - CHARACTER_HEIGHT) as i16).into());
         self.attack_anim.update(now);
         self.sleep_anim.update(now);
+        self.bat_anim.update(now);
+
+        if let Some(ref mut bat_atlas) = &mut self.bat_atlas {
+            gfx.sprite_atlas_frame(
+                (
+                    (VIRTUAL_SCREEN_SIZE.x / 2u16 - (TILE_SIZE.x / 2u16)) as i16,
+                    (VIRTUAL_SCREEN_SIZE.y / 2u16 - CHARACTER_HEIGHT) as i16,
+                    0,
+                )
+                    .into(),
+                self.bat_anim.frame(),
+                bat_atlas,
+            );
+        }
 
         let spacing = 64;
 

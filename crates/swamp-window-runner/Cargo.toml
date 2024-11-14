@@ -12,7 +12,6 @@ swamp-app = { path = "../swamp-app", version = "0.0.9" }
 swamp-window = { path = "../swamp-window", version = "0.0.9" }
 swamp-wgpu-window = { path = "../swamp-wgpu-window", version = "0.0.9" }
 future-runner = { version = "0.0.1", features = ["block"] }
-swamp-log = { path = "../swamp-log", version = "0.0.9" }
 swamp-basic-input = { path = "../swamp-basic-input", version = "0.0.9" }
 swamp-screen = { path = "../swamp-screen", version = "0.0.9" }
 

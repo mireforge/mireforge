@@ -9,13 +9,13 @@ use std::io;
 use std::io::Error;
 use std::sync::{Arc, Mutex};
 use swamp_app::prelude::{App, Plugin, Resource};
-use swamp_assets::{Asset, RawAssetIdWithTypeId};
+use swamp_assets::prelude::{Asset, RawWeakId};
 pub use swamp_resource::ResourceStorage;
-use tracing::info;
+use tracing::debug;
 
 #[derive(Debug)]
 pub enum LoadError {
-    MissingLoader(RawAssetIdWithTypeId),
+    MissingLoader(RawWeakId),
     ConversionError(ConversionError),
     Downcast,
 }
@@ -45,7 +45,7 @@ pub trait AssetLoader: Send + Sync {
     /// TODO: Add more here
     fn convert_and_insert(
         &self,
-        id: RawAssetIdWithTypeId,
+        id: RawWeakId,
         octets: &[u8],
         world: &mut ResourceStorage,
     ) -> Result<(), ConversionError>;
@@ -58,7 +58,7 @@ pub trait AnyAssetLoader: Send + Sync {
     /// TODO: Add more here
     fn convert_and_insert_erased(
         &self,
-        id: RawAssetIdWithTypeId,
+        id: RawWeakId,
         octets: &[u8],
         resources: &mut ResourceStorage,
     ) -> Result<(), LoadError>;
@@ -72,7 +72,7 @@ where
 {
     fn convert_and_insert_erased(
         &self,
-        id: RawAssetIdWithTypeId,
+        id: RawWeakId,
         octets: &[u8],
         resources: &mut ResourceStorage,
     ) -> Result<(), LoadError> {
@@ -119,7 +119,7 @@ impl AssetLoaderRegistry {
     where
         T: AssetLoader + 'static,
     {
-        info!(
+        debug!(
             "registering asset loader for '{}' ({})",
             type_name::<T::AssetType>(),
             type_name::<T>()
@@ -132,13 +132,13 @@ impl AssetLoaderRegistry {
     /// If missing or conversion failed
     pub fn convert_and_insert(
         &self,
-        id: RawAssetIdWithTypeId,
+        id: RawWeakId,
         octets: &[u8],
         resources: &mut ResourceStorage,
     ) -> Result<(), LoadError> {
         let loader = self
             .loaders
-            .get(&id.type_id)
+            .get(&id.type_id())
             .ok_or(LoadError::MissingLoader(id))?;
 
         loader.convert_and_insert_erased(id, octets, resources)

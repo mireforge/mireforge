@@ -11,6 +11,7 @@ use swamp_assets_loader::{AssetLoader, ConversionError, WrappedAssetLoaderRegist
 use tracing::debug;
 
 pub type FontRef = Id<Font>;
+pub type WeakFontRef = WeakId<Font>;
 
 #[derive(Debug, Asset)]
 pub struct Font {
@@ -46,7 +47,7 @@ impl AssetLoader for FontConverter {
 
     fn convert_and_insert(
         &self,
-        id: RawAssetIdWithTypeId,
+        id: RawWeakId,
         octets: &[u8],
         resources: &mut ResourceStorage,
     ) -> Result<(), ConversionError> {
@@ -54,7 +55,7 @@ impl AssetLoader for FontConverter {
         {
             let asset_container = resources.fetch::<AssetRegistry>();
             name = asset_container
-                .name(Id::<Font>::from_raw(id))
+                .name_raw(id)
                 .expect("should know about this Id");
         }
 
@@ -63,8 +64,9 @@ impl AssetLoader for FontConverter {
 
         debug!("font complete {name}");
         let font_assets = resources.fetch_mut::<Assets<Font>>();
-        let typed_id = Id::<Font>::from_raw(id);
-        font_assets.set(&typed_id, Font { font });
+
+        font_assets.set_raw(id, Font { font });
+
         Ok(())
     }
 }

@@ -5,19 +5,19 @@
 use chunk_reader::{ChunkReader, ResourceId};
 use message_channel::Sender;
 use std::fmt::Debug;
-use swamp_assets::{AssetName, RawAssetIdWithTypeId};
+use swamp_assets::prelude::{AssetName, RawWeakId};
 
 pub struct Blob {
     pub path: AssetName,
     pub content: Vec<u8>,
-    pub id: RawAssetIdWithTypeId,
+    pub id: RawWeakId,
 }
 
 impl Debug for Blob {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Blob {{ name: {:?} size:{} }}",
+            "Blob {{ name: {} size:{} }}",
             self.path,
             self.content.len()
         )
@@ -28,7 +28,7 @@ pub async fn load(
     reader: Box<dyn ChunkReader>,
     sender: &Sender<Blob>,
     asset_name: AssetName,
-    id: RawAssetIdWithTypeId,
+    id: RawWeakId,
 ) {
     if let Ok(octets) = reader
         .fetch_octets(ResourceId::from(asset_name.value()))

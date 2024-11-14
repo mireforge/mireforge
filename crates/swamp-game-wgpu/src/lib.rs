@@ -16,7 +16,7 @@ use swamp_app::prelude::{
 use swamp_app::prelude::{MessagesIterator, Resource};
 use swamp_app::system_types::ReAll;
 use swamp_asset_registry::AssetRegistry;
-use swamp_assets::{AssetName, Id};
+use swamp_assets::prelude::{AssetName, Id};
 pub use swamp_basic_input::prelude::*;
 use swamp_game::{Application, Assets};
 use swamp_render_wgpu::prelude::Font;
@@ -82,7 +82,7 @@ impl<'a> Assets for WgpuAssets<'a> {
         }
     }
 
-    fn font(&self, font_ref: Id<Font>) -> Option<&Font> {
+    fn font(&self, font_ref: &Id<Font>) -> Option<&Font> {
         let font_assets = self
             .resource_storage
             .get::<swamp_assets::Assets<Font>>()
@@ -92,7 +92,7 @@ impl<'a> Assets for WgpuAssets<'a> {
     }
 
     fn text_glyphs(&self, text: &str, font_and_mat: &FontAndMaterial) -> Option<Vec<Glyph>> {
-        if let Some(font) = self.font(font_and_mat.font_ref) {
+        if let Some(font) = self.font(&font_and_mat.font_ref) {
             let glyphs = font.draw(text);
             Some(glyphs)
         } else {

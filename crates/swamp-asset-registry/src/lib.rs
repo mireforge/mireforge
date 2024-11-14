@@ -7,7 +7,7 @@ mod idx_gen;
 
 use crate::id_gen::IdAssigner;
 use chunk_reader::get_platform_reader;
-use message_channel::Sender;
+use message_channel::{Channel, Receiver, Sender};
 use std::any::TypeId;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -17,7 +17,7 @@ use swamp_assets::prelude::*;
 use swamp_assets_loader::{AssetLoaderRegistry, LoadError, WrappedAssetLoaderRegistry};
 use swamp_loader::{load, Blob};
 use swamp_loader_plugin::{LoaderReceiver, LoaderSender};
-use tracing::{debug, info};
+use tracing::debug;
 
 #[derive(Debug)]
 pub enum Phase {
@@ -36,10 +36,12 @@ type TypeIdMap<T> = HashMap<TypeId, T>;
 
 #[derive(Debug, Resource)]
 pub struct AssetRegistry {
-    infos: HashMap<RawAssetIdWithTypeId, AssetInfo>,
+    infos: HashMap<RawWeakId, AssetInfo>,
     sender: Sender<Blob>,
     id_assigner: IdAssigner,
     converters: Arc<Mutex<AssetLoaderRegistry>>,
+    #[allow(unused)]
+    drop_channel_receiver: Receiver<DropMessage>,
 }
 
 impl AssetRegistry {
@@ -48,11 +50,13 @@ impl AssetRegistry {
         sender: Sender<Blob>,
         asset_loader_registry: Arc<Mutex<AssetLoaderRegistry>>,
     ) -> Self {
+        let (drop_channel_sender, drop_channel_receiver) = Channel::create();
         Self {
             infos: HashMap::new(),
             sender,
-            id_assigner: IdAssigner::new(),
+            id_assigner: IdAssigner::new(drop_channel_sender),
             converters: asset_loader_registry,
+            drop_channel_receiver,
         }
     }
 
@@ -60,9 +64,10 @@ impl AssetRegistry {
         let asset_name = name.into();
         debug!("Loading {asset_name}");
         let reader = get_platform_reader("assets/");
-        let typed_id = self.id_assigner.allocate::<T>();
+        let typed_id = self.id_assigner.allocate::<T>(asset_name.clone());
+        let raw_type_id: RawWeakId = (&typed_id).into();
         self.infos.insert(
-            typed_id.into(),
+            raw_type_id,
             AssetInfo {
                 name: asset_name.clone(),
                 phase: Phase::Loading,
@@ -71,20 +76,24 @@ impl AssetRegistry {
         let sender = self.sender.clone();
         {
             future_runner::run_future(async move {
-                load(reader, &sender, asset_name, typed_id.into()).await;
+                load(reader, &sender, asset_name, raw_type_id).await;
             });
         }
         typed_id
     }
 
     pub fn name<A: Asset>(&self, id: Id<A>) -> Option<AssetName> {
-        let raw = id.into();
-        self.infos.get(&raw).map(|info| info.name.clone())
+        let raw_id = (&id).into();
+        self.name_raw(raw_id)
+    }
+
+    pub fn name_raw(&self, raw_id: RawWeakId) -> Option<AssetName> {
+        self.infos.get(&raw_id).map(|info| info.name.clone())
     }
 
     pub fn blob_loaded(
         &mut self,
-        id: RawAssetIdWithTypeId,
+        id: RawWeakId,
         octets: &[u8],
         resources: &mut ResourceStorage,
     ) -> Result<(), LoadError> {
@@ -96,7 +105,7 @@ impl AssetRegistry {
     }
 
     pub fn asset_id_dropped<A: Asset>(&mut self, id: Id<A>) {
-        self.infos.remove(&id.into());
+        self.infos.remove(&(&id).into());
         self.id_assigner.remove(id);
     }
 }
@@ -123,7 +132,7 @@ fn tick(
     mut mut_access_to_resources: ReAll,
 ) {
     if let Some(blob) = loader_receiver.receiver.try_recv() {
-        info!("loaded {:?}, starting conversion", blob);
+        debug!("loaded {:?}, starting conversion", blob);
         asset_container
             .blob_loaded(blob.id, &blob.content, &mut mut_access_to_resources)
             .expect("couldn't convert")

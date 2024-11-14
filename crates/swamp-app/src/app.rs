@@ -46,13 +46,13 @@ impl App {
             if !all_are_ready {
                 return;
             }
-            info!("all plugins are ready, starting post initialization");
+            debug!("all plugins are ready, starting post initialization");
             let mut plugins = std::mem::take(&mut self.plugins); // Temporarily take ownership of the plugins
             for plugin in &mut plugins {
                 plugin.post_initialization(self);
             }
 
-            info!("...post initialization complete. start running!");
+            info!("...post initialization complete. start running systems in schedules!");
 
             self.plugins = plugins;
 
@@ -181,7 +181,7 @@ impl App {
     }
 
     pub fn create_message_type<M: Message>(&mut self) {
-        info!("creating message queue {}", type_name::<M>());
+        debug!("creating message queue {}", type_name::<M>());
         self.state.messages_mut().register_message_type::<M>();
     }
 

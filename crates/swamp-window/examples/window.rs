@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
 use std::sync::Arc;
-use swamp_log::prelude::{info, trace};
+use swamp_log::prelude::info;
 use swamp_window::AppHandler;
 use winit::dpi::{PhysicalPosition, PhysicalSize};
 use winit::event::{
@@ -33,7 +33,7 @@ impl AppHandler for Handler {
 
     // Window
     fn redraw(&mut self) -> bool {
-        trace!("redraw");
+        // trace!("redraw");
         !self.should_quit
     }
 

@@ -4,7 +4,7 @@
  */
 use swamp_app::prelude::*;
 use swamp_asset_registry::AssetRegistry;
-use swamp_assets::{AssetName, Assets, Id, RawAssetIdWithTypeId};
+use swamp_assets::prelude::{AssetName, Assets, RawWeakId};
 use swamp_assets_loader::{
     AssetLoader, ConversionError, ResourceStorage, WrappedAssetLoaderRegistry,
 };
@@ -41,7 +41,7 @@ impl AssetLoader for MaterialWgpuProcessor {
 
     fn convert_and_insert(
         &self,
-        id: RawAssetIdWithTypeId,
+        id: RawWeakId,
         octets: &[u8],
         resources: &mut ResourceStorage,
     ) -> Result<(), ConversionError> {
@@ -51,7 +51,7 @@ impl AssetLoader for MaterialWgpuProcessor {
         {
             let asset_container = resources.fetch::<AssetRegistry>();
             name = asset_container
-                .name(Id::<Material>::from_raw(id))
+                .name_raw(id)
                 .expect("should know about this Id");
         }
 
@@ -65,18 +65,16 @@ impl AssetLoader for MaterialWgpuProcessor {
             &device_info.device,
             &device_info.queue,
             img,
-            name.value().as_str(),
+            name.value(),
         );
 
         debug!("creating material {name}");
         {
             let swamp_render_wgpu = resources.fetch_mut::<Render>();
-            let wgpu_material =
-                swamp_render_wgpu.material_from_texture(wgpu_texture, name.value().as_str());
+            let wgpu_material = swamp_render_wgpu.material_from_texture(wgpu_texture, name.value());
 
             let image_assets = resources.fetch_mut::<Assets<Material>>();
-            let typed_id = Id::<Material>::from_raw(id);
-            image_assets.set(&typed_id, wgpu_material);
+            image_assets.set_raw(id, wgpu_material);
         }
 
         debug!("material complete {name}");

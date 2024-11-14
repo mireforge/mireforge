@@ -13,11 +13,10 @@ use std::sync::{Arc, Mutex};
 use swamp_app::prelude::Resource;
 use swamp_app::prelude::{App, AppReturnValue, ApplicationExit};
 use swamp_basic_input::prelude::*;
-use swamp_log::prelude::info;
 use swamp_screen::WindowMessage;
 use swamp_wgpu_window::{annoying_async_device_creation, WgpuWindow};
 use swamp_window::AppHandler;
-use tracing::error;
+use tracing::{debug, error};
 use winit::dpi;
 use winit::keyboard::PhysicalKey;
 
@@ -58,13 +57,12 @@ impl AppHandler for WindowState {
     fn lost_focus(&mut self) {}
 
     fn window_created(&mut self, window: Arc<winit::window::Window>) {
-        info!("window created callback");
+        debug!("received callback for: window created");
         let app = Arc::clone(&self.app);
         future_runner::run_future(async move {
             let async_device_info = annoying_async_device_creation(window)
                 .await
                 .expect("couldn't get device info");
-            info!("async device info: {:?}", async_device_info);
             app.lock().unwrap().insert_resource(async_device_info);
         });
         self.app
@@ -128,10 +126,6 @@ impl AppHandler for WindowState {
             );
         }
 
-        info!(
-            "cursor moved callback {} {:?}",
-            self.physical_surface_size.height, physical_position
-        );
         self.app
             .lock()
             .unwrap()
@@ -188,7 +182,7 @@ impl AppHandler for WindowState {
 
 pub fn runner(mut app: App) -> AppReturnValue {
     console_error_panic_hook::set_once();
-    info!("started!");
+    debug!("window-runner started!");
 
     let requested_surface_size: UVec2;
     let minimal_surface_size: UVec2;
@@ -220,7 +214,7 @@ pub fn runner(mut app: App) -> AppReturnValue {
 
     swamp_window::WindowRunner::run_app(&mut state, title.as_str()).expect("run_app failed");
 
-    info!("we returned, that is not guaranteed for all platforms!");
+    debug!("we returned, that is not guaranteed for all platforms");
 
     AppReturnValue::Value(0)
 }
