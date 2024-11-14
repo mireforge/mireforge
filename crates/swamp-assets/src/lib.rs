@@ -8,7 +8,7 @@ use crate::prelude::*;
 use sparse_slot::SparseSlot;
 use std::fmt::{Debug, Formatter};
 use swamp_resource::prelude::*;
-use tracing::debug;
+use tracing::{debug, trace};
 
 #[derive(Resource)]
 pub struct Assets<A: Asset> {
@@ -39,14 +39,14 @@ impl<A: Asset> Assets<A> {
 
     /// # Panics
     pub fn set(&mut self, id: &Id<A>, asset: A) {
-        debug!("setting resource {id} of asset: {asset:?}");
+        debug!(id=%id,asset=?asset, "setting asset");
         self.storage
             .try_set(to_slot_map_id(id), asset)
             .expect("internal error");
     }
 
     pub fn set_raw(&mut self, id: RawWeakId, asset: A) {
-        debug!("setting resource {id} of asset: {asset:?}");
+        debug!(id=%id,asset=?asset, "setting asset");
         self.storage
             .try_set(to_slot_map_id_from_raw(id), asset)
             .expect("internal error");
@@ -69,11 +69,13 @@ impl<A: Asset> Assets<A> {
     /// if id is missing
     #[must_use]
     pub fn fetch(&self, id: &Id<A>) -> &A {
+        trace!(id=%id, "fetch asset");
         self.storage.get(to_slot_map_id(id)).unwrap()
     }
 
     #[must_use]
     pub fn get_mut(&mut self, id: &Id<A>) -> Option<&mut A> {
+        trace!(id=%id, "get_mut asset");
         self.storage.get_mut(to_slot_map_id(id))
     }
 

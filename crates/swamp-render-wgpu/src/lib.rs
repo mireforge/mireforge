@@ -656,7 +656,7 @@ impl Render {
         materials: &Assets<Material>,
         fonts: &Assets<Font>,
     ) {
-        trace!("swamp_render: render()");
+        trace!("start render()");
         self.last_render_at = self.clock.now();
 
         self.viewport = match self.viewport_strategy {
@@ -733,10 +733,7 @@ impl Render {
             render_pass.set_bind_group(1, &wgpu_material.texture_and_sampler_bind_group, &[]);
 
             // Issue the instanced draw call for the batch
-            trace!(
-                "swamp_render: {}: instances: {start}..{count}",
-                weak_material_ref
-            );
+            trace!(material=%weak_material_ref, start=%start, count=%count, "draw instanced");
             render_pass.draw_indexed(0..num_indices, 0, start..(start + count));
         }
 

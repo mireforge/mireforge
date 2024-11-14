@@ -7,7 +7,7 @@ use crate::owner::{AssetOwner, DropMessage};
 use colored::Colorize;
 use fixstr::FixStr;
 use message_channel::Sender;
-use std::any::TypeId;
+use std::any::{type_name, TypeId};
 use std::cmp::Ordering;
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
@@ -48,11 +48,16 @@ impl Display for RawAssetId {
     }
 }
 
+fn short_type_name<T>() -> &'static str {
+    type_name::<T>().split("::").last().unwrap()
+}
+
 #[derive(Debug, PartialEq, Eq, Ord, PartialOrd, Hash, Clone, Copy)]
 pub struct RawWeakId {
     raw_id: RawAssetId,
     type_id: TypeId,
     debug_asset_name: AssetName,
+    debug_type_id: FixStr<32>,
 }
 
 impl<A: Asset> From<&Id<A>> for RawWeakId {
@@ -60,6 +65,7 @@ impl<A: Asset> From<&Id<A>> for RawWeakId {
         Self {
             raw_id: id.owner.raw_id().raw_id,
             type_id: TypeId::of::<A>(),
+            debug_type_id: FixStr::new_unchecked(short_type_name::<A>()),
             debug_asset_name: id.owner.asset_name().unwrap(),
         }
     }
@@ -72,6 +78,7 @@ impl RawWeakId {
             raw_id: id,
             type_id: TypeId::of::<A>(),
             debug_asset_name: asset_name,
+            debug_type_id: FixStr::new_unchecked(short_type_name::<A>()),
         }
     }
 
@@ -82,7 +89,11 @@ impl RawWeakId {
 
 impl Display for RawWeakId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {}", self.raw_id, self.debug_asset_name)
+        write!(
+            f,
+            "({} {} {})",
+            self.raw_id, self.debug_asset_name, self.debug_type_id
+        )
     }
 }
 
@@ -119,7 +130,7 @@ impl<A: Asset> WeakId<A> {
 
 impl<A: Asset> Display for WeakId<A> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "weak {} ({:?})", self.raw_id, self.phantom_data)
+        write!(f, "weak {}", self.raw_id)
     }
 }
 
