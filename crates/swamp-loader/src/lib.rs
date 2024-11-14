@@ -15,12 +15,7 @@ pub struct Blob {
 
 impl Debug for Blob {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Blob {{ name: {} size:{} }}",
-            self.path,
-            self.content.len()
-        )
+        write!(f, "{{ name:{} size:{} }}", self.path, self.content.len())
     }
 }
 

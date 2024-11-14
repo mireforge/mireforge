@@ -120,9 +120,9 @@ impl AssetLoaderRegistry {
         T: AssetLoader + 'static,
     {
         debug!(
-            "registering asset loader for '{}' ({})",
-            type_name::<T::AssetType>(),
-            type_name::<T>()
+            asset_type = type_name::<T::AssetType>(),
+            loader = type_name::<T>(),
+            "registering asset loader",
         );
         self.loaders
             .insert(loader.asset_type_id(), Box::new(loader));

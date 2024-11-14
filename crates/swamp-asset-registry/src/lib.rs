@@ -62,7 +62,7 @@ impl AssetRegistry {
 
     pub fn load<T: Asset>(&mut self, name: impl Into<AssetName>) -> Id<T> {
         let asset_name = name.into();
-        debug!("Loading {asset_name}");
+        debug!(asset_name=%asset_name, "Loading");
         let reader = get_platform_reader("assets/");
         let typed_id = self.id_assigner.allocate::<T>(asset_name);
         let raw_type_id: RawWeakId = (&typed_id).into();

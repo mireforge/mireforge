@@ -28,7 +28,7 @@ pub struct App {
 impl App {
     pub(crate) fn internal_add_plugin(&mut self, boxed_plugin: Box<dyn Plugin>) {
         boxed_plugin.build(self);
-        debug!("Added plugin {boxed_plugin:?}");
+        debug!(plugin=?boxed_plugin, "Added");
         self.plugins.push(boxed_plugin);
     }
 
@@ -137,7 +137,7 @@ impl App {
     }
 
     pub fn insert_resource<R: Resource>(&mut self, value: R) -> &mut Self {
-        debug!("inserting resource '{}' {:?}", type_name::<R>(), value);
+        debug!(resource_type=type_name::<R>(), value=?value, "inserting resource");
         self.state.resources_mut().insert(value);
         self
     }
@@ -181,7 +181,7 @@ impl App {
     }
 
     pub fn create_message_type<M: Message>(&mut self) {
-        debug!("creating message queue {}", type_name::<M>());
+        debug!(channel_type = type_name::<M>(), "creating message queue");
         self.state.messages_mut().register_message_type::<M>();
     }
 
@@ -297,6 +297,6 @@ pub trait Plugin: 'static {
 
 impl std::fmt::Debug for dyn Plugin {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Plugin (type: {})", self.type_name())
+        write!(f, "{}", self.type_name())
     }
 }
