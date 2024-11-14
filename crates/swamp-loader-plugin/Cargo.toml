@@ -1,6 +1,6 @@
 [package]
 name = "swamp-loader-plugin"
-version = "0.0.9"
+version = "0.0.10"
 edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
@@ -10,9 +10,9 @@ description = "Plugin for swamp-loader"
 [dependencies]
 tracing = "0.1.40"
 
-swamp-loader = { path = "../swamp-loader", version = "0.0.9" }
-swamp-app = { path = "../swamp-app", version = "0.0.9" }
+swamp-loader = { path = "../swamp-loader", version = "0.0.10" }
+swamp-app = { path = "../swamp-app", version = "0.0.10" }
 message-channel = "0.0.1"
-swamp-assets = { path = "../swamp-assets", version = "0.0.9" }
+swamp-assets = { path = "../swamp-assets", version = "0.0.10" }
 
 future-runner = { version = "0.0.1", features = [] }

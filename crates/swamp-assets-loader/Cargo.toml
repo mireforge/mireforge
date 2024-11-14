@@ -1,6 +1,6 @@
 [package]
 name = "swamp-assets-loader"
-version = "0.0.9"
+version = "0.0.10"
 edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
@@ -8,12 +8,12 @@ categories = ["game-development"]
 description = "loads assets"
 
 [dependencies]
-swamp-app = { path = "../swamp-app", version = "0.0.9" }
-swamp-loader = { path = "../swamp-loader", version = "0.0.9" }
+swamp-app = { path = "../swamp-app", version = "0.0.10" }
+swamp-loader = { path = "../swamp-loader", version = "0.0.10" }
 message-channel = "0.0.1"
-swamp-assets = { path = "../swamp-assets", version = "0.0.9" }
-swamp-resource = { path = "../swamp-resource", version = "0.0.9" }
-swamp-loader-plugin = { path = "../swamp-loader-plugin", version = "0.0.9" }
+swamp-assets = { path = "../swamp-assets", version = "0.0.10" }
+swamp-resource = { path = "../swamp-resource", version = "0.0.10" }
+swamp-loader-plugin = { path = "../swamp-loader-plugin", version = "0.0.10" }
 tracing = "0.1.40"
 hashbrown = "0.15.1"
 chunk-reader = "0.0.1"

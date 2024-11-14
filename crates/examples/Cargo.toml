@@ -1,6 +1,6 @@
 [package]
 name = "swamp-examples"
-version = "0.0.9"
+version = "0.0.10"
 edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
@@ -8,5 +8,4 @@ categories = ["game-development"]
 
 [dependencies]
 tracing = "0.1.40"
-
-swamp-boot-game = { path = "../swamp-boot-game", version = "0.0.9"}
+swamp = { path = "../swamp", version = "0.0.10" }

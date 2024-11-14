@@ -1,6 +1,6 @@
 [package]
 name = "swamp-window-runner"
-version = "0.0.9"
+version = "0.0.10"
 edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
@@ -8,12 +8,12 @@ categories = ["game-development"]
 description = "winit runner for swamp-app"
 
 [dependencies]
-swamp-app = { path = "../swamp-app", version = "0.0.9" }
-swamp-window = { path = "../swamp-window", version = "0.0.9" }
-swamp-wgpu-window = { path = "../swamp-wgpu-window", version = "0.0.9" }
+swamp-app = { path = "../swamp-app", version = "0.0.10" }
+swamp-window = { path = "../swamp-window", version = "0.0.10" }
+swamp-wgpu-window = { path = "../swamp-wgpu-window", version = "0.0.10" }
 future-runner = { version = "0.0.1", features = ["block"] }
-swamp-basic-input = { path = "../swamp-basic-input", version = "0.0.9" }
-swamp-screen = { path = "../swamp-screen", version = "0.0.9" }
+swamp-basic-input = { path = "../swamp-basic-input", version = "0.0.10" }
+swamp-screen = { path = "../swamp-screen", version = "0.0.10" }
 
 winit = "0.30.5"
 int_math = "0.0.2"

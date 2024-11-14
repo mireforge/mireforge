@@ -1,6 +1,6 @@
 [package]
 name = "swamp-app"
-version = "0.0.9"
+version = "0.0.10"
 edition = "2021"
 license = "MIT"
 description = "Application management for 2D pixel perfect sprite rendering"
@@ -12,13 +12,13 @@ keywords = ["game", "render"]
 tracing = "0.1.40"
 
 # State, resource and message
-swamp-system-state = { path = "../swamp-system-state", version = "0.0.9"}
-swamp-message = { path = "../swamp-message", version = "0.0.9"}
-swamp-resource = { path = "../swamp-resource", version = "0.0.9"}
+swamp-system-state = { path = "../swamp-system-state", version = "0.0.10" }
+swamp-message = { path = "../swamp-message", version = "0.0.10" }
+swamp-resource = { path = "../swamp-resource", version = "0.0.10" }
 
 # System
-swamp-system-runner = { path = "../swamp-system-runner", version = "0.0.9"}
-swamp-system = {path = "../swamp-system", version = "0.0.9"}
+swamp-system-runner = { path = "../swamp-system-runner", version = "0.0.10" }
+swamp-system = {path = "../swamp-system", version = "0.0.10" }
 
 [dev-dependencies]
 test-log = "0.2.16"

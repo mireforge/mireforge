@@ -1,6 +1,6 @@
 [package]
 name = "swamp-message"
-version = "0.0.9"
+version = "0.0.10"
 edition = "2021"
 license = "MIT"
 description = "message container"
@@ -11,8 +11,8 @@ keywords = ["game", "message", "queue"]
 [dependencies]
 tracing = "0.1.40"
 
-swamp-resource = { path= "../swamp-resource", version = "0.0.9"}
-swamp-macros = { path = "../swamp-macros", version = "0.0.10-dev3"}
+swamp-resource = { path= "../swamp-resource", version = "0.0.10" }
+swamp-macros = { path = "../swamp-macros", version = "0.0.10" }
 
 [dev-dependencies]
 test-log = "0.2.16"

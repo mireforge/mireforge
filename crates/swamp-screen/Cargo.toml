@@ -1,6 +1,6 @@
 [package]
 name = "swamp-screen"
-version = "0.0.9"
+version = "0.0.10"
 edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
@@ -9,6 +9,6 @@ description = "platform neutral screen and window types"
 
 
 [dependencies]
-swamp-resource = { path = "../swamp-resource", version = "0.0.9"}
-swamp-message = { path = "../swamp-message", version = "0.0.9"}
+swamp-resource = { path = "../swamp-resource", version = "0.0.10" }
+swamp-message = { path = "../swamp-message", version = "0.0.10" }
 int_math = "0.0.2"

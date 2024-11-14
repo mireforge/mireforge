@@ -1,6 +1,6 @@
 [package]
 name = "swamp-render-wgpu"
-version = "0.0.9"
+version = "0.0.10"
 edition = "2021"
 license = "MIT"
 description = "render pixel perfect 2D sprites"
@@ -15,16 +15,16 @@ bytemuck = "1.19.0"
 monotonic-time-rs = "0.0.5"
 int_math = "0.0.2"
 bmf-parser = "0.0.1"
-swamp-wgpu-math = { path = "../swamp-wgpu-math", version = "0.0.9" }
-swamp-wgpu-sprites = { path = "../swamp-wgpu-sprites", version = "0.0.9" }
-swamp-render = { path = "../swamp-render", version = "0.0.9" }
-swamp-wgpu = { path = "../swamp-wgpu", version = "0.0.9" }
-swamp-resource = { path = "../swamp-resource", version = "0.0.9" }
-swamp-assets = { path = "../swamp-assets", version = "0.0.9" }
-swamp-font = { path = "../swamp-font", version = "0.0.9" }
+swamp-wgpu-math = { path = "../swamp-wgpu-math", version = "0.0.10" }
+swamp-wgpu-sprites = { path = "../swamp-wgpu-sprites", version = "0.0.10" }
+swamp-render = { path = "../swamp-render", version = "0.0.10" }
+swamp-wgpu = { path = "../swamp-wgpu", version = "0.0.10" }
+swamp-resource = { path = "../swamp-resource", version = "0.0.10" }
+swamp-assets = { path = "../swamp-assets", version = "0.0.10" }
+swamp-font = { path = "../swamp-font", version = "0.0.10" }
 
 
 # Plugin
-swamp-app = { path = "../swamp-app", version = "0.0.9" }
-swamp-wgpu-window = { path = "../swamp-wgpu-window", version = "0.0.9" }
-swamp-screen = { path = "../swamp-screen", version = "0.0.9" }
+swamp-app = { path = "../swamp-app", version = "0.0.10" }
+swamp-wgpu-window = { path = "../swamp-wgpu-window", version = "0.0.10" }
+swamp-screen = { path = "../swamp-screen", version = "0.0.10" }

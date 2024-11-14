@@ -1,6 +1,6 @@
 [package]
 name = "swamp"
-version = "0.0.9"
+version = "0.0.10"
 edition = "2021"
 license = "MIT"
 description = "2D Game Engine"
@@ -9,5 +9,5 @@ categories = ["game-development"]
 keywords = ["game", "engine"]
 
 [dependencies]
-swamp-render = "0.0.9"
-swamp-app = "0.0.9"
+swamp-app = { path = "../swamp-app", version = "0.0.10" }
+swamp-boot-game = { path = "../swamp-boot-game", version = "0.0.10" }

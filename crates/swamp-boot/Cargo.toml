@@ -1,6 +1,6 @@
 [package]
 name = "swamp-boot"
-version = "0.0.9"
+version = "0.0.10"
 edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
@@ -9,13 +9,13 @@ description = "Collection of plugins to boot a swamp-app"
 
 
 [dependencies]
-swamp-app = { path = "../swamp-app", version = "0.0.9" }
-swamp-window-runner = { path = "../swamp-window-runner", version = "0.0.9" }
-swamp-wgpu-window = { path = "../swamp-wgpu-window", version = "0.0.9" }
-swamp-log = { path = "../swamp-log", version = "0.0.9" }
-swamp-assets-loader = { path = "../swamp-assets-loader", version = "0.0.9" }
-swamp-loader-plugin = { path = "../swamp-loader-plugin", version = "0.0.9" }
-swamp-asset-image = { path = "../swamp-material", version = "0.0.9" }
-swamp-render-wgpu = { path = "../swamp-render-wgpu", version = "0.0.9" }
-swamp-asset-registry = { path = "../swamp-asset-registry", version = "0.0.9" }
-swamp-font = { path = "../swamp-font", version = "0.0.9" }
+swamp-app = { path = "../swamp-app", version = "0.0.10" }
+swamp-window-runner = { path = "../swamp-window-runner", version = "0.0.10" }
+swamp-wgpu-window = { path = "../swamp-wgpu-window", version = "0.0.10" }
+swamp-log = { path = "../swamp-log", version = "0.0.10" }
+swamp-assets-loader = { path = "../swamp-assets-loader", version = "0.0.10" }
+swamp-loader-plugin = { path = "../swamp-loader-plugin", version = "0.0.10" }
+swamp-asset-image = { path = "../swamp-material", version = "0.0.10" }
+swamp-render-wgpu = { path = "../swamp-render-wgpu", version = "0.0.10" }
+swamp-asset-registry = { path = "../swamp-asset-registry", version = "0.0.10" }
+swamp-font = { path = "../swamp-font", version = "0.0.10" }

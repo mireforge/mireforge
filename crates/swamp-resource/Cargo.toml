@@ -1,6 +1,6 @@
 [package]
 name = "swamp-resource"
-version = "0.0.9"
+version = "0.0.10"
 edition = "2021"
 license = "MIT"
 description = "resource container"
@@ -9,7 +9,7 @@ categories = ["game-development"]
 keywords = ["game", "resource"]
 
 [dependencies]
-swamp-macros = { path = "../swamp-macros", version = "0.0.10-dev3"}
+swamp-macros = { path = "../swamp-macros", version = "0.0.10" }
 
 [dev-dependencies]
 

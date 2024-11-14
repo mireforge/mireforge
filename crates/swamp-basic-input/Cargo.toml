@@ -1,6 +1,6 @@
 [package]
 name = "swamp-basic-input"
-version = "0.0.9"
+version = "0.0.10"
 edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
@@ -11,4 +11,4 @@ description = "platform neutral input types"
 [dependencies]
 int_math = "0.0.2"
 
-swamp-message = {path = "../swamp-message", version = "0.0.9"}
+swamp-message = {path = "../swamp-message", version = "0.0.10" }

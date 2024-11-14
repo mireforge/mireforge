@@ -1,6 +1,6 @@
 [package]
 name = "swamp-macros"
-version = "0.0.10-dev3"
+version = "0.0.10"
 edition = "2021"
 license = "MIT"
 description = "swamp macros specific for the swamp game engine"

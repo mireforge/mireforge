@@ -1,6 +1,6 @@
 [package]
 name = "swamp-game"
-version = "0.0.9"
+version = "0.0.10"
 edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
@@ -12,11 +12,11 @@ description = "common swamp game types"
 tracing = "0.1.40"
 int_math = "0.0.2"
 
-swamp-render = { path = "../swamp-render", version = "0.0.9" }
-swamp-render-wgpu = { path = "../swamp-render-wgpu", version = "0.0.9" }
-swamp-assets = {path = "../swamp-assets", version = "0.0.9"}
+swamp-render = { path = "../swamp-render", version = "0.0.10" }
+swamp-render-wgpu = { path = "../swamp-render-wgpu", version = "0.0.10" }
+swamp-assets = {path = "../swamp-assets", version = "0.0.10" }
 
-swamp-basic-input = { path = "../swamp-basic-input", version = "0.0.9" }
+swamp-basic-input = { path = "../swamp-basic-input", version = "0.0.10" }
 monotonic-time-rs = "0.0.5"
 
 [dev-dependencies]

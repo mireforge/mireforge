@@ -1,6 +1,6 @@
 [package]
 name = "swamp-boot-game"
-version = "0.0.9"
+version = "0.0.10"
 edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
@@ -9,10 +9,10 @@ description = "Plugin to boot a swamp-game"
 
 
 [dependencies]
-swamp-app = { path = "../swamp-app", version = "0.0.9" }
-swamp-game-wgpu = { path = "../swamp-game-wgpu", version = "0.0.9" }
-swamp-boot = { path = "../swamp-boot", version = "0.0.9" }
-swamp-game = { path = "../swamp-game", version = "0.0.9" }
-swamp-screen = { path = "../swamp-screen", version = "0.0.9" }
+swamp-app = { path = "../swamp-app", version = "0.0.10" }
+swamp-game-wgpu = { path = "../swamp-game-wgpu", version = "0.0.10" }
+swamp-boot = { path = "../swamp-boot", version = "0.0.10" }
+swamp-game = { path = "../swamp-game", version = "0.0.10" }
+swamp-screen = { path = "../swamp-screen", version = "0.0.10" }
 tracing = "0.1.40"
 int_math = "0.0.2"

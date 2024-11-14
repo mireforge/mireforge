@@ -1,6 +1,6 @@
 [package]
 name = "swamp-window"
-version = "0.0.9"
+version = "0.0.10"
 edition = "2021"
 license = "MIT"
 description = "Easily create and manage windows across multiple platforms for game applications, leveraging the power of the `winit` library."
@@ -10,7 +10,7 @@ keywords = ["game", "window"]
 
 [dependencies]
 winit = { version = "0.30.5", features = ["rwh_05"] }
-swamp-log = { path = "../swamp-log", version = "0.0.9" }
+swamp-log = { path = "../swamp-log", version = "0.0.10" }
 
 # WASM
 wasm-bindgen = "0.2.95"
