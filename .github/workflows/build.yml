@@ -20,7 +20,9 @@ jobs:
           cargo test --color=always -- --nocapture --color=always
           cargo test --color=always -- --nocapture --color=always
           cargo test --color=always -- --nocapture --color=always
-      - run: rustup install nightly
+
+      # no nightly tests for now
+      # - run: rustup install nightly
 
       # - run: cargo +nightly update -Zminimal-versions
       # - run: cargo +nightly test
