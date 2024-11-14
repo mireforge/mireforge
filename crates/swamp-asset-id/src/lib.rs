@@ -4,6 +4,7 @@
  */
 
 use crate::owner::{AssetOwner, DropMessage};
+use colored::Colorize;
 use fixstr::FixStr;
 use message_channel::Sender;
 use std::any::TypeId;
@@ -13,7 +14,6 @@ use std::fmt::{Debug, Display, Formatter};
 use std::marker::PhantomData;
 use std::path::PathBuf;
 use std::sync::Arc;
-use colored::Colorize;
 pub mod owner;
 
 const FIXED_CAPACITY_SIZE: usize = 32;
@@ -39,7 +39,12 @@ impl From<RawWeakId> for RawAssetId {
 
 impl Display for RawAssetId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}-{}", self.index.to_string().bright_green(), self.generation.to_string().green())
+        write!(
+            f,
+            "{}-{}",
+            self.index.to_string().bright_green(),
+            self.generation.to_string().green()
+        )
     }
 }
 
@@ -221,8 +226,8 @@ pub fn is_valid_asset_name(s: &str) -> bool {
         && !s.contains("--")
         && !s.contains("..")
         && chars.all(|c| {
-        c.is_ascii_lowercase() || c.is_ascii_digit() || matches!(c, '_' | '-' | '/' | '.')
-    })
+            c.is_ascii_lowercase() || c.is_ascii_digit() || matches!(c, '_' | '-' | '/' | '.')
+        })
 }
 
 #[derive(Debug, Copy, Clone, Eq, Ord, PartialOrd, PartialEq, Hash)]
