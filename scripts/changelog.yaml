@@ -1,0 +1,35 @@
+repo: swamp/swamp
+
+# added
+# changed
+# fixed
+# workaround
+# performance
+# test
+# removed
+# improved
+# breaking
+# deprecated
+# refactor
+# experimental
+# docs
+# known issue
+# style
+# unreleased
+# security
+
+releases:
+  v0.0.10:
+    date: "2024-11-14"
+    notice: |
+      Refactored Systems, Resources, Assets and Messages to separate crates.
+
+    packages:
+      swamp-asset-id:
+        unreleased:
+          - Start working on removing assets when asset `Id` is dropped.
+
+      swamp-examples:
+        added:
+          - animation example add bat animation
+          - animation example intentionally drop asset to test asset removal
