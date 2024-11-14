@@ -257,7 +257,7 @@ impl AssetName {
 
 impl Display for AssetName {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "asset '{}'", self.value)
+        write!(f, "asset('{}')", self.value)
     }
 }
 

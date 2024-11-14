@@ -44,7 +44,7 @@ impl Eq for AssetOwner {}
 
 impl Drop for AssetOwner {
     fn drop(&mut self) {
-        info!("notice: asset owner is dropped {}", self.id);
+        info!("notice: asset owner is dropped for {}", self.id);
         let _ = self.drop_channel.send(DropMessage { asset_id: self.id });
     }
 }

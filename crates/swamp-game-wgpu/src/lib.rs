@@ -24,7 +24,7 @@ use swamp_render_wgpu::{FixedAtlas, FontAndMaterial, MaterialRef};
 use swamp_render_wgpu::{Material, Render};
 use swamp_screen::WindowMessage;
 use swamp_wgpu_window::WgpuWindow;
-use tracing::info;
+use tracing::debug;
 
 #[derive(Debug, Resource)]
 pub struct GameWgpuSettings {
@@ -32,7 +32,6 @@ pub struct GameWgpuSettings {
 }
 
 pub struct WgpuAssets<'a> {
-    //asset_loader: &'a mut AssetRegistry,
     resource_storage: &'a mut ResourceStorage,
     clock: InstantMonotonicClock,
 }
@@ -40,7 +39,6 @@ pub struct WgpuAssets<'a> {
 impl<'a> WgpuAssets<'a> {
     pub fn new(resource_storage: &'a mut ResourceStorage) -> Self {
         Self {
-            //            asset_loader,
             resource_storage,
             clock: InstantMonotonicClock::new(),
         }
@@ -128,7 +126,6 @@ impl<G: Application> WgpuGame<G> {
         for message in iter {
             match message {
                 InputMessage::KeyboardInput(button_state, key_code) => {
-                    info!("{:?}", key_code);
                     self.game.keyboard_input(*button_state, *key_code)
                 }
                 InputMessage::MouseInput(button_state, button) => {
@@ -292,9 +289,10 @@ pub fn tick<G: Application>(
 impl<G: Application> Plugin for GameWgpuPlugin<G> {
     fn post_initialization(&self, app: &mut App) {
         let storage = app.resources_mut();
-        //let asset_container = storage.get_mut::<AssetRegistry>();
 
         let mut asset = WgpuAssets::new(storage);
+
+        debug!("calling WgpuGame::new()");
         let internal_game = WgpuGame::<G>::new(&mut asset);
         app.insert_resource(internal_game);
 
