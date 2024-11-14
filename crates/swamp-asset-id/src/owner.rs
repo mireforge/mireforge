@@ -67,6 +67,6 @@ impl AssetOwner {
     }
 
     pub fn asset_name(&self) -> Option<AssetName> {
-        self.asset_name.clone()
+        self.asset_name
     }
 }

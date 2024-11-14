@@ -464,7 +464,7 @@ impl Render {
         let (material_ref, atlas_rect) = atlas.lookup(frame);
         self.push_sprite(
             position,
-            &material_ref,
+            material_ref,
             Sprite {
                 atlas_rect,
                 params: Default::default(),

@@ -31,9 +31,9 @@ impl RawAssetId {
     }
 }
 
-impl Into<RawAssetId> for RawWeakId {
-    fn into(self) -> RawAssetId {
-        self.raw_id
+impl From<RawWeakId> for RawAssetId {
+    fn from(value: RawWeakId) -> Self {
+        value.raw_id
     }
 }
 
@@ -232,7 +232,7 @@ pub struct AssetName {
 
 impl AssetName {
     #[must_use]
-    pub fn with_extension(&self, extension: &str) -> impl Into<AssetName> + Sized {
+    pub fn with_extension(&self, extension: &str) -> impl Into<AssetName> {
         let added = format!("{}.{}", self.value.as_str(), extension);
         Self {
             value: FixStr::new_unchecked(added.as_str()),

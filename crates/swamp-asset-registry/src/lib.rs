@@ -64,12 +64,12 @@ impl AssetRegistry {
         let asset_name = name.into();
         debug!("Loading {asset_name}");
         let reader = get_platform_reader("assets/");
-        let typed_id = self.id_assigner.allocate::<T>(asset_name.clone());
+        let typed_id = self.id_assigner.allocate::<T>(asset_name);
         let raw_type_id: RawWeakId = (&typed_id).into();
         self.infos.insert(
             raw_type_id,
             AssetInfo {
-                name: asset_name.clone(),
+                name: asset_name,
                 phase: Phase::Loading,
             },
         );
@@ -88,7 +88,7 @@ impl AssetRegistry {
     }
 
     pub fn name_raw(&self, raw_id: RawWeakId) -> Option<AssetName> {
-        self.infos.get(&raw_id).map(|info| info.name.clone())
+        self.infos.get(&raw_id).map(|info| info.name)
     }
 
     pub fn blob_loaded(

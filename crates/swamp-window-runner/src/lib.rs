@@ -199,6 +199,7 @@ pub fn runner(mut app: App) -> AppReturnValue {
         app.create_message_type::<InputMessage>();
     }
 
+    #[allow(clippy::arc_with_non_send_sync)]
     let arc_app = Arc::new(Mutex::new(app));
 
     let mut state = WindowState {

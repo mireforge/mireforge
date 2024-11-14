@@ -88,7 +88,7 @@ impl<'a> Assets for WgpuAssets<'a> {
             .get::<swamp_assets::Assets<Font>>()
             .expect("font assets should be a thing");
 
-        font_assets.get(&font_ref)
+        font_assets.get(font_ref)
     }
 
     fn text_glyphs(&self, text: &str, font_and_mat: &FontAndMaterial) -> Option<Vec<Glyph>> {
