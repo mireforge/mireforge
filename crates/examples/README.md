@@ -14,8 +14,15 @@ cargo run --example
 - Run one of the examples with:
 
 ```bash
-cargo run --release --example name_of_the_example
+cargo run --release --example <example_name>
 ```
+Replace <example_name> with the specific example you want to run.
+
+- To see detailed logs of the application’s behavior, you can run with logging enabled:
+```bash
+RUST_LOG=debug,wgpu_core=warn,naga=warn,wgpu_hal=warn,winit=warn cargo run --example <example_name>
+```
+Replace <example_name> with the specific example you want to run.
 
 ## Asset Licenses
 
