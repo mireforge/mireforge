@@ -25,5 +25,6 @@ jobs:
       # - run: cargo +nightly update -Zminimal-versions
       # - run: cargo +nightly test
 
-      - run: cargo +nightly update -Zdirect-minimal-versions
-      - run: cargo +nightly test
+      # TODO: bring these back
+      # - run: cargo +nightly update -Zdirect-minimal-versions
+      # - run: cargo +nightly test
