@@ -12,6 +12,10 @@ use swamp_log::LogPlugin;
 use swamp_render_wgpu::plugin::RenderWgpuPlugin;
 use swamp_wgpu_window::WgpuWindowPlugin;
 
+#[cfg(feature = "audio")]
+use swamp_audio::AudioPlugin;
+use swamp_audio_sample::AudioSamplePlugin;
+
 pub struct Main;
 
 impl Main {
@@ -44,6 +48,10 @@ impl Plugin for DefaultPlugins {
             WgpuWindowPlugin,
             RenderWgpuPlugin,
         ));
+
         app.add_plugins(FontPlugin);
+
+        #[cfg(feature = "audio")]
+        app.add_plugins((AudioPlugin, AudioSamplePlugin));
     }
 }

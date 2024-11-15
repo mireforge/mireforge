@@ -15,7 +15,6 @@ members = [
     "crates/swamp-window-runner",
     "crates/swamp-boot",
     "crates/swamp-log",
-    "crates/swamp-game-wgpu",
     "crates/swamp-basic-input",
     "crates/swamp-message",
     "crates/swamp-resource",
@@ -34,4 +33,4 @@ members = [
     "crates/swamp-system-runner",
     "crates/swamp-asset-registry",
     "crates/swamp-font"
-, "crates/swamp-asset-id"]
+, "crates/swamp-asset-id", "crates/swamp-audio", "crates/local-resource", "crates/audio-sample", "crates/game-assets"]

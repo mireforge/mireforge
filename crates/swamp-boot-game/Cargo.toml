@@ -10,8 +10,7 @@ description = "Plugin to boot a swamp-game"
 
 [dependencies]
 swamp-app = { path = "../swamp-app", version = "0.0.10" }
-swamp-game-wgpu = { path = "../swamp-game-wgpu", version = "0.0.10" }
-swamp-boot = { path = "../swamp-boot", version = "0.0.10" }
+swamp-boot = { path = "../swamp-boot", version = "0.0.10", features = ["audio"] }
 swamp-game = { path = "../swamp-game", version = "0.0.10" }
 swamp-screen = { path = "../swamp-screen", version = "0.0.10" }
 tracing = "0.1.40"

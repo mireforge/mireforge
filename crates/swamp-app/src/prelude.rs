@@ -5,6 +5,7 @@
 pub use {
     crate::app::{App, AppReturnValue, ApplicationExit, Plugin},
     crate::system_types::{Msg, Re, ReM},
+    swamp_local_resource::prelude::*,
     swamp_message::prelude::*,
     swamp_resource::prelude::*,
     swamp_system_runner::UpdatePhase,

@@ -4,13 +4,22 @@
  */
 pub mod prelude;
 
-use crate::prelude::Glyph;
-use int_math::{UVec2, Vec2};
-use monotonic_time_rs::Millis;
-use swamp_assets::prelude::{AssetName, Id};
+use int_math::{URect, UVec2, Vec2};
+use monotonic_time_rs::{InstantMonotonicClock, MonotonicClock};
+use std::cmp::{max, min};
+use std::fmt::{Debug, Formatter};
+use std::marker::PhantomData;
+use swamp_app::prelude::*;
+use swamp_app::system_types::ReAll;
 use swamp_basic_input::prelude::*;
+use swamp_game_assets::{Assets, GameAssets};
 use swamp_render_wgpu::prelude::Font;
-use swamp_render_wgpu::{FixedAtlas, FontAndMaterial, Gfx, MaterialRef};
+use swamp_render_wgpu::{Gfx, Material, Render};
+use swamp_resource::prelude::Resource;
+use swamp_resource::ResourceStorage;
+use swamp_screen::WindowMessage;
+use swamp_wgpu_window::WgpuWindow;
+use tracing::debug;
 
 pub trait Application: Send + Sync + Sized + 'static {
     fn new(assets: &mut impl Assets) -> Self;
@@ -44,20 +53,173 @@ pub trait Application: Send + Sync + Sized + 'static {
     }
 }
 
-pub trait Assets {
-    fn material_png(&mut self, name: impl Into<AssetName>) -> MaterialRef;
-    fn frame_fixed_grid_material_png(
+#[derive(Debug, Resource)]
+pub struct GameSettings {
+    pub virtual_size: UVec2,
+}
+
+#[derive(Resource)]
+pub struct Game<G: Application> {
+    game: G,
+    clock: InstantMonotonicClock,
+}
+
+impl<G: Application> Debug for Game<G> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "WgpuGame")
+    }
+}
+
+impl<G: Application> Game<G> {
+    #[must_use]
+    pub fn new(all_resources: &mut ResourceStorage) -> Self {
+        let clock = InstantMonotonicClock::default();
+        let mut assets = GameAssets::new(all_resources, clock.now());
+        let game = G::new(&mut assets);
+
+        Self { game, clock }
+    }
+
+    pub fn inputs(&mut self, iter: MessagesIterator<InputMessage>) {
+        for message in iter {
+            match message {
+                InputMessage::KeyboardInput(button_state, key_code) => {
+                    self.game.keyboard_input(*button_state, *key_code)
+                }
+                InputMessage::MouseInput(button_state, button) => {
+                    self.game.mouse_input(*button_state, *button);
+                }
+                InputMessage::MouseWheel(scroll_delta, _touch_phase) => {
+                    if let MouseScrollDelta::LineDelta(delta) = scroll_delta {
+                        let game_scroll_y = (-delta.y as f32 * 120.0) as i16;
+                        self.game.mouse_wheel(game_scroll_y);
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn cursor_moved(
         &mut self,
-        name: impl Into<AssetName>,
-        grid_size: UVec2,
-        texture_size: UVec2,
-    ) -> FixedAtlas;
-    fn bm_font(&mut self, name: impl Into<AssetName>) -> FontAndMaterial;
+        physical_position: UVec2,
+        viewport: URect,
+        virtual_surface_size: UVec2,
+    ) {
+        let relative_x = max(
+            0,
+            min(
+                physical_position.x as i64 - viewport.position.x as i64,
+                (viewport.size.x - 1) as i64,
+            ),
+        );
 
-    fn font(&self, font_ref: &Id<Font>) -> Option<&Font>;
-    fn text_glyphs(&self, text: &str, font_ref: &FontAndMaterial) -> Option<Vec<Glyph>>;
+        let relative_y = max(
+            0,
+            min(
+                physical_position.y as i64 - viewport.position.y as i64,
+                (viewport.size.y - 1) as i64,
+            ),
+        );
 
-    fn now(&self) -> Millis;
+        let clamped_to_viewport: UVec2 = UVec2::new(relative_x as u16, relative_y as u16);
+
+        let virtual_position_x =
+            (clamped_to_viewport.x as u64 * virtual_surface_size.x as u64) / viewport.size.x as u64;
+
+        let virtual_position_y =
+            (clamped_to_viewport.y as u64 * virtual_surface_size.y as u64) / viewport.size.y as u64;
+
+        let virtual_position = UVec2::new(virtual_position_x as u16, virtual_position_y as u16);
+        self.game.cursor_moved(virtual_position)
+    }
+
+    pub fn mouse_move(&mut self, iter: MessagesIterator<WindowMessage>, wgpu_render: &Render) {
+        for message in iter {
+            match message {
+                WindowMessage::CursorMoved(position) => self.cursor_moved(
+                    *position,
+                    wgpu_render.viewport(),
+                    wgpu_render.virtual_surface_size(),
+                ),
+                WindowMessage::WindowCreated() => {}
+                WindowMessage::Resized(_) => {}
+            }
+        }
+    }
+
+    pub fn tick(&mut self, storage: &mut ResourceStorage) {
+        // This is a quick operation, we basically wrap storage
+        let mut assets = GameAssets::new(storage, self.clock.now());
+
+        self.game.tick(&mut assets);
+    }
+
+    pub fn render(
+        &mut self,
+        wgpu: &WgpuWindow,
+        wgpu_render: &mut Render,
+        materials: &swamp_assets::Assets<Material>,
+        fonts: &swamp_assets::Assets<Font>,
+    ) {
+        self.game.render(wgpu_render);
+
+        wgpu.render(wgpu_render.clear_color(), |render_pass| {
+            wgpu_render.render(render_pass, materials, fonts)
+        })
+        .unwrap();
+    }
+}
+
+pub struct GamePlugin<G: Application> {
+    pub phantom_data: PhantomData<G>,
+}
+impl<G: Application> Default for GamePlugin<G> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<G: Application> GamePlugin<G> {
+    pub const fn new() -> Self {
+        Self {
+            phantom_data: PhantomData,
+        }
+    }
+}
+
+// TODO: add support for having tuple arguments to have maximum seven parameters
+#[allow(clippy::too_many_arguments)]
+pub fn tick<G: Application>(
+    window: Re<WgpuWindow>,
+    mut wgpu_render: ReM<Render>,
+    materials: Re<swamp_assets::Assets<Material>>,
+    fonts: Re<swamp_assets::Assets<Font>>,
+    input_messages: Msg<InputMessage>,
+    window_messages: Msg<WindowMessage>,
+    mut all_resources: ReAll,
+    mut internal_game: ReM<Game<G>>,
+) {
+    internal_game.inputs(input_messages.iter_previous());
+    internal_game.mouse_move(window_messages.iter_previous(), &wgpu_render);
+
+    internal_game.tick(&mut all_resources);
+    if internal_game.game.wants_to_quit() {
+        all_resources.insert(ApplicationExit {
+            value: AppReturnValue::Value(0),
+        });
+    }
+    internal_game.render(&window, &mut wgpu_render, &materials, &fonts);
+}
+
+impl<G: Application> Plugin for GamePlugin<G> {
+    fn post_initialization(&self, app: &mut App) {
+        debug!("calling WgpuGame::new()");
+        let all_resources = app.resources_mut();
+        let internal_game = Game::<G>::new(all_resources);
+        app.insert_resource(internal_game);
+
+        app.add_system(UpdatePhase::Update, tick::<G>);
+    }
 }
 
 /*

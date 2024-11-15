@@ -7,9 +7,8 @@ pub mod prelude;
 use int_math::UVec2;
 use swamp_app::prelude::{App, AppReturnValue};
 use swamp_boot::DefaultPlugins;
-use swamp_game::Application;
-use swamp_game_wgpu::GameWgpuPlugin;
-use swamp_game_wgpu::GameWgpuSettings;
+use swamp_game::{Application, GamePlugin, GameSettings};
+
 use swamp_screen::Window;
 
 pub fn run<T: Application>(
@@ -24,7 +23,7 @@ pub fn run<T: Application>(
             minimal_surface_size: virtual_size,
             fullscreen: false,
         })
-        .insert_resource(GameWgpuSettings { virtual_size })
-        .add_plugins((DefaultPlugins, GameWgpuPlugin::<T>::new()))
+        .insert_resource(GameSettings { virtual_size })
+        .add_plugins((DefaultPlugins, GamePlugin::<T>::new()))
         .run()
 }

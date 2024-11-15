@@ -19,3 +19,11 @@ swamp-asset-image = { path = "../swamp-material", version = "0.0.10" }
 swamp-render-wgpu = { path = "../swamp-render-wgpu", version = "0.0.10" }
 swamp-asset-registry = { path = "../swamp-asset-registry", version = "0.0.10" }
 swamp-font = { path = "../swamp-font", version = "0.0.10" }
+
+swamp-audio = { path = "../swamp-audio", version = "0.0.10", optional = true }
+swamp-audio-sample = { path = "../audio-sample", version = "0.0.10" }
+
+
+[features]
+default = []
+audio = ["swamp-audio"]

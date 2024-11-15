@@ -15,10 +15,10 @@ tracing = "0.1.40"
 swamp-system-state = { path = "../swamp-system-state", version = "0.0.10" }
 swamp-message = { path = "../swamp-message", version = "0.0.10" }
 swamp-resource = { path = "../swamp-resource", version = "0.0.10" }
-
+swamp-local-resource = { path = "../local-resource", version = "0.0.10" }
 # System
 swamp-system-runner = { path = "../swamp-system-runner", version = "0.0.10" }
-swamp-system = {path = "../swamp-system", version = "0.0.10" }
+swamp-system = { path = "../swamp-system", version = "0.0.10" }
 
 [dev-dependencies]
 test-log = "0.2.16"

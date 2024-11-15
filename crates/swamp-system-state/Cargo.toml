@@ -10,4 +10,6 @@ description = "Keeps the state that is provided to systems"
 
 [dependencies]
 swamp-resource = { path = "../swamp-resource", version = "0.0.10" }
-swamp-message =  { path = "../swamp-message", version = "0.0.10" }
+swamp-message = { path = "../swamp-message", version = "0.0.10" }
+
+swamp-local-resource = { path = "../local-resource", version = "0.0.10" }

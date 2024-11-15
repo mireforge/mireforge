@@ -3,6 +3,7 @@
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
 use std::any::type_name;
+use swamp_local_resource::LocalResource;
 use swamp_message::{Message, MessageId, MessageStorage, Messages, MessagesIterator};
 use swamp_resource::prelude::*;
 use swamp_system::{IntoSystem, SystemParam};
@@ -139,6 +140,12 @@ impl App {
     pub fn insert_resource<R: Resource>(&mut self, value: R) -> &mut Self {
         debug!(resource_type=type_name::<R>(), value=?value, "inserting resource");
         self.state.resources_mut().insert(value);
+        self
+    }
+
+    pub fn insert_local_resource<R: LocalResource>(&mut self, value: R) -> &mut Self {
+        debug!(resource_type=type_name::<R>(), value=?value, "inserting local resource");
+        self.state.local_resources_mut().insert(value);
         self
     }
 
