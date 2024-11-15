@@ -75,13 +75,10 @@ impl Audio {
             debug!("Supported config: {:?}", config);
         }
 
-        let maybe_supported_config = device
-            .supported_output_configs()?
-            .filter(|config| {
-                config.min_sample_rate().0 <= MAX_SAMPLE_RATE
-                    && config.max_sample_rate().0 >= MIN_SAMPLE_RATE
-            })
-            .next();
+        let maybe_supported_config = device.supported_output_configs()?.find(|config| {
+            config.min_sample_rate().0 <= MAX_SAMPLE_RATE
+                && config.max_sample_rate().0 >= MIN_SAMPLE_RATE
+        });
 
         if maybe_supported_config.is_none() {
             error!("No supported output configurations with with an accepted output_config.");

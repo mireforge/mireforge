@@ -18,6 +18,12 @@ impl Debug for AudioMixer {
     }
 }
 
+impl Default for AudioMixer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AudioMixer {
     pub fn new() -> Self {
         //let (scene_control, scene) = oddio::SpatialScene::new();

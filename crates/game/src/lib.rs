@@ -235,7 +235,7 @@ pub fn tick<G: Application>(
     {
         let materials = all_resources.fetch::<swamp_assets::Assets<Material>>();
         let fonts = all_resources.fetch::<swamp_assets::Assets<Font>>();
-        internal_game.render(&window, &mut wgpu_render, &materials, &fonts, now);
+        internal_game.render(&window, &mut wgpu_render, materials, fonts, now);
     }
 }
 

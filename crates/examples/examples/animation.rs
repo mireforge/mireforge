@@ -81,10 +81,10 @@ impl Application for AnimationExample {
         }
     }
 
-    fn audio(&mut self, sound: &mut impl Audio) {
+    fn audio(&mut self, audio: &mut impl Audio) {
         if self.attack_anim.is_playing() {
             if self.attack_sound.is_none() {
-                self.attack_sound = Some(sound.play(&self.whoosh_sound));
+                self.attack_sound = Some(audio.play(&self.whoosh_sound));
             }
         } else {
             self.attack_sound = None;
