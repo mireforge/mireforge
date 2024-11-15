@@ -9,10 +9,13 @@ use swamp_render_wgpu::{FixedAtlas, FontAndMaterial, Material, MaterialRef};
 use swamp_resource::ResourceStorage;
 
 pub trait Assets {
+    #[must_use]
     fn now(&self) -> Millis;
 
+    #[must_use]
     fn material_png(&mut self, name: impl Into<AssetName>) -> MaterialRef;
 
+    #[must_use]
     fn frame_fixed_grid_material_png(
         &mut self,
         name: impl Into<AssetName>,
@@ -20,11 +23,15 @@ pub trait Assets {
         texture_size: UVec2,
     ) -> FixedAtlas;
 
+    #[must_use]
     fn bm_font(&mut self, name: impl Into<AssetName>) -> FontAndMaterial;
 
+    #[must_use]
     fn text_glyphs(&self, text: &str, font_and_mat: &FontAndMaterial) -> Option<Vec<Glyph>>;
 
+    #[must_use]
     fn font(&self, font_ref: &Id<Font>) -> Option<&Font>;
+    #[must_use]
     fn audio_sample_wav(&mut self, name: impl Into<AssetName>) -> StereoSampleRef;
 }
 

@@ -15,7 +15,7 @@ swamp-wgpu-window = { path = "../wgpu-window", version = "0.0.10" }
 swamp-log = { path = "../log", version = "0.0.10" }
 swamp-assets-loader = { path = "../assets-loader", version = "0.0.10" }
 swamp-loader-plugin = { path = "../loader-plugin", version = "0.0.10" }
-swamp-asset-image = { path = "../material", version = "0.0.10" }
+swamp-material = { path = "../material", version = "0.0.10" }
 swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.10" }
 swamp-asset-registry = { path = "../asset-registry", version = "0.0.10" }
 swamp-font = { path = "../font", version = "0.0.10" }

@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::sync::Arc;
 use swamp_app::prelude::{App, Plugin};
 use swamp_asset_registry::AssetRegistry;
@@ -10,10 +11,22 @@ use tracing::debug;
 
 pub type StereoSampleRef = Id<StereoSample>;
 
-#[derive(Debug, Asset)]
+#[derive(Asset)]
 pub struct StereoSample {
     #[allow(unused)]
     stereo_frames: Arc<oddio::Frames<[oddio::Sample; 2]>>,
+}
+
+impl Debug for StereoSample {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "StereoSample ({})", self.stereo_frames.len())
+    }
+}
+
+impl StereoSample {
+    pub fn frames(&self) -> &Arc<oddio::Frames<[oddio::Sample; 2]>> {
+        &self.stereo_frames
+    }
 }
 
 pub fn load_wav(payload: &[u8]) -> StereoSample {
@@ -61,6 +74,7 @@ impl Plugin for AudioSamplePlugin {
 
             registry.value.lock().unwrap().register_loader(loader);
         }
+        app.insert_resource(Assets::<StereoSample>::default());
     }
 }
 
@@ -93,7 +107,7 @@ impl AssetLoader for StereoSampleConverter {
         debug!("convert from wav {name}");
         let stereo_sample = load_wav(octets);
 
-        debug!("font complete {name}");
+        debug!("converted wav {name}");
         let stereo_sample_assets = resources.fetch_mut::<Assets<StereoSample>>();
 
         stereo_sample_assets.set_raw(id, stereo_sample);

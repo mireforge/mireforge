@@ -6,7 +6,7 @@ pub mod plugin;
 pub mod prelude;
 
 use int_math::{URect, UVec2, Vec2, Vec3};
-use monotonic_time_rs::{InstantMonotonicClock, Millis, MonotonicClock};
+use monotonic_time_rs::Millis;
 use std::cmp::Ordering;
 use std::fmt::Debug;
 use std::sync::Arc;
@@ -97,14 +97,18 @@ pub trait Gfx {
 
     fn text_draw(&mut self, position: Vec3, text: &str, font_ref: &FontAndMaterial);
 
+    #[must_use]
     fn now(&self) -> Millis;
 
+    #[must_use]
     fn physical_aspect_ratio(&self) -> AspectRatio;
 
+    #[must_use]
     fn physical_size(&self) -> UVec2;
 
     fn set_viewport(&mut self, viewport_strategy: ViewportStrategy);
 
+    #[must_use]
     fn viewport(&self) -> &ViewportStrategy;
 
     fn set_scale(&mut self, scale_factor: VirtualScale);
@@ -169,8 +173,6 @@ pub struct Render {
     batch_offsets: Vec<(WeakMaterialRef, u32, u32)>,
     viewport: URect,
     clear_color: wgpu::Color,
-
-    clock: InstantMonotonicClock,
     last_render_at: Millis,
     scale: f32,
 }
@@ -186,16 +188,16 @@ impl Gfx for Render {
         self.sprite_atlas_frame(position, frame, atlas);
     }
 
+    fn sprite_atlas(&mut self, position: Vec3, atlas_rect: URect, material_ref: &MaterialRef) {
+        self.sprite_atlas(position, atlas_rect, material_ref);
+    }
+
     fn set_origin(&mut self, position: Vec2) {
         self.origin = position;
     }
 
     fn set_clear_color(&mut self, color: Color) {
         self.clear_color = to_wgpu_color(color);
-    }
-
-    fn now(&self) -> Millis {
-        self.last_render_at
     }
 
     fn tilemap_params(
@@ -230,8 +232,8 @@ impl Gfx for Render {
         });
     }
 
-    fn sprite_atlas(&mut self, position: Vec3, atlas_rect: URect, material_ref: &MaterialRef) {
-        self.sprite_atlas(position, atlas_rect, material_ref);
+    fn now(&self) -> Millis {
+        self.last_render_at
     }
 
     fn physical_aspect_ratio(&self) -> AspectRatio {
@@ -304,6 +306,7 @@ impl Render {
         surface_texture_format: wgpu::TextureFormat,
         physical_size: UVec2,
         virtual_surface_size: UVec2,
+        now: Millis,
     ) -> Self {
         let (vertex_shader_source, fragment_shader_source) = sources();
 
@@ -314,9 +317,6 @@ impl Render {
             fragment_shader_source,
             create_view_uniform_view_projection_matrix(physical_size),
         );
-
-        let clock = InstantMonotonicClock::new();
-        let now = clock.now();
 
         Self {
             device,
@@ -335,12 +335,15 @@ impl Render {
             viewport: Self::viewport_from_integer_scale(physical_size, virtual_surface_size),
             clear_color: to_wgpu_color(Color::from_f32(0.008, 0.015, 0.008, 1.0)),
             origin: Vec2::new(0, 0),
-            clock,
             last_render_at: now,
             physical_surface_size: physical_size,
             viewport_strategy: ViewportStrategy::FitIntegerScaling(virtual_surface_size),
             scale: 1.0,
         }
+    }
+
+    pub fn set_now(&mut self, now: Millis) {
+        self.last_render_at = now;
     }
 
     pub const fn virtual_surface_size(&self) -> UVec2 {
@@ -655,9 +658,10 @@ impl Render {
         render_pass: &mut RenderPass,
         materials: &Assets<Material>,
         fonts: &Assets<Font>,
+        now: Millis,
     ) {
         trace!("start render()");
-        self.last_render_at = self.clock.now();
+        self.last_render_at = now;
 
         self.viewport = match self.viewport_strategy {
             ViewportStrategy::FitIntegerScaling(virtual_surface_size) => {

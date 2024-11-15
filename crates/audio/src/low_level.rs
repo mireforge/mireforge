@@ -1,6 +1,6 @@
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{Device, Host, Stream, StreamConfig};
-use oddio::SpatialScene;
+use oddio::Mixer;
 use std::fmt::Debug;
 use std::io;
 use std::ops::DerefMut;
@@ -54,7 +54,7 @@ fn debug_output(host: Host) {
 
 impl Audio {
     pub fn new(
-        spatial_scene: Arc<Mutex<SpatialScene>>,
+        spatial_scene: Arc<Mutex<Mixer<[f32; 2]>>>,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let host = cpal::default_host();
 

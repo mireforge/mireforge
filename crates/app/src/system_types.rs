@@ -4,6 +4,7 @@
  */
 use std::mem::transmute;
 use std::ops::{Deref, DerefMut};
+use swamp_local_resource::LocalResourceStorage;
 use swamp_message::{Message, Messages};
 use swamp_resource::{Resource, ResourceStorage};
 use swamp_system::SystemParam;
@@ -169,5 +170,40 @@ impl<'a, T: Message> Deref for crate::system_types::MsgM<'a, T> {
 impl<'a, T: Message> DerefMut for crate::system_types::MsgM<'a, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.value
+    }
+}
+
+// ==========  Local resources
+
+pub struct LocReAll<'a> {
+    value: &'a mut LocalResourceStorage,
+}
+impl<'a> LocReAll<'a> {
+    pub fn new(value: &'a mut LocalResourceStorage) -> Self {
+        Self { value }
+    }
+}
+
+impl<'a> Deref for LocReAll<'a> {
+    type Target = LocalResourceStorage;
+
+    fn deref(&self) -> &Self::Target {
+        self.value
+    }
+}
+
+impl<'a> DerefMut for LocReAll<'a> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.value
+    }
+}
+
+impl SystemParam for LocReAll<'static> {
+    type Item = Self;
+
+    fn fetch(world: &mut State) -> Self::Item {
+        let actual_ref: &mut LocalResourceStorage = world.local_resources_mut();
+        let static_ref: &'static mut LocalResourceStorage = unsafe { transmute(actual_ref) };
+        LocReAll::new(static_ref)
     }
 }

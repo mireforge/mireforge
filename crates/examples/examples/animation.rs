@@ -22,10 +22,16 @@ pub struct AnimationExample {
     sleep_anim: FrameAnimation,
     bat_anim: FrameAnimation,
     bat_atlas: Option<FixedAtlas>, // Intentionally unload this later
+
+    // Audio
+    whoosh_sound: StereoSampleRef,
+    attack_sound: Option<SoundHandle>,
     tick_count: usize,
 }
 
 impl AnimationExample {}
+
+const ATTACK_START_FRAME: u16 = 12 * 7;
 
 impl Application for AnimationExample {
     fn new(assets: &mut impl Assets) -> Self {
@@ -34,49 +40,74 @@ impl Application for AnimationExample {
         let old_hero_atlas =
             assets.frame_fixed_grid_material_png("jotem_spritesheet", TILE_SIZE, JOTEM_SIZE);
 
-        let attack_anim = FrameAnimation::new(12 * 7, 10, 12, now);
-        let sleep_anim = FrameAnimation::new(12 * 11 + 1, 5, 5, now);
+        let attack_anim_cfg = FrameAnimationConfig::new(ATTACK_START_FRAME, 10, 12);
+
+        let sleep_anim_config = FrameAnimationConfig::new(12 * 11 + 1, 5, 5);
+        let mut sleep_anim = FrameAnimation::new(sleep_anim_config);
+        sleep_anim.play_repeat(now);
 
         let bat_atlas =
             assets.frame_fixed_grid_material_png("flying_46x30", (46, 30).into(), (322, 30).into());
 
-        let bat_anim = FrameAnimation::new(0, 7, 20, now);
+        let whoosh_sound = assets.audio_sample_wav("qubodup_whoosh");
+
+        let bat_anim_config = FrameAnimationConfig::new(0, 7, 20);
+        let mut bat_anim = FrameAnimation::new(bat_anim_config);
+        bat_anim.play_repeat(now);
 
         Self {
             old_hero_atlas,
             bat_atlas: Some(bat_atlas),
-            attack_anim,
+            attack_anim: FrameAnimation::new(attack_anim_cfg),
             sleep_anim,
             bat_anim,
             tick_count: 0,
+            whoosh_sound,
+            attack_sound: None,
         }
     }
 
-    fn tick(&mut self, _assets: &mut impl Assets) {
+    fn tick(&mut self, assets: &mut impl Assets) {
+        let now = assets.now();
+
+        self.tick_count += 1;
         if self.bat_atlas.is_some() && self.tick_count >= 240 {
             info!("intentionally unload bat atlas");
             self.bat_atlas.take();
+        }
+
+        if self.tick_count % 60 == 0 && self.attack_anim.is_done() {
+            self.attack_anim.play(now);
+        }
+    }
+
+    fn audio(&mut self, sound: &mut impl Audio) {
+        if self.attack_anim.is_playing() {
+            if self.attack_sound.is_none() {
+                self.attack_sound = Some(sound.play(&self.whoosh_sound));
+            }
         } else {
-            self.tick_count += 1;
+            self.attack_sound = None;
         }
     }
 
     fn render(&mut self, gfx: &mut impl Gfx) {
         let now = gfx.now();
 
-        gfx.set_clear_color(Color::from_octet(0, 0, 0, 0));
-
-        gfx.set_origin((0, (VIRTUAL_SCREEN_SIZE.y / 2 - CHARACTER_HEIGHT) as i16).into());
         self.attack_anim.update(now);
         self.sleep_anim.update(now);
         self.bat_anim.update(now);
+
+        gfx.set_clear_color(Color::from_octet(0, 0, 0, 0));
+
+        gfx.set_origin((0, (VIRTUAL_SCREEN_SIZE.y / 2 - CHARACTER_HEIGHT) as i16).into());
 
         if let Some(ref bat_atlas) = &self.bat_atlas {
             gfx.sprite_atlas_frame(
                 (
                     (VIRTUAL_SCREEN_SIZE.x / 2u16 - 23) as i16,
                     (VIRTUAL_SCREEN_SIZE.y / 2u16 + CHARACTER_HEIGHT + 10) as i16,
-                    0,
+                    1,
                 )
                     .into(),
                 self.bat_anim.frame(),

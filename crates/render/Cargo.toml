@@ -11,3 +11,4 @@ keywords = ["game", "render"]
 [dependencies]
 int_math = "0.0.2"
 monotonic-time-rs = "0.0.5"
+tracing = "0.1.40"

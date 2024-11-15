@@ -4,6 +4,7 @@
  */
 use crate::{AssetName, RawWeakId};
 use message_channel::Sender;
+use std::fmt::{Debug, Display};
 use tracing::info;
 
 // Event sent when owner is dropped
@@ -13,12 +14,26 @@ pub struct DropMessage {
 }
 
 // NOTE: Do NOT implement copy or clone for AssetOwner
-#[derive(Debug)]
 pub struct AssetOwner {
     id: RawWeakId,
     #[allow(unused)]
     asset_name: Option<AssetName>,
     drop_channel: Sender<DropMessage>,
+}
+
+impl Debug for AssetOwner {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let asset_name = self
+            .asset_name
+            .map_or("unknown".to_string(), |name| name.to_string());
+        write!(f, "({:?} {})", self.id, asset_name)
+    }
+}
+
+impl Display for AssetOwner {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.id)
+    }
 }
 
 impl PartialEq<Self> for AssetOwner {

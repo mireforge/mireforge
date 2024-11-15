@@ -37,3 +37,5 @@ Please refer to each asset’s respective page for specific licensing informatio
   of [bountiful bits](https://v3x3d.itch.io/bountiful-bits) [(1)](https://opengameart.org/content/bountiful-bits-10x10-top-down-rpg-tiles).
 - **Peter**: Creator of the menu font.
 - **Pixel Frog**: Creator of [Pixel Adventure 2](https://pixelfrog-assets.itch.io/pixel-adventure-2)
+
+- **qubodup** created sound [Whoosh](https://freesound.org/people/qubodup/sounds/60013/)

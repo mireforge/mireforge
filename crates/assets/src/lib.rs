@@ -39,29 +39,32 @@ impl<A: Asset> Assets<A> {
 
     /// # Panics
     pub fn set(&mut self, id: &Id<A>, asset: A) {
-        debug!(id=%id,asset=?asset, "setting asset");
+        debug!(id=%id,asset=?asset, "set");
         self.storage
             .try_set(to_slot_map_id(id), asset)
             .expect("internal error");
     }
 
     pub fn set_raw(&mut self, id: RawWeakId, asset: A) {
-        debug!(id=%id,asset=?asset, "setting asset");
+        debug!(id=%id,asset=?asset, "set_raw");
         self.storage
             .try_set(to_slot_map_id_from_raw(id), asset)
             .expect("internal error");
     }
 
     pub fn remove(&mut self, id: &Id<A>) {
+        trace!(id=%id, "remove");
         self.storage.remove(to_slot_map_id(id));
     }
 
     #[must_use]
     pub fn get(&self, id: &Id<A>) -> Option<&A> {
+        trace!(id=%id, "get");
         self.storage.get(to_slot_map_id(id))
     }
 
     pub fn get_weak(&self, weak_id: WeakId<A>) -> Option<&A> {
+        trace!(id=%weak_id, "get_weak");
         self.storage.get(to_slot_map_id_from_weak(weak_id))
     }
 
@@ -81,6 +84,7 @@ impl<A: Asset> Assets<A> {
 
     #[must_use]
     pub fn contains(&self, id: &Id<A>) -> bool {
+        trace!(id=%id, "contains");
         self.get(id).is_some()
     }
 

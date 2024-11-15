@@ -91,7 +91,9 @@ impl Display for RawWeakId {
         write!(
             f,
             "({} {} {})",
-            self.raw_id, self.debug_asset_name, self.debug_type_id
+            self.raw_id,
+            self.debug_asset_name,
+            self.debug_type_id.as_str().yellow()
         )
     }
 }
@@ -140,10 +142,21 @@ impl<A: Asset> From<WeakId<A>> for RawWeakId {
 }
 
 // Note: Do not implement a generic copy or clone for Id<A>
-#[derive(Debug)]
 pub struct Id<A: Asset> {
     owner: Arc<AssetOwner>,
     _phantom_data: PhantomData<A>,
+}
+
+impl<A: Asset> Debug for Id<A> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self.owner)
+    }
+}
+
+impl<A: Asset> Display for Id<A> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.owner)
+    }
 }
 
 impl<A: Asset> PartialEq<Self> for Id<A> {
@@ -192,12 +205,6 @@ impl<A: Asset> Id<A> {
 
     pub fn asset_name(&self) -> Option<AssetName> {
         self.owner.asset_name()
-    }
-}
-
-impl<A: Asset> Display for Id<A> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.owner)
     }
 }
 

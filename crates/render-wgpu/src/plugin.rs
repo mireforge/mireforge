@@ -3,6 +3,7 @@
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
 use crate::Render;
+use monotonic_time_rs::Millis;
 use std::sync::Arc;
 use swamp_app::prelude::{App, Msg, Plugin, ReM, UpdatePhase};
 use swamp_screen::{Window, WindowMessage};
@@ -30,6 +31,7 @@ impl Plugin for RenderWgpuPlugin {
             window.texture_format(),
             window_settings.requested_surface_size,
             window_settings.minimal_surface_size,
+            Millis::new(0),
         );
         app.insert_resource(wgpu_render);
         app.add_system(UpdatePhase::First, tick);

@@ -1,11 +1,11 @@
 [package]
-name = "swamp-asset-image"
+name = "swamp-material"
 version = "0.0.10"
 edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
 categories = ["game-development"]
-description = "image asset loading"
+description = "image asset loading and material creation"
 
 
 [dependencies]

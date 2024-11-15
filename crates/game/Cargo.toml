@@ -33,6 +33,8 @@ swamp-screen = { path = "../screen", version = "0.0.10" }
 swamp-window = { path = "../window", version = "0.0.10" }
 
 swamp-game-assets = { path = "../game-assets", version = "0.0.10" }
+swamp-game-audio = { path = "../game-audio", version = "0.0.10" }
+swamp-audio = { path = "../audio", version = "0.0.10" }
 
 [dev-dependencies]
 test-log = "0.2.16"

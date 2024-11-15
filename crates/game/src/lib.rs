@@ -5,14 +5,17 @@
 pub mod prelude;
 
 use int_math::{URect, UVec2, Vec2};
-use monotonic_time_rs::{InstantMonotonicClock, MonotonicClock};
+use monotonic_time_rs::{InstantMonotonicClock, Millis, MonotonicClock};
 use std::cmp::{max, min};
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use swamp_app::prelude::*;
-use swamp_app::system_types::ReAll;
+use swamp_app::system_types::{LocReAll, ReAll};
+use swamp_audio::mixer::AudioMixer;
+use swamp_audio_sample::StereoSample;
 use swamp_basic_input::prelude::*;
 use swamp_game_assets::{Assets, GameAssets};
+use swamp_game_audio::{Audio, GameAudio};
 use swamp_render_wgpu::prelude::Font;
 use swamp_render_wgpu::{Gfx, Material, Render};
 use swamp_resource::prelude::Resource;
@@ -25,6 +28,7 @@ pub trait Application: Send + Sync + Sized + 'static {
     fn new(assets: &mut impl Assets) -> Self;
     fn tick(&mut self, assets: &mut impl Assets);
     fn render(&mut self, gfx: &mut impl Gfx);
+    fn audio(&mut self, _audio: &mut impl Audio) {}
 
     fn wants_to_quit(&self) -> bool {
         false
@@ -73,7 +77,7 @@ impl<G: Application> Debug for Game<G> {
 impl<G: Application> Game<G> {
     #[must_use]
     pub fn new(all_resources: &mut ResourceStorage) -> Self {
-        let clock = InstantMonotonicClock::default();
+        let clock = InstantMonotonicClock::new();
         let mut assets = GameAssets::new(all_resources, clock.now());
         let game = G::new(&mut assets);
 
@@ -147,9 +151,9 @@ impl<G: Application> Game<G> {
         }
     }
 
-    pub fn tick(&mut self, storage: &mut ResourceStorage) {
+    pub fn tick(&mut self, storage: &mut ResourceStorage, now: Millis) {
         // This is a quick operation, we basically wrap storage
-        let mut assets = GameAssets::new(storage, self.clock.now());
+        let mut assets = GameAssets::new(storage, now);
 
         self.game.tick(&mut assets);
     }
@@ -160,11 +164,13 @@ impl<G: Application> Game<G> {
         wgpu_render: &mut Render,
         materials: &swamp_assets::Assets<Material>,
         fonts: &swamp_assets::Assets<Font>,
+        now: Millis,
     ) {
+        wgpu_render.set_now(now);
         self.game.render(wgpu_render);
 
         wgpu.render(wgpu_render.clear_color(), |render_pass| {
-            wgpu_render.render(render_pass, materials, fonts)
+            wgpu_render.render(render_pass, materials, fonts, now)
         })
         .unwrap();
     }
@@ -192,23 +198,45 @@ impl<G: Application> GamePlugin<G> {
 pub fn tick<G: Application>(
     window: Re<WgpuWindow>,
     mut wgpu_render: ReM<Render>,
-    materials: Re<swamp_assets::Assets<Material>>,
-    fonts: Re<swamp_assets::Assets<Font>>,
+
     input_messages: Msg<InputMessage>,
     window_messages: Msg<WindowMessage>,
     mut all_resources: ReAll,
+    mut all_local_resources: LocReAll,
     mut internal_game: ReM<Game<G>>,
 ) {
-    internal_game.inputs(input_messages.iter_previous());
-    internal_game.mouse_move(window_messages.iter_previous(), &wgpu_render);
+    let now = internal_game.clock.now();
 
-    internal_game.tick(&mut all_resources);
-    if internal_game.game.wants_to_quit() {
-        all_resources.insert(ApplicationExit {
-            value: AppReturnValue::Value(0),
-        });
+    // Inputs
+    {
+        internal_game.inputs(input_messages.iter_previous());
+        internal_game.mouse_move(window_messages.iter_previous(), &wgpu_render);
     }
-    internal_game.render(&window, &mut wgpu_render, &materials, &fonts);
+
+    // Tick
+    {
+        internal_game.tick(&mut all_resources, now);
+        if internal_game.game.wants_to_quit() {
+            all_resources.insert(ApplicationExit {
+                value: AppReturnValue::Value(0),
+            });
+        }
+    }
+
+    // Audio
+    {
+        let samples = all_resources.fetch::<swamp_assets::Assets<StereoSample>>();
+        let mixer = all_local_resources.fetch_mut::<AudioMixer>();
+        let mut game_audio = GameAudio::new(mixer, samples);
+        internal_game.game.audio(&mut game_audio);
+    }
+
+    // Render
+    {
+        let materials = all_resources.fetch::<swamp_assets::Assets<Material>>();
+        let fonts = all_resources.fetch::<swamp_assets::Assets<Font>>();
+        internal_game.render(&window, &mut wgpu_render, &materials, &fonts, now);
+    }
 }
 
 impl<G: Application> Plugin for GamePlugin<G> {
