@@ -7,12 +7,12 @@ edition = "2021"
 tracing = "0.1.40"
 int_math = "0.0.2"
 
-swamp-render-wgpu = { path = "../swamp-render-wgpu", version = "0.0.10" }
-swamp-assets = { path = "../swamp-assets", version = "0.0.10" }
+swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.10" }
+swamp-assets = { path = "../assets", version = "0.0.10" }
 
 swamp-audio-sample = { path = "../audio-sample", version = "0.0.10" }
 
-swamp-resource = { path = "../swamp-resource", version = "0.0.10" }
+swamp-resource = { path = "../resource", version = "0.0.10" }
 
 monotonic-time-rs = "0.0.5"
-swamp-asset-registry = { path = "../swamp-asset-registry", version = "0.0.10" }
+swamp-asset-registry = { path = "../asset-registry", version = "0.0.10" }

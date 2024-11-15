@@ -4,4 +4,4 @@ version = "0.0.10"
 edition = "2021"
 
 [dependencies]
-swamp-macros = { path = "../swamp-macros", version = "0.0.10" }
+swamp-macros = { path = "../macros", version = "0.0.10" }
