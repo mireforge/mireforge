@@ -75,10 +75,14 @@ impl Audio {
             debug!("Supported config: {:?}", config);
         }
 
-        let maybe_supported_config = device.supported_output_configs()?.find(|config| {
-            config.min_sample_rate().0 <= MAX_SAMPLE_RATE
-                && config.max_sample_rate().0 >= MIN_SAMPLE_RATE
-        });
+        let maybe_supported_config = device
+            .supported_output_configs()?
+            .find(|config| {
+                config.min_sample_rate().0 <= MAX_SAMPLE_RATE
+                    && config.max_sample_rate().0 >= MIN_SAMPLE_RATE
+            })
+            .into_iter()
+            .min_by_key(|config| config.max_sample_rate().0);
 
         if maybe_supported_config.is_none() {
             error!("No supported output configurations with with an accepted output_config.");
@@ -88,15 +92,15 @@ impl Audio {
             )));
         }
 
-        let supported_config = maybe_supported_config
-            .unwrap()
-            .with_sample_rate(cpal::SampleRate(MIN_SAMPLE_RATE));
+        let supported_config = maybe_supported_config.unwrap();
+
+        let sample_rate = supported_config.min_sample_rate().0;
+        let supported_config = supported_config.with_sample_rate(cpal::SampleRate(sample_rate));
 
         trace!(config=?supported_config, "Selected output config");
 
         let config: StreamConfig = supported_config.into();
 
-        let sample_rate = config.sample_rate.0 as f32;
         info!(device=device_name, sample_rate, config=?&config, "selected device and configuration");
 
         //let scene = Arc::new(oddio::SpatialScene);
