@@ -5,7 +5,18 @@
 pub mod prelude;
 
 use int_math::{URect, UVec2, Vec2};
-use limnus::prelude::*;
+
+use limnus_app::prelude::{App, AppReturnValue, ApplicationExit, Plugin};
+use limnus_audio_mixer::{AudioMixer, StereoSample};
+use limnus_basic_input::prelude::{ButtonState, KeyCode, MouseButton, MouseScrollDelta};
+use limnus_basic_input::InputMessage;
+use limnus_message::MessagesIterator;
+use limnus_resource::prelude::Resource;
+use limnus_resource::ResourceStorage;
+use limnus_screen::WindowMessage;
+use limnus_system_params::{LocReAll, Msg, Re, ReAll, ReM};
+use limnus_system_runner::UpdatePhase;
+use limnus_wgpu_window::WgpuWindow;
 use monotonic_time_rs::{InstantMonotonicClock, Millis, MonotonicClock};
 use std::cmp::{max, min};
 use std::fmt::{Debug, Formatter};
@@ -154,8 +165,8 @@ impl<G: Application> Game<G> {
         &mut self,
         wgpu: &WgpuWindow,
         wgpu_render: &mut Render,
-        materials: &limnus::prelude::Assets<Material>,
-        fonts: &limnus::prelude::Assets<Font>,
+        materials: &limnus_assets::Assets<Material>,
+        fonts: &limnus_assets::Assets<Font>,
         now: Millis,
     ) {
         wgpu_render.set_now(now);
@@ -217,7 +228,7 @@ pub fn tick<G: Application>(
 
     // Audio
     {
-        let samples = all_resources.fetch::<limnus::prelude::Assets<StereoSample>>();
+        let samples = all_resources.fetch::<limnus_assets::Assets<StereoSample>>();
         let mixer = all_local_resources.fetch_mut::<AudioMixer>();
         let mut game_audio = GameAudio::new(mixer, samples);
         internal_game.game.audio(&mut game_audio);
@@ -225,8 +236,8 @@ pub fn tick<G: Application>(
 
     // Render
     {
-        let materials = all_resources.fetch::<limnus::prelude::Assets<Material>>();
-        let fonts = all_resources.fetch::<limnus::prelude::Assets<Font>>();
+        let materials = all_resources.fetch::<limnus_assets::Assets<Material>>();
+        let fonts = all_resources.fetch::<limnus_assets::Assets<Font>>();
         internal_game.render(&window, &mut wgpu_render, materials, fonts, now);
     }
 }

@@ -4,7 +4,13 @@
  */
 use bmf_parser::BMFont;
 use int_math::{URect, UVec2, Vec2};
-use limnus::prelude::*;
+use limnus_app::prelude::{App, Plugin};
+use limnus_asset_registry::AssetRegistry;
+use limnus_assets::prelude::{Asset, AssetName, Id, RawWeakId, WeakId};
+use limnus_assets::Assets;
+use limnus_assets_loader::{
+    AssetLoader, ConversionError, ResourceStorage, WrappedAssetLoaderRegistry,
+};
 use tracing::debug;
 
 pub type FontRef = Id<Font>;

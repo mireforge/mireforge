@@ -9,7 +9,12 @@ description = "Font asset loading"
 
 [dependencies]
 bmf-parser = "0.0.1"
-limnus = { path = "../../../limnus/crates/limnus", version = "0.0.10" }
 
 tracing = "0.1.40"
 int_math = "0.0.2"
+
+# Limnus
+limnus-assets = "0.0.10"
+limnus-app = "0.0.10"
+limnus-assets-loader = "0.0.10"
+limnus-asset-registry = "0.0.10"

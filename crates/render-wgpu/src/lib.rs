@@ -6,7 +6,11 @@ pub mod plugin;
 pub mod prelude;
 
 use int_math::{URect, UVec2, Vec2, Vec3};
-use limnus::prelude::*;
+
+use limnus_assets::prelude::{Asset, Id, WeakId};
+use limnus_assets::Assets;
+use limnus_resource::prelude::Resource;
+use limnus_wgpu_math::{Matrix4, OrthoInfo, Vec4};
 use monotonic_time_rs::Millis;
 use std::cmp::Ordering;
 use std::fmt::Debug;

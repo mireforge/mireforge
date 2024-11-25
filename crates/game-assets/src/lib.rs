@@ -1,5 +1,9 @@
 use int_math::UVec2;
-use limnus::prelude::*;
+
+use limnus_asset_id::{AssetName, Id};
+use limnus_asset_registry::AssetRegistry;
+use limnus_audio_mixer::{StereoSample, StereoSampleRef};
+use limnus_resource::ResourceStorage;
 use monotonic_time_rs::Millis;
 use std::fmt::Debug;
 use swamp_font::Font;
@@ -104,7 +108,7 @@ impl Assets for GameAssets<'_> {
     fn font(&self, font_ref: &Id<Font>) -> Option<&Font> {
         let font_assets = self
             .resource_storage
-            .get::<limnus::prelude::Assets<Font>>()
+            .get::<limnus_assets::Assets<Font>>()
             .expect("font assets should be a thing");
 
         font_assets.get(font_ref)
