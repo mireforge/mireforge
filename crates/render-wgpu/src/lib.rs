@@ -6,17 +6,15 @@ pub mod plugin;
 pub mod prelude;
 
 use int_math::{URect, UVec2, Vec2, Vec3};
+use limnus::prelude::*;
 use monotonic_time_rs::Millis;
 use std::cmp::Ordering;
 use std::fmt::Debug;
 use std::sync::Arc;
-use swamp_assets::prelude::{Asset, Id, WeakId};
-use swamp_assets::Assets;
-use swamp_font::{Font, FontRef, WeakFontRef};
+use swamp_font::Font;
+use swamp_font::FontRef;
+use swamp_font::WeakFontRef;
 use swamp_render::prelude::*;
-use swamp_resource::prelude::Resource;
-use swamp_wgpu_math::Vec4;
-use swamp_wgpu_math::{Matrix4, OrthoInfo};
 use swamp_wgpu_sprites::{SpriteInfo, SpriteInstanceUniform};
 use tracing::trace;
 use wgpu::{BindGroup, BindGroupLayout, Buffer, RenderPass, RenderPipeline};
@@ -82,6 +80,7 @@ pub struct FontAndMaterial {
 pub trait Gfx {
     fn sprite_atlas_frame(&mut self, position: Vec3, frame: u16, atlas: &impl FrameLookup);
     fn sprite_atlas(&mut self, position: Vec3, atlas_rect: URect, material_ref: &MaterialRef);
+    fn draw_sprite(&mut self, position: Vec3, size: UVec2, material_ref: &MaterialRef);
     fn set_origin(&mut self, position: Vec2);
 
     fn set_clear_color(&mut self, color: Color);
@@ -190,6 +189,10 @@ impl Gfx for Render {
 
     fn sprite_atlas(&mut self, position: Vec3, atlas_rect: URect, material_ref: &MaterialRef) {
         self.sprite_atlas(position, atlas_rect, material_ref);
+    }
+
+    fn draw_sprite(&mut self, position: Vec3, size: UVec2, material_ref: &MaterialRef) {
+        self.draw_sprite(position, size, material_ref);
     }
 
     fn set_origin(&mut self, position: Vec2) {
@@ -471,6 +474,19 @@ impl Render {
             Sprite {
                 atlas_rect,
                 params: Default::default(),
+            },
+        );
+    }
+
+    fn draw_sprite(&mut self, position: Vec3, size: UVec2, material: &MaterialRef) {
+        self.push_sprite(
+            position,
+            material,
+            Sprite {
+                atlas_rect: URect::new(0, 0, size.x, size.y),
+                params: SpriteParams {
+                    ..Default::default()
+                },
             },
         );
     }
