@@ -1,0 +1,36 @@
+[package]
+name = "swamp-advanced-game"
+version = "0.0.11"
+edition = "2021"
+
+[dependencies]
+tracing = "0.1.40"
+int_math = "0.0.2"
+
+swamp-render = { path = "../render", version = "0.0.11" }
+swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.11" }
+
+monotonic-time-rs = "0.0.5"
+swamp-font = { path = "../font", version = "0.0.11" }
+
+swamp-game-assets = { path = "../game-assets", version = "0.0.11" }
+swamp-game-audio = { path = "../game-audio", version = "0.0.11" }
+
+
+# Limnus
+limnus-assets = "0.0.11"
+limnus-app = "0.0.11"
+limnus-resource = "0.0.11"
+limnus-local-resource = "0.0.11"
+limnus-system-params =  "0.0.11"
+limnus-screen = "0.0.11"
+limnus-wgpu-window = "0.0.11"
+limnus-system-runner = "0.0.11"
+limnus-audio-mixer = "0.0.11"
+limnus-basic-input = "0.0.11"
+limnus-message = "0.0.11"
+limnus-gamepad = "0.0.11"
+fixed32 = "0.0.17"
+
+[dev-dependencies]
+test-log = "0.2.16"

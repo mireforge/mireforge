@@ -9,6 +9,8 @@ pub use {
     limnus::prelude::{ButtonState, KeyCode, MouseButton, MouseScrollDelta, StereoSampleRef},
     limnus_gamepad::{Axis, AxisValueType, Button, ButtonValueType, GamePadId, Gamepad, Gamepads},
     monotonic_time_rs::Millis,
+    swamp_advanced_game::{ApplicationAudio, ApplicationLogic, ApplicationRender},
+    swamp_boot_advanced_game::run_advanced,
     swamp_boot_game::prelude::*,
     swamp_font::*,
     swamp_game::prelude::*,

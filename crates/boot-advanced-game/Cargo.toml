@@ -1,0 +1,15 @@
+[package]
+name = "swamp-boot-advanced-game"
+version = "0.0.11"
+edition = "2021"
+
+[dependencies]
+swamp-advanced-game = { path = "../advanced-game", version = "0.0.11" }
+tracing = "0.1.40"
+int_math = "0.0.2"
+swamp-material = { path = "../material", version = "0.0.11" }
+swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.11" }
+swamp-font = { path = "../font", version = "0.0.11" }
+
+# Limnus
+limnus = "0.0.11"# // TODO: Should have a more minimal dependency

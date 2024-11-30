@@ -10,6 +10,7 @@ keywords = ["game", "engine"]
 
 [dependencies]
 swamp-boot-game = { path = "../boot-game", version = "0.0.11" }
+swamp-boot-advanced-game = { path = "../boot-advanced-game", version = "0.0.11" }
 swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.11" }
 swamp-game-assets = { path = "../game-assets", version = "0.0.11" }
 swamp-render = { path = "../render", version = "0.0.11" }
@@ -18,6 +19,7 @@ swamp-font = { path = "../font", version = "0.0.11" }
 int_math = "0.0.2"
 tracing = "0.1.40"
 swamp-game = { path = "../game", version = "0.0.11" }
+swamp-advanced-game = { path = "../advanced-game", version = "0.0.11" }
 
 limnus = "0.0.11" # // TODO: should have a more minimal dependency
 
