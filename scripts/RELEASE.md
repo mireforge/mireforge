@@ -24,3 +24,10 @@ tokei crates/ --files --sort code --type rust
 ```
 export MTL_DEBUG_LAYER=1
 export MTL_DEVICE_WRAPPER_TYPE=1
+
+## Upgrade Limnus Regexp
+
+```bash
+(limnus.*) = "0.0.10"
+$1 = "0.0.11"
+```

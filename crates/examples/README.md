@@ -8,13 +8,13 @@ by providing ready-to-run examples.
 - List the available examples:
 
 ```bash
-cargo run --example
+cargo run --bin 
 ```
 
 - Run one of the examples with:
 
 ```bash
-cargo run --release --example <example_name>
+cargo run --release --bin <example_name>
 ```
 Replace <example_name> with the specific example you want to run.
 

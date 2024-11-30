@@ -196,8 +196,6 @@ pub struct ExampleAudio {
 
 impl ApplicationAudio<ExampleLogic> for ExampleAudio {
     fn new(assets: &mut impl Assets) -> Self {
-        let now = assets.now();
-
         let whoosh_sound = assets.audio_sample_wav("qubodup_whoosh");
 
         Self {
