@@ -4,8 +4,11 @@
  */
 
 pub use {
+    fixed32::Fp,
     int_math::prelude::*,
     limnus::prelude::{ButtonState, KeyCode, MouseButton, MouseScrollDelta, StereoSampleRef},
+    limnus_gamepad::{Axis, AxisValueType, Button, ButtonValueType, GamePadId, Gamepad, Gamepads},
+    monotonic_time_rs::Millis,
     swamp_boot_game::prelude::*,
     swamp_font::*,
     swamp_game::prelude::*,

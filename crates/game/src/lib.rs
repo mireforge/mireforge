@@ -2,20 +2,24 @@
  * Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/swamp/swamp
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
+extern crate core;
+
 pub mod prelude;
 
 use int_math::{URect, UVec2, Vec2};
 
+use fixed32::Fp;
 use limnus_app::prelude::{App, AppReturnValue, ApplicationExit, Plugin};
 use limnus_audio_mixer::{AudioMixer, StereoSample};
 use limnus_basic_input::prelude::{ButtonState, KeyCode, MouseButton, MouseScrollDelta};
 use limnus_basic_input::InputMessage;
+use limnus_gamepad::{Axis, Button, GamePadId, Gamepad, GamepadMessage, Gamepads};
 use limnus_local_resource::prelude::LocalResource;
 use limnus_message::MessagesIterator;
 use limnus_resource::prelude::Resource;
 use limnus_resource::ResourceStorage;
 use limnus_screen::WindowMessage;
-use limnus_system_params::{LocReAll, Msg, Re, ReAll, ReM};
+use limnus_system_params::{LoReM, Msg, Re, ReAll, ReM};
 use limnus_system_runner::UpdatePhase;
 use limnus_wgpu_window::WgpuWindow;
 use monotonic_time_rs::{InstantMonotonicClock, Millis, MonotonicClock};
@@ -55,6 +59,11 @@ pub trait Application: Sized + 'static {
     fn mouse_wheel(&mut self, _delta_y: i16) {}
 
     fn mouse_motion(&mut self, _delta: Vec2) {}
+
+    fn gamepad_activated(&mut self, _gamepad_id: GamePadId, _name: String) {}
+    fn gamepad_button_changed(&mut self, _gamepad: &Gamepad, _button: Button, _value: Fp) {}
+    fn gamepad_axis_changed(&mut self, _gamepad: &Gamepad, _axis: Axis, _value: Fp) {}
+    fn gamepad_disconnected(&mut self, _gamepad_id: GamePadId) {}
 
     fn scale_factor_changed(&mut self, _scale_factor: f64) -> Option<UVec2> {
         None
@@ -202,14 +211,12 @@ impl<G: Application> GamePlugin<G> {
 pub fn tick<G: Application>(
     window: Re<WgpuWindow>,
     mut wgpu_render: ReM<Render>,
-
     input_messages: Msg<InputMessage>,
     window_messages: Msg<WindowMessage>,
     mut all_resources: ReAll,
-    mut all_local_resources: LocReAll,
-    //mut internal_game: LoReM<Game<G>>,
+    mut internal_game: LoReM<Game<G>>,
+    mut audio_mixer: LoReM<AudioMixer>,
 ) {
-    let internal_game = all_local_resources.get_mut::<Game<G>>().unwrap();
     let now = internal_game.clock.now();
 
     // Inputs
@@ -231,8 +238,7 @@ pub fn tick<G: Application>(
     // Audio
     {
         let samples = all_resources.fetch::<limnus_assets::Assets<StereoSample>>();
-        let mixer = all_local_resources.fetch_mut::<AudioMixer>();
-        let mut game_audio = GameAudio::new(mixer, samples);
+        let mut game_audio = GameAudio::new(&mut audio_mixer, samples);
         internal_game.game.audio(&mut game_audio);
     }
 
@@ -244,6 +250,53 @@ pub fn tick<G: Application>(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
+pub fn tick_input<G: Application>(
+    mut internal_game: LoReM<Game<G>>,
+    gamepads: Re<Gamepads>,
+    gamepad_messages: Msg<GamepadMessage>,
+) {
+    for gamepad_message in gamepad_messages.iter_current() {
+        match gamepad_message {
+            GamepadMessage::Connected(_gamepad_id, _gamepad_name) => {}
+            GamepadMessage::Disconnected(gamepad_id) => {
+                if let Some(gamepad) = gamepads.gamepad(*gamepad_id) {
+                    if gamepad.is_active {
+                        internal_game.game.gamepad_disconnected(*gamepad_id);
+                    }
+                }
+            }
+            GamepadMessage::Activated(gamepad_id) => {
+                if let Some(gamepad) = gamepads.gamepad(*gamepad_id) {
+                    internal_game
+                        .game
+                        .gamepad_activated(*gamepad_id, gamepad.name.as_str().to_string())
+                }
+            }
+            GamepadMessage::ButtonChanged(gamepad_id, button, value) => {
+                if let Some(gamepad) = gamepads.gamepad(*gamepad_id) {
+                    if gamepad.is_active {
+                        internal_game.game.gamepad_button_changed(
+                            gamepad,
+                            *button,
+                            Fp::from(*value),
+                        )
+                    }
+                }
+            }
+            GamepadMessage::AxisChanged(gamepad_id, axis, value) => {
+                if let Some(gamepad) = gamepads.gamepad(*gamepad_id) {
+                    if gamepad.is_active {
+                        internal_game
+                            .game
+                            .gamepad_axis_changed(gamepad, *axis, Fp::from(*value))
+                    }
+                }
+            }
+        }
+    }
+}
+
 impl<G: Application> Plugin for GamePlugin<G> {
     fn post_initialization(&self, app: &mut App) {
         debug!("calling WgpuGame::new()");
@@ -251,6 +304,7 @@ impl<G: Application> Plugin for GamePlugin<G> {
         let internal_game = Game::<G>::new(all_resources);
         app.insert_local_resource(internal_game);
 
+        app.add_system(UpdatePhase::Update, tick_input::<G>);
         app.add_system(UpdatePhase::Update, tick::<G>);
     }
 }
