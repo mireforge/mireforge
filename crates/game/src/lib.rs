@@ -206,52 +206,54 @@ impl<G: Application> GamePlugin<G> {
     }
 }
 
-// TODO: add support for having tuple arguments to have maximum seven parameters
-#[allow(clippy::too_many_arguments)]
-pub fn tick<G: Application>(
-    window: Re<WgpuWindow>,
-    mut wgpu_render: ReM<Render>,
-    input_messages: Msg<InputMessage>,
-    window_messages: Msg<WindowMessage>,
-    mut all_resources: ReAll,
+pub fn mouse_input_tick<G: Application>(
     mut internal_game: LoReM<Game<G>>,
+    window_messages: Msg<WindowMessage>,
+    wgpu_render: Re<Render>,
+) {
+    internal_game.mouse_move(window_messages.iter_previous(), &wgpu_render);
+}
+
+pub fn keyboard_input_tick<G: Application>(
+    mut internal_game: LoReM<Game<G>>,
+    input_messages: Msg<InputMessage>,
+) {
+    internal_game.inputs(input_messages.iter_previous());
+}
+
+pub fn audio_tick<G: Application>(
+    mut internal_game: LoReM<Game<G>>,
+    stereo_samples: Re<limnus_assets::Assets<StereoSample>>,
     mut audio_mixer: LoReM<AudioMixer>,
 ) {
+    let mut game_audio = GameAudio::new(&mut audio_mixer, &stereo_samples);
+    internal_game.game.audio(&mut game_audio);
+}
+
+pub fn logic_tick<G: Application>(mut internal_game: LoReM<Game<G>>, mut all_resources: ReAll) {
     let now = internal_game.clock.now();
 
-    // Inputs
-    {
-        internal_game.inputs(input_messages.iter_previous());
-        internal_game.mouse_move(window_messages.iter_previous(), &wgpu_render);
-    }
-
-    // Tick
-    {
-        internal_game.tick(&mut all_resources, now);
-        if internal_game.game.wants_to_quit() {
-            all_resources.insert(ApplicationExit {
-                value: AppReturnValue::Value(0),
-            });
-        }
-    }
-
-    // Audio
-    {
-        let samples = all_resources.fetch::<limnus_assets::Assets<StereoSample>>();
-        let mut game_audio = GameAudio::new(&mut audio_mixer, samples);
-        internal_game.game.audio(&mut game_audio);
-    }
-
-    // Render
-    {
-        let materials = all_resources.fetch::<limnus_assets::Assets<Material>>();
-        let fonts = all_resources.fetch::<limnus_assets::Assets<Font>>();
-        internal_game.render(&window, &mut wgpu_render, materials, fonts, now);
+    internal_game.tick(&mut all_resources, now);
+    if internal_game.game.wants_to_quit() {
+        all_resources.insert(ApplicationExit {
+            value: AppReturnValue::Value(0),
+        });
     }
 }
 
-#[allow(clippy::too_many_arguments)]
-pub fn tick_input<G: Application>(
+pub fn render_tick<G: Application>(
+    mut internal_game: LoReM<Game<G>>,
+    window: Re<WgpuWindow>,
+    mut wgpu_render: ReM<Render>,
+    materials: Re<limnus_assets::Assets<Material>>,
+    fonts: Re<limnus_assets::Assets<Font>>,
+) {
+    let now = internal_game.clock.now();
+
+    internal_game.render(&window, &mut wgpu_render, &materials, &fonts, now);
+}
+
+pub fn gamepad_input_tick<G: Application>(
     mut internal_game: LoReM<Game<G>>,
     gamepads: Re<Gamepads>,
     gamepad_messages: Msg<GamepadMessage>,
@@ -300,48 +302,16 @@ pub fn tick_input<G: Application>(
 impl<G: Application> Plugin for GamePlugin<G> {
     fn post_initialization(&self, app: &mut App) {
         debug!("calling WgpuGame::new()");
+
         let all_resources = app.resources_mut();
         let internal_game = Game::<G>::new(all_resources);
         app.insert_local_resource(internal_game);
 
-        app.add_system(UpdatePhase::Update, tick_input::<G>);
-        app.add_system(UpdatePhase::Update, tick::<G>);
+        app.add_system(UpdatePhase::Update, gamepad_input_tick::<G>);
+        app.add_system(UpdatePhase::Update, keyboard_input_tick::<G>);
+        app.add_system(UpdatePhase::Update, mouse_input_tick::<G>);
+        app.add_system(UpdatePhase::Update, audio_tick::<G>);
+        app.add_system(UpdatePhase::Update, logic_tick::<G>);
+        app.add_system(UpdatePhase::Update, render_tick::<G>);
     }
 }
-
-/*
-pub trait Gfx {
-    // Physical surface and viewport
-    fn physical_aspect_ratio(&self) -> AspectRatio;
-    fn physical_size(&self) -> UVec2;
-    fn set_viewport(&mut self, viewport_strategy: ViewportStrategy);
-    fn viewport(&self) -> &ViewportStrategy;
-
-    // "Camera" (Project and view matrix)
-    fn set_scale(&mut self, scale_factor: VirtualScale);
-    fn set_origin(&mut self, position: Vec2);
-
-    // Other
-    fn set_clear_color(&mut self, color: Color);
-
-    // Sprite
-    fn sprite_atlas_frame(&mut self, position: Vec3, frame: u16, atlas: &impl FrameLookup);
-    fn sprite_atlas(&mut self, position: Vec3, atlas_rect: URect, material: &MaterialRef);
-
-    // Text
-    fn text_draw(&mut self, position: Vec3, text: &str, font_ref: &FontAndMaterialRef);
-    fn text_glyphs(&self, position: Vec2, text: &str, font_ref: &FontAndMaterialRef) -> Vec<Glyph>;
-
-    // Tilemap
-    fn tilemap(&mut self, position: Vec3, tiles: &[u16], width: u16, atlas: &FixedAtlas);
-    fn tilemap_params(
-        &mut self,
-        position: Vec3,
-        tiles: &[u16],
-        width: u16,
-        atlas: &FixedAtlas,
-        scale: u8,
-    );
-    fn now(&self) -> Millis;
-}
-*/
