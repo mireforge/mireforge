@@ -10,6 +10,7 @@ use limnus_app::prelude::{App, AppReturnValue, ApplicationExit, Plugin};
 use limnus_audio_mixer::{AudioMixer, StereoSample};
 use limnus_basic_input::prelude::{ButtonState, KeyCode, MouseButton, MouseScrollDelta};
 use limnus_basic_input::InputMessage;
+use limnus_local_resource::prelude::LocalResource;
 use limnus_message::MessagesIterator;
 use limnus_resource::prelude::Resource;
 use limnus_resource::ResourceStorage;
@@ -27,7 +28,7 @@ use swamp_game_audio::{Audio, GameAudio};
 use swamp_render_wgpu::{Gfx, Material, Render};
 use tracing::debug;
 
-pub trait Application: Send + Sync + Sized + 'static {
+pub trait Application: Sized + 'static {
     fn new(assets: &mut impl Assets) -> Self;
     fn tick(&mut self, assets: &mut impl Assets);
     fn render(&mut self, gfx: &mut impl Gfx);
@@ -65,7 +66,7 @@ pub struct GameSettings {
     pub virtual_size: UVec2,
 }
 
-#[derive(Resource)]
+#[derive(LocalResource)]
 pub struct Game<G: Application> {
     game: G,
     clock: InstantMonotonicClock,
@@ -206,8 +207,9 @@ pub fn tick<G: Application>(
     window_messages: Msg<WindowMessage>,
     mut all_resources: ReAll,
     mut all_local_resources: LocReAll,
-    mut internal_game: ReM<Game<G>>,
+    //mut internal_game: LoReM<Game<G>>,
 ) {
+    let internal_game = all_local_resources.get_mut::<Game<G>>().unwrap();
     let now = internal_game.clock.now();
 
     // Inputs
@@ -247,7 +249,7 @@ impl<G: Application> Plugin for GamePlugin<G> {
         debug!("calling WgpuGame::new()");
         let all_resources = app.resources_mut();
         let internal_game = Game::<G>::new(all_resources);
-        app.insert_resource(internal_game);
+        app.insert_local_resource(internal_game);
 
         app.add_system(UpdatePhase::Update, tick::<G>);
     }
