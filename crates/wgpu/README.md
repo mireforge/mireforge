@@ -11,7 +11,7 @@ Add swamp-wgpu to your project's `Cargo.toml`:
 
 ```toml
 [dependencies]
-swamp-wgpu = "0.0.11"
+swamp-wgpu = "0.0.12"
 ```
 
 ## License
