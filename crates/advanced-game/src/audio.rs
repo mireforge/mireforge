@@ -16,7 +16,7 @@ use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use swamp_game_assets::GameAssets;
 use swamp_game_audio::GameAudio;
-use tracing::debug;
+use tracing::trace;
 
 impl<A: ApplicationAudio<L>, L: ApplicationLogic> Debug for GameAudioRender<A, L> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -66,7 +66,7 @@ impl<A: ApplicationAudio<L>, L: ApplicationLogic> GameAudioRenderPlugin<A, L> {
 
 impl<A: ApplicationAudio<L>, L: ApplicationLogic> Plugin for GameAudioRenderPlugin<A, L> {
     fn post_initialization(&self, app: &mut App) {
-        debug!("calling AdvancedGameAudioPlugin::new()");
+        trace!("GameAudioRenderPlugin startup");
         let all_resources = app.resources_mut();
         let internal_audio = GameAudioRender::<A, L>::new(all_resources);
         app.insert_local_resource(internal_audio);

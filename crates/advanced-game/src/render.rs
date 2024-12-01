@@ -17,7 +17,7 @@ use std::marker::PhantomData;
 use swamp_font::Font;
 use swamp_game_assets::GameAssets;
 use swamp_render_wgpu::{Material, Render};
-use tracing::debug;
+use tracing::trace;
 
 #[derive(LocalResource)]
 pub struct GameRenderer<R: ApplicationRender<L>, L: ApplicationLogic> {
@@ -84,20 +84,6 @@ pub fn advanced_game_render_tick<R: ApplicationRender<L>, L: ApplicationLogic>(
     );
 }
 
-/*
-
-let window = app.resource::<WgpuWindow>();
-let window_settings = app.resource::<Window>();
-let wgpu_render = Render::new(
-Arc::clone(window.device()),
-Arc::clone(window.queue()),
-window.texture_format(),
-window_settings.requested_surface_size,
-window_settings.minimal_surface_size,
-Millis::new(0),
-);
-*/
-
 #[derive(Default)]
 pub struct GameRendererPlugin<R: ApplicationRender<L>, L: ApplicationLogic> {
     _phantom: PhantomData<(R, L)>,
@@ -113,7 +99,7 @@ impl<A: ApplicationRender<L>, L: ApplicationLogic> GameRendererPlugin<A, L> {
 
 impl<R: ApplicationRender<L>, L: ApplicationLogic> Plugin for GameRendererPlugin<R, L> {
     fn post_initialization(&self, app: &mut App) {
-        debug!("calling WgpuGame::new()");
+        trace!("GameRendererPlugin startup");
         let all_resources = app.resources_mut();
 
         let game_renderer = GameRenderer::<R, L>::new(all_resources);

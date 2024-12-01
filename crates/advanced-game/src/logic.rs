@@ -19,7 +19,7 @@ use std::cmp::{max, min};
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use swamp_render_wgpu::Render;
-use tracing::debug;
+use tracing::trace;
 
 #[derive(LocalResource)]
 pub struct GameLogic<L: ApplicationLogic> {
@@ -105,15 +105,9 @@ impl<L: ApplicationLogic> Debug for GameLogic<L> {
 }
 
 pub fn advanced_game_logic_tick<L: ApplicationLogic>(
-    wgpu_render: Re<Render>,
-    input_messages: Msg<InputMessage>,
-    window_messages: Msg<WindowMessage>,
     mut all_resources: ReAll,
     mut game_logic: LoReM<GameLogic<L>>,
 ) {
-    game_logic.inputs(input_messages.iter_previous());
-    game_logic.mouse_move(window_messages.iter_previous(), &wgpu_render);
-
     game_logic.logic.tick();
     if game_logic.logic.wants_to_quit() {
         all_resources.insert(ApplicationExit {
@@ -122,7 +116,22 @@ pub fn advanced_game_logic_tick<L: ApplicationLogic>(
     }
 }
 
-pub fn tick_input<L: ApplicationLogic>(
+pub fn advanced_game_logic_keyboard_tick<L: ApplicationLogic>(
+    input_messages: Msg<InputMessage>,
+    mut game_logic: LoReM<GameLogic<L>>,
+) {
+    game_logic.inputs(input_messages.iter_previous());
+}
+
+pub fn advanced_game_logic_mouse_tick<L: ApplicationLogic>(
+    wgpu_render: Re<Render>,
+    window_messages: Msg<WindowMessage>,
+    mut game_logic: LoReM<GameLogic<L>>,
+) {
+    game_logic.mouse_move(window_messages.iter_previous(), &wgpu_render);
+}
+
+pub fn advanced_gamepad_input_tick<L: ApplicationLogic>(
     mut internal_game: LoReM<GameLogic<L>>,
     gamepads: Re<Gamepads>,
     gamepad_messages: Msg<GamepadMessage>,
@@ -185,11 +194,13 @@ impl<L: ApplicationLogic> GameLogicPlugin<L> {
 
 impl<L: ApplicationLogic> Plugin for GameLogicPlugin<L> {
     fn post_initialization(&self, app: &mut App) {
-        debug!("calling WgpuGame::new()");
+        trace!("GameLogicPlugin startup");
         let game_logic = GameLogic::<L>::new();
         app.insert_local_resource(game_logic);
 
-        app.add_system(UpdatePhase::Update, tick_input::<L>);
+        app.add_system(UpdatePhase::Update, advanced_gamepad_input_tick::<L>);
+        app.add_system(UpdatePhase::Update, advanced_game_logic_mouse_tick::<L>);
+        app.add_system(UpdatePhase::Update, advanced_game_logic_keyboard_tick::<L>);
         app.add_system(UpdatePhase::Update, advanced_game_logic_tick::<L>);
     }
 }
