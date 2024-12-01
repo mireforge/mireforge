@@ -2,6 +2,10 @@
 name = "swamp-boot-advanced-game"
 version = "0.0.11"
 edition = "2021"
+license = "MIT"
+description = "boot up an advanced game (logic, render, audio)"
+repository = "https://github.com/swamp/swamp"
+categories = ["game-development"]
 
 [dependencies]
 swamp-advanced-game = { path = "../advanced-game", version = "0.0.11" }
@@ -12,4 +16,7 @@ swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.11" }
 swamp-font = { path = "../font", version = "0.0.11" }
 
 # Limnus
-limnus = "0.0.11"# // TODO: Should have a more minimal dependency
+# limnus-app = "0.0.11"
+# limnus-screen = "0.0.11"
+
+limnus = "0.0.11"# TODO: Move DefaultPlugins

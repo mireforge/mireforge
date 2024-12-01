@@ -2,6 +2,10 @@
 name = "swamp-advanced-game"
 version = "0.0.11"
 edition = "2021"
+license = "MIT"
+description = "advanced game (logic, render, audio)"
+repository = "https://github.com/swamp/swamp"
+categories = ["game-development"]
 
 [dependencies]
 tracing = "0.1.40"
@@ -31,6 +35,3 @@ limnus-basic-input = "0.0.11"
 limnus-message = "0.0.11"
 limnus-gamepad = "0.0.11"
 fixed32 = "0.0.17"
-
-[dev-dependencies]
-test-log = "0.2.16"

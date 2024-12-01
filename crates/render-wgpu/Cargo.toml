@@ -21,8 +21,6 @@ swamp-wgpu = { path = "../wgpu", version = "0.0.11" }
 
 # Limnus
 limnus-assets = "0.0.11"
-limnus-asset-registry = "0.0.11"
-limnus-assets-loader = "0.0.11"
 limnus-app = "0.0.11"
 limnus-resource = "0.0.11"
 limnus-wgpu-math = "0.0.11"

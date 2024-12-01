@@ -8,7 +8,6 @@ categories = ["game-development"]
 description = "Game audio"
 
 [dependencies]
-limnus-audio-sample = "0.0.11"
 limnus-audio-mixer = "0.0.11"
 limnus-assets = "0.0.11"
 

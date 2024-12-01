@@ -3,9 +3,7 @@
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
 use int_math::UVec2;
-use limnus::prelude::Window;
-use limnus::prelude::{App, AppReturnValue};
-use limnus::DefaultPlugins;
+use limnus::prelude::{App, AppReturnValue, DefaultPlugins, Window};
 use swamp_advanced_game::audio::GameAudioRenderPlugin;
 use swamp_advanced_game::logic::GameLogicPlugin;
 use swamp_advanced_game::render::GameRendererPlugin;
@@ -26,7 +24,6 @@ pub fn run_advanced<L: ApplicationLogic, R: ApplicationRender<L>, A: Application
             minimal_surface_size: virtual_size,
             fullscreen: false,
         })
-        //.insert_resource(GameSettings { virtual_size })
         .add_plugins((DefaultPlugins, RenderWgpuPlugin, MaterialPlugin))
         .add_plugins(GameRendererPlugin::<R, L>::new())
         .add_plugins(GameLogicPlugin::<L>::new())
