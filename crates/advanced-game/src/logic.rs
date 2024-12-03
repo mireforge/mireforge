@@ -21,7 +21,7 @@ use std::marker::PhantomData;
 use swamp_render_wgpu::Render;
 use tracing::trace;
 
-#[derive(LocalResource)]
+#[derive(LocalResource, Default)]
 pub struct GameLogic<L: ApplicationLogic> {
     pub logic: L,
 }
