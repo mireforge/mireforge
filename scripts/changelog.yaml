@@ -20,6 +20,12 @@ repo: swamp/swamp
 # security
 
 releases:
+  v0.0.13:
+    date: "2024-12-03"
+    notice: |
+      Upgrade limnus dependency to 0.0.12.
+
+
   v0.0.12:
     date: "2024-12-01"
     notice: |

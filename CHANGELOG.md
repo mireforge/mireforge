@@ -1,5 +1,9 @@
 # Changelog
 
+## 🔖 [v0.0.13](https://github.com/swamp/swamp/releases/tag/v0.0.13) (2024-12-03)
+
+Upgrade limnus dependency to 0.0.12.
+
 ## 🔖 [v0.0.12](https://github.com/swamp/swamp/releases/tag/v0.0.12) (2024-12-01)
 
 Advanced game abstraction with logic, render and audio.
