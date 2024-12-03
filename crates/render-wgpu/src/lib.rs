@@ -267,44 +267,6 @@ impl Gfx for Render {
     }
 }
 
-/*
-
-impl Gfx for Render {
-
-    fn set_origin(&mut self, position: Vec2) {
-        self.origin = position;
-    }
-
-    fn sprite_atlas_frame(&mut self, position: Vec3, frame: u16, atlas: &impl FrameLookup) {
-        self.sprite_atlas_frame(position, frame, atlas);
-    }
-
-    fn sprite_atlas(&mut self, position: Vec3, atlas_rect: URect, material: &MaterialRef) {
-        self.sprite_atlas(position, atlas_rect, material);
-    }
-
-
-
-
-    fn tilemap(&mut self, position: Vec3, tiles: &[u16], width: u16, atlas_ref: &FixedAtlas) {
-        self.items.push(RenderItem {
-            position,
-            material_ref: atlas_ref.material.clone(),
-            renderable: Renderable::TileMap(TileMap {
-                tiles_data_grid_size: UVec2::new(width, tiles.len() as u16 / width),
-                cell_count_size: atlas_ref.cell_count_size,
-                one_cell_size: atlas_ref.one_cell_size,
-                tiles: Vec::from(tiles),
-                scale: 1,
-            }),
-        });
-    }
-
-
-}
-
-*/
-
 impl Render {
     #[must_use]
     pub fn new(
@@ -482,7 +444,7 @@ impl Render {
         );
     }
 
-    fn draw_sprite(&mut self, position: Vec3, size: UVec2, material: &MaterialRef) {
+    pub fn draw_sprite(&mut self, position: Vec3, size: UVec2, material: &MaterialRef) {
         self.push_sprite(
             position,
             material,
