@@ -1,6 +1,6 @@
 [package]
 name = "swamp-game-assets"
-version = "0.0.12"
+version = "0.0.13"
 edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
@@ -12,8 +12,8 @@ tracing = "0.1.40"
 int_math = "0.0.2"
 monotonic-time-rs = "0.0.5"
 
-swamp-font = { path = "../font", version = "0.0.12" }
-swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.12" }
+swamp-font = { path = "../font", version = "0.0.13" }
+swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.13" }
 
 # Limnus
 limnus-assets = "0.0.12"
