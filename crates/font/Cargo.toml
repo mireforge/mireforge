@@ -14,7 +14,7 @@ tracing = "0.1.40"
 int_math = "0.0.2"
 
 # Limnus
-limnus-assets = "0.0.11"
-limnus-app = "0.0.11"
-limnus-assets-loader = "0.0.11"
-limnus-asset-registry = "0.0.11"
+limnus-assets = "0.0.12"
+limnus-app = "0.0.12"
+limnus-assets-loader = "0.0.12"
+limnus-asset-registry = "0.0.12"

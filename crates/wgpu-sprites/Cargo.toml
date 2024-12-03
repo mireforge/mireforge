@@ -15,4 +15,4 @@ tracing = "0.1.40"
 wgpu = "23.0.0"
 
 swamp-wgpu = { path = "../wgpu", version = "0.0.12" }
-limnus-wgpu-math = "0.0.11"
+limnus-wgpu-math = "0.0.12"

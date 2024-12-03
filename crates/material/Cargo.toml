@@ -16,10 +16,10 @@ image = "0.25.5"
 
 
 # Limnus
-limnus-assets = "0.0.11"
-limnus-asset-registry = "0.0.11"
-limnus-assets-loader = "0.0.11"
-limnus-app = "0.0.11"
-limnus-resource = "0.0.11"
-limnus-wgpu-window = "0.0.11"
-limnus-asset-id = "0.0.11"
+limnus-assets = "0.0.12"
+limnus-asset-registry = "0.0.12"
+limnus-assets-loader = "0.0.12"
+limnus-app = "0.0.12"
+limnus-resource = "0.0.12"
+limnus-wgpu-window = "0.0.12"
+limnus-asset-id = "0.0.12"
