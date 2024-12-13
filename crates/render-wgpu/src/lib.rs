@@ -432,7 +432,7 @@ impl Render {
         );
     }
 
-    fn sprite_atlas_frame(&mut self, position: Vec3, frame: u16, atlas: &impl FrameLookup) {
+    pub fn sprite_atlas_frame(&mut self, position: Vec3, frame: u16, atlas: &impl FrameLookup) {
         let (material_ref, atlas_rect) = atlas.lookup(frame);
         self.push_sprite(
             position,

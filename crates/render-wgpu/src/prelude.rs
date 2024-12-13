@@ -3,5 +3,6 @@
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
 pub use crate::{
-    plugin::RenderWgpuPlugin, FixedAtlas, FontAndMaterial, Gfx, Material, MaterialRef, Render,
+    plugin::RenderWgpuPlugin, FixedAtlas, FontAndMaterial, FrameLookup, Gfx, Material, MaterialRef,
+    Render,
 };
