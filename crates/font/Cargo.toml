@@ -1,6 +1,6 @@
 [package]
 name = "swamp-font"
-version = "0.0.13"
+version = "0.0.14-alpha.1"
 edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
