@@ -51,6 +51,18 @@ cd crates/examples
 | `boot-game` | Game bootstrapping and initialization |
 | `examples` | Example games and demos |
 
+## Recommended Resolutions
+
+Most common desktop resolutions are:
+
+- 1920 x 1080
+- 2560 x 1440
+- 3840 x 2160
+
+Steam Deck is slightly different with 1280x800, but we can approximate it as 720p.
+
+For those resolutions 720p is the common denominator and for a retro pixel-perfect feel we half the height, giving a resolution of **640 x 360**, to get a really old school feel, use **320 x 180**.
+
 
 ## About Contributions
 
