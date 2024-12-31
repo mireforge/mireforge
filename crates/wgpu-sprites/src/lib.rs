@@ -57,6 +57,7 @@ pub fn create_sprite_uniform_buffer(device: &Device, label: &str) -> Buffer {
         contents: bytemuck::cast_slice(&[SpriteInstanceUniform {
             model: Matrix4::identity(),
             tex_coords_mul_add: Vec4([0.0, 0.0, 1.0, 1.0]),
+            rotation: 0,
         }]),
         usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
     })
@@ -76,16 +77,18 @@ unsafe impl Zeroable for CameraUniform {}
 pub struct SpriteInstanceUniform {
     pub model: Matrix4, // Model Transformation matrix
     pub tex_coords_mul_add: Vec4,
+    pub rotation: u32,
 }
 
 unsafe impl Pod for SpriteInstanceUniform {}
 unsafe impl Zeroable for SpriteInstanceUniform {}
 
 impl SpriteInstanceUniform {
-    pub const fn new(model: Matrix4, tex_coords_mul_add: Vec4) -> Self {
+    pub const fn new(model: Matrix4, tex_coords_mul_add: Vec4, rotation: u32) -> Self {
         Self {
             model,
             tex_coords_mul_add,
+            rotation,
         }
     }
 }
@@ -122,6 +125,12 @@ impl SpriteInstanceUniform {
                     offset: 64,
                     shader_location: 6,
                     format: VertexFormat::Float32x4,
+                },
+                // Rotation
+                VertexAttribute {
+                    offset: 80,
+                    shader_location: 7,
+                    format: VertexFormat::Uint32,
                 },
             ],
         }

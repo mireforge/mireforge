@@ -6,7 +6,6 @@ pub mod plugin;
 pub mod prelude;
 
 use int_math::{URect, UVec2, Vec2, Vec3};
-
 use limnus_assets::prelude::{Asset, Id, WeakId};
 use limnus_assets::Assets;
 use limnus_resource::prelude::Resource;
@@ -14,6 +13,7 @@ use limnus_wgpu_math::{Matrix4, OrthoInfo, Vec4};
 use monotonic_time_rs::Millis;
 use std::cmp::Ordering;
 use std::fmt::Debug;
+use std::mem::swap;
 use std::sync::Arc;
 use swamp_font::Font;
 use swamp_font::FontRef;
@@ -444,6 +444,17 @@ impl Render {
         );
     }
 
+    pub fn sprite_atlas_frame_ex(
+        &mut self,
+        position: Vec3,
+        frame: u16,
+        atlas: &impl FrameLookup,
+        params: SpriteParams,
+    ) {
+        let (material_ref, atlas_rect) = atlas.lookup(frame);
+        self.push_sprite(position, material_ref, Sprite { atlas_rect, params });
+    }
+
     pub fn draw_sprite(&mut self, position: Vec3, size: UVec2, material: &MaterialRef) {
         self.push_sprite(
             position,
@@ -526,21 +537,40 @@ impl Render {
             for render_item in render_items {
                 match &render_item.renderable {
                     Renderable::Sprite(ref sprite) => {
-                        let size = sprite.atlas_rect.size;
-                        let render_atlas = sprite.atlas_rect;
+                        let mut size = sprite.atlas_rect.size;
+                        let mut render_atlas = sprite.atlas_rect;
+
+                        match sprite.params.rotation {
+                            Rotation::Degrees90 | Rotation::Degrees270 => {
+                                swap(&mut size.x, &mut size.y);
+                            }
+                            _ => {}
+                        }
+
                         let model_matrix =
                             Matrix4::from_translation(
                                 render_item.position.x as f32,
                                 render_item.position.y as f32,
                                 0.0,
                             ) * Matrix4::from_scale(size.x as f32, size.y as f32, 1.0);
+
                         let tex_coords_mul_add = Self::calculate_texture_coords_mul_add(
                             render_atlas,
                             current_texture_size,
                         );
 
-                        let quad_instance =
-                            SpriteInstanceUniform::new(model_matrix, tex_coords_mul_add);
+                        let rotation_value = match sprite.params.rotation {
+                            Rotation::Degrees0 => 0,
+                            Rotation::Degrees90 => 1,
+                            Rotation::Degrees180 => 2,
+                            Rotation::Degrees270 => 3,
+                        };
+
+                        let quad_instance = SpriteInstanceUniform::new(
+                            model_matrix,
+                            tex_coords_mul_add,
+                            rotation_value,
+                        );
                         quad_matrix_and_uv.push(quad_instance);
                         quad_count += 1;
                     }
@@ -569,7 +599,7 @@ impl Render {
                             );
 
                             let quad_instance =
-                                SpriteInstanceUniform::new(model_matrix, tex_coords_mul_add);
+                                SpriteInstanceUniform::new(model_matrix, tex_coords_mul_add, 0);
                             quad_matrix_and_uv.push(quad_instance);
                             quad_count += 1;
                         }
@@ -614,6 +644,7 @@ impl Render {
                             let quad_instance = SpriteInstanceUniform::new(
                                 cell_model_matrix,
                                 cell_tex_coords_mul_add,
+                                0,
                             );
                             quad_matrix_and_uv.push(quad_instance);
                             quad_count += 1;
@@ -785,11 +816,20 @@ fn sort_render_items_by_z_and_material(items: &mut [RenderItem]) {
     items.sort_by_key(|item| (item.position.z, item.material_ref));
 }
 
+#[derive(Debug, Clone, Copy, Default)]
+pub enum Rotation {
+    #[default]
+    Degrees0,
+    Degrees90,
+    Degrees180,
+    Degrees270,
+}
+
 #[derive(Default, Debug)]
 pub struct SpriteParams {
     pub dest_size: Option<UVec2>,
     pub source: Option<URect>,
-    pub rotation: u16,
+    pub rotation: Rotation,
     pub flip_x: bool,
     pub flip_y: bool,
     pub pivot: Option<Vec2>,
@@ -876,6 +916,7 @@ fn vs_main(
     @location(4) model_matrix2: vec4<f32>,
     @location(5) model_matrix3: vec4<f32>,
     @location(6) tex_multiplier: vec4<f32>,
+    @location(7) rotation_step: u32,
 ) -> VertexOutput {
     var output: VertexOutput;
 
@@ -893,8 +934,17 @@ fn vs_main(
     // Apply view-projection matrix
     output.position = camera_uniforms.view_proj * world_position;
 
+    var rotated_tex_coords = input.tex_coords;
+    if (rotation_step == 1u) {
+        rotated_tex_coords = vec2<f32>(1.0 - input.tex_coords.y, input.tex_coords.x);
+    } else if (rotation_step == 2u) {
+        rotated_tex_coords = vec2<f32>(1.0 - input.tex_coords.x, 1.0 - input.tex_coords.y);
+    } else if (rotation_step == 3u) {
+        rotated_tex_coords = vec2<f32>(input.tex_coords.y, 1.0 - input.tex_coords.x);
+    }
+
     // Modify texture coordinates
-    output.tex_coords = input.tex_coords * tex_multiplier.xy + tex_multiplier.zw;
+    output.tex_coords = rotated_tex_coords * tex_multiplier.xy + tex_multiplier.zw;
 
     return output;
 }
