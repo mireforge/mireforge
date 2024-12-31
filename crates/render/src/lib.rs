@@ -72,11 +72,23 @@ impl fmt::Display for AspectRatio {
     }
 }
 
+#[derive(Debug)]
 pub struct Color {
     r: u8,
     g: u8,
     b: u8,
     a: u8,
+}
+
+impl Default for Color {
+    fn default() -> Self {
+        Self {
+            r: 255,
+            g: 255,
+            b: 255,
+            a: 255,
+        }
+    }
 }
 
 impl Color {
@@ -87,6 +99,15 @@ impl Color {
             (b * 255.0) as u8,
             (a * 255.0) as u8,
         )
+    }
+
+    pub fn to_f32_slice(&self) -> [f32; 4] {
+        [
+            self.r as f32 / 255.0,
+            self.g as f32 / 255.0,
+            self.b as f32 / 255.0,
+            self.a as f32 / 255.0,
+        ]
     }
 
     pub const fn from_octet(r: u8, g: u8, b: u8, a: u8) -> Self {

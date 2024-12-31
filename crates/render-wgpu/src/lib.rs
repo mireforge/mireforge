@@ -538,9 +538,10 @@ impl Render {
                 match &render_item.renderable {
                     Renderable::Sprite(ref sprite) => {
                         let mut size = sprite.atlas_rect.size;
-                        let mut render_atlas = sprite.atlas_rect;
+                        let render_atlas = sprite.atlas_rect;
+                        let params = &sprite.params;
 
-                        match sprite.params.rotation {
+                        match params.rotation {
                             Rotation::Degrees90 | Rotation::Degrees270 => {
                                 swap(&mut size.x, &mut size.y);
                             }
@@ -559,17 +560,28 @@ impl Render {
                             current_texture_size,
                         );
 
-                        let rotation_value = match sprite.params.rotation {
+                        const FLIP_X_MASK: u32 = 0b00000100;
+                        const FLIP_Y_MASK: u32 = 0b00001000;
+
+                        let mut rotation_value = match params.rotation {
                             Rotation::Degrees0 => 0,
                             Rotation::Degrees90 => 1,
                             Rotation::Degrees180 => 2,
                             Rotation::Degrees270 => 3,
                         };
 
+                        if params.flip_x {
+                            rotation_value |= FLIP_X_MASK;
+                        }
+                        if params.flip_y {
+                            rotation_value |= FLIP_Y_MASK;
+                        }
+
                         let quad_instance = SpriteInstanceUniform::new(
                             model_matrix,
                             tex_coords_mul_add,
                             rotation_value,
+                            Vec4(params.color.to_f32_slice()),
                         );
                         quad_matrix_and_uv.push(quad_instance);
                         quad_count += 1;
@@ -598,8 +610,12 @@ impl Render {
                                 current_texture_size,
                             );
 
-                            let quad_instance =
-                                SpriteInstanceUniform::new(model_matrix, tex_coords_mul_add, 0);
+                            let quad_instance = SpriteInstanceUniform::new(
+                                model_matrix,
+                                tex_coords_mul_add,
+                                0,
+                                Vec4([1.0, 1.0, 1.0, 1.0]),
+                            );
                             quad_matrix_and_uv.push(quad_instance);
                             quad_count += 1;
                         }
@@ -645,6 +661,7 @@ impl Render {
                                 cell_model_matrix,
                                 cell_tex_coords_mul_add,
                                 0,
+                                Vec4([1.0, 1.0, 1.0, 1.0]),
                             );
                             quad_matrix_and_uv.push(quad_instance);
                             quad_count += 1;
@@ -833,6 +850,7 @@ pub struct SpriteParams {
     pub flip_x: bool,
     pub flip_y: bool,
     pub pivot: Option<Vec2>,
+    pub color: Color,
 }
 
 #[derive(Debug, PartialEq, Eq, Asset)]
@@ -904,6 +922,7 @@ struct VertexInput {
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
     @location(0) tex_coords: vec2<f32>,
+    @location(1) color: vec4<f32>,
 };
 
 // Vertex shader entry point
@@ -917,6 +936,7 @@ fn vs_main(
     @location(5) model_matrix3: vec4<f32>,
     @location(6) tex_multiplier: vec4<f32>,
     @location(7) rotation_step: u32,
+    @location(8) color: vec4<f32>,
 ) -> VertexOutput {
     var output: VertexOutput;
 
@@ -934,17 +954,36 @@ fn vs_main(
     // Apply view-projection matrix
     output.position = camera_uniforms.view_proj * world_position;
 
+    // Decode rotation_step
+    let rotation_val = rotation_step & 3u; // Bits 0-1
+    let flip_x = (rotation_step & 4u) != 0u; // Bit 2
+    let flip_y = (rotation_step & 8u) != 0u; // Bit 3
+
+    // Rotate texture coordinates based on rotation_val
     var rotated_tex_coords = input.tex_coords;
-    if (rotation_step == 1u) {
+    if (rotation_val == 1) {
+        // 90 degrees rotation
         rotated_tex_coords = vec2<f32>(1.0 - input.tex_coords.y, input.tex_coords.x);
-    } else if (rotation_step == 2u) {
+    } else if (rotation_val == 2) {
+        // 180 degrees rotation
         rotated_tex_coords = vec2<f32>(1.0 - input.tex_coords.x, 1.0 - input.tex_coords.y);
-    } else if (rotation_step == 3u) {
+    } else if (rotation_val == 3) {
+        // 270 degrees rotation
         rotated_tex_coords = vec2<f32>(input.tex_coords.y, 1.0 - input.tex_coords.x);
+    }
+    // else rotation_val == Degrees0, no rotation
+
+    // Apply flipping
+    if (flip_x) {
+        rotated_tex_coords.x = 1.0 - rotated_tex_coords.x;
+    }
+    if (flip_y) {
+        rotated_tex_coords.y = 1.0 - rotated_tex_coords.y;
     }
 
     // Modify texture coordinates
     output.tex_coords = rotated_tex_coords * tex_multiplier.xy + tex_multiplier.zw;
+    output.color = color;
 
     return output;
 }
@@ -964,14 +1003,19 @@ var sampler_diffuse: sampler;
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
     @location(0) tex_coords: vec2<f32>,
+    @location(1) color: vec4<f32>,
 };
 
 // Fragment shader entry point
 @fragment
 fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
     // Sample the texture using the texture coordinates
-    let color = textureSample(diffuse_texture, sampler_diffuse, input.tex_coords);
-    return color;
+    let texture_color = textureSample(diffuse_texture, sampler_diffuse, input.tex_coords);
+
+    // Apply color modulation and opacity
+    let final_color = texture_color * input.color;
+
+    return final_color;
 }
 
 ";
