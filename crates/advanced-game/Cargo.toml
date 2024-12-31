@@ -1,6 +1,6 @@
 [package]
 name = "swamp-advanced-game"
-version = "0.0.14-alpha.1"
+version = "0.0.14-alpha.2"
 edition = "2021"
 license = "MIT"
 description = "advanced game (logic, render, audio)"
@@ -11,14 +11,14 @@ categories = ["game-development"]
 tracing = "0.1.40"
 int_math = "0.0.2"
 
-swamp-render = { path = "../render", version = "0.0.14-alpha.1" }
-swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.14-alpha.1" }
+swamp-render = { path = "../render", version = "0.0.14-alpha.2" }
+swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.14-alpha.2" }
 
 monotonic-time-rs = "0.0.5"
-swamp-font = { path = "../font", version = "0.0.14-alpha.1" }
+swamp-font = { path = "../font", version = "0.0.14-alpha.2" }
 
-swamp-game-assets = { path = "../game-assets", version = "0.0.14-alpha.1" }
-swamp-game-audio = { path = "../game-audio", version = "0.0.14-alpha.1" }
+swamp-game-assets = { path = "../game-assets", version = "0.0.14-alpha.2" }
+swamp-game-audio = { path = "../game-audio", version = "0.0.14-alpha.2" }
 
 
 # Limnus
