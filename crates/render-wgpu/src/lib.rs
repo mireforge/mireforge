@@ -84,7 +84,7 @@ pub struct FontAndMaterial {
 pub trait Gfx {
     fn sprite_atlas_frame(&mut self, position: Vec3, frame: u16, atlas: &impl FrameLookup);
     fn sprite_atlas(&mut self, position: Vec3, atlas_rect: URect, material_ref: &MaterialRef);
-    fn draw_sprite(&mut self, position: Vec3, size: UVec2, material_ref: &MaterialRef);
+    fn draw_sprite(&mut self, position: Vec3, material_ref: &MaterialRef);
     fn set_origin(&mut self, position: Vec2);
 
     fn set_clear_color(&mut self, color: Color);
@@ -195,8 +195,8 @@ impl Gfx for Render {
         self.sprite_atlas(position, atlas_rect, material_ref);
     }
 
-    fn draw_sprite(&mut self, position: Vec3, size: UVec2, material_ref: &MaterialRef) {
-        self.draw_sprite(position, size, material_ref);
+    fn draw_sprite(&mut self, position: Vec3, material_ref: &MaterialRef) {
+        self.draw_sprite(position, material_ref);
     }
 
     fn set_origin(&mut self, position: Vec2) {
@@ -426,8 +426,11 @@ impl Render {
             position,
             material_ref,
             Sprite {
-                atlas_rect,
-                params: Default::default(),
+                params: SpriteParams {
+                    texture_pos: atlas_rect.position,
+                    texture_size: atlas_rect.size,
+                    ..Default::default()
+                },
             },
         );
     }
@@ -438,8 +441,11 @@ impl Render {
             position,
             material_ref,
             Sprite {
-                atlas_rect,
-                params: Default::default(),
+                params: SpriteParams {
+                    texture_pos: atlas_rect.position,
+                    texture_size: atlas_rect.size,
+                    ..Default::default()
+                },
             },
         );
     }
@@ -449,23 +455,28 @@ impl Render {
         position: Vec3,
         frame: u16,
         atlas: &impl FrameLookup,
-        params: SpriteParams,
+        mut params: SpriteParams,
     ) {
         let (material_ref, atlas_rect) = atlas.lookup(frame);
-        self.push_sprite(position, material_ref, Sprite { atlas_rect, params });
+        params.texture_pos = atlas_rect.position;
+        params.texture_size = atlas_rect.size;
+        self.push_sprite(position, material_ref, Sprite { params });
     }
 
-    pub fn draw_sprite(&mut self, position: Vec3, size: UVec2, material: &MaterialRef) {
+    pub fn draw_sprite(&mut self, position: Vec3, material: &MaterialRef) {
         self.push_sprite(
             position,
             material,
             Sprite {
-                atlas_rect: URect::new(0, 0, size.x, size.y),
                 params: SpriteParams {
                     ..Default::default()
                 },
             },
         );
+    }
+
+    pub fn draw_sprite_ex(&mut self, position: Vec3, material: &MaterialRef, params: SpriteParams) {
+        self.push_sprite(position, material, Sprite { params });
     }
 
     pub const fn clear_color(&self) -> wgpu::Color {
@@ -537,9 +548,16 @@ impl Render {
             for render_item in render_items {
                 match &render_item.renderable {
                     Renderable::Sprite(ref sprite) => {
-                        let mut size = sprite.atlas_rect.size;
-                        let render_atlas = sprite.atlas_rect;
                         let params = &sprite.params;
+                        let mut size = params.texture_size;
+                        if size.x == 0 && size.y == 0 {
+                            size = current_texture_size;
+                        }
+
+                        let render_atlas = URect {
+                            position: params.texture_pos,
+                            size,
+                        };
 
                         match params.rotation {
                             Rotation::Degrees90 | Rotation::Degrees270 => {
@@ -548,12 +566,15 @@ impl Render {
                             _ => {}
                         }
 
-                        let model_matrix =
-                            Matrix4::from_translation(
-                                render_item.position.x as f32,
-                                render_item.position.y as f32,
-                                0.0,
-                            ) * Matrix4::from_scale(size.x as f32, size.y as f32, 1.0);
+                        let model_matrix = Matrix4::from_translation(
+                            render_item.position.x as f32,
+                            render_item.position.y as f32,
+                            0.0,
+                        ) * Matrix4::from_scale(
+                            (size.x * params.scale as u16) as f32,
+                            (size.y * params.scale as u16) as f32,
+                            1.0,
+                        );
 
                         let tex_coords_mul_add = Self::calculate_texture_coords_mul_add(
                             render_atlas,
@@ -842,21 +863,36 @@ pub enum Rotation {
     Degrees270,
 }
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct SpriteParams {
-    pub dest_size: Option<UVec2>,
-    pub source: Option<URect>,
+    pub texture_size: UVec2,
+    pub texture_pos: UVec2,
+    pub scale: u8,
     pub rotation: Rotation,
     pub flip_x: bool,
     pub flip_y: bool,
-    pub pivot: Option<Vec2>,
+    pub pivot: Vec2,
     pub color: Color,
+}
+
+impl Default for SpriteParams {
+    fn default() -> Self {
+        Self {
+            texture_size: UVec2::new(0, 0),
+            texture_pos: UVec2::new(0, 0),
+            pivot: Vec2::new(0, 0),
+            flip_x: false,
+            flip_y: false,
+            color: Color::from_octet(255, 255, 255, 255),
+            scale: 1,
+            rotation: Rotation::Degrees0,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Asset)]
 pub struct Material {
     pub texture_and_sampler_bind_group: BindGroup,
-    //pub render_pipeline: RenderPipelineRef,
     pub texture_size: UVec2,
 }
 
@@ -878,8 +914,6 @@ impl Ord for Material {
 
 #[derive(Debug)]
 pub struct Sprite {
-    pub atlas_rect: URect,
-
     pub params: SpriteParams,
 }
 
