@@ -17,9 +17,9 @@ pub fn create_shader_module(device: &Device, name: &str, shader_source: &str) ->
 pub fn create_nearest_sampler(device: &Device, label: &str) -> Sampler {
     device.create_sampler(&SamplerDescriptor {
         label: Some(label),
-        address_mode_u: AddressMode::ClampToEdge,
-        address_mode_v: AddressMode::ClampToEdge,
-        address_mode_w: AddressMode::ClampToEdge,
+        address_mode_u: AddressMode::Repeat, // AddressMode::ClampToEdge,
+        address_mode_v: AddressMode::Repeat,
+        address_mode_w: AddressMode::Repeat,
         mag_filter: FilterMode::Nearest,
         min_filter: FilterMode::Nearest,
         mipmap_filter: FilterMode::Nearest,
