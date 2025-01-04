@@ -85,6 +85,7 @@ pub trait Gfx {
     fn sprite_atlas_frame(&mut self, position: Vec3, frame: u16, atlas: &impl FrameLookup);
     fn sprite_atlas(&mut self, position: Vec3, atlas_rect: URect, material_ref: &MaterialRef);
     fn draw_sprite(&mut self, position: Vec3, material_ref: &MaterialRef);
+    fn draw_sprite_ex(&mut self, position: Vec3, material_ref: &MaterialRef, params: &SpriteParams);
     fn set_origin(&mut self, position: Vec2);
 
     fn set_clear_color(&mut self, color: Color);
@@ -197,6 +198,15 @@ impl Gfx for Render {
 
     fn draw_sprite(&mut self, position: Vec3, material_ref: &MaterialRef) {
         self.draw_sprite(position, material_ref);
+    }
+
+    fn draw_sprite_ex(
+        &mut self,
+        position: Vec3,
+        material_ref: &MaterialRef,
+        params: &SpriteParams,
+    ) {
+        self.draw_sprite_ex(position, material_ref, params.clone());
     }
 
     fn set_origin(&mut self, position: Vec2) {
@@ -863,7 +873,7 @@ pub enum Rotation {
     Degrees270,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct SpriteParams {
     pub texture_size: UVec2,
     pub texture_pos: UVec2,

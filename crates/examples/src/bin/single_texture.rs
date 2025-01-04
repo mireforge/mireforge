@@ -56,7 +56,6 @@ impl Application for SingleTextureExample {
                 0,
             )
                 .into(),
-            UVec2::new(256, 832),
             &self.test,
         );
         gfx.sprite_atlas_frame(

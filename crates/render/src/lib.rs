@@ -72,7 +72,7 @@ impl fmt::Display for AspectRatio {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Color {
     r: u8,
     g: u8,
