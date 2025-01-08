@@ -20,7 +20,7 @@ use swamp_font::FontRef;
 use swamp_font::WeakFontRef;
 use swamp_render::prelude::*;
 use swamp_wgpu_sprites::{SpriteInfo, SpriteInstanceUniform};
-use tracing::trace;
+use tracing::{info, trace};
 use wgpu::{BindGroup, BindGroupLayout, Buffer, RenderPass, RenderPipeline};
 
 pub type MaterialRef = Id<Material>;
@@ -99,7 +99,7 @@ pub trait Gfx {
         scale: u8,
     );
 
-    fn text_draw(&mut self, position: Vec3, text: &str, font_ref: &FontAndMaterial);
+    fn text_draw(&mut self, position: Vec3, text: &str, font_ref: &FontAndMaterial, color: &Color);
 
     #[must_use]
     fn now(&self) -> Millis;
@@ -128,6 +128,7 @@ fn to_wgpu_color(c: Color) -> wgpu::Color {
     }
 }
 
+#[derive(Debug)]
 struct RenderItem {
     position: Vec3,
     material_ref: WeakMaterialRef,
@@ -135,11 +136,14 @@ struct RenderItem {
     renderable: Renderable,
 }
 
+#[derive(Debug)]
 pub struct Text {
     text: String,
     font_ref: WeakFontRef,
+    color: Color,
 }
 
+#[derive(Debug)]
 enum Renderable {
     Sprite(Sprite),
     TileMap(TileMap),
@@ -238,13 +242,20 @@ impl Gfx for Render {
         });
     }
 
-    fn text_draw(&mut self, position: Vec3, text: &str, font_and_mat: &FontAndMaterial) {
+    fn text_draw(
+        &mut self,
+        position: Vec3,
+        text: &str,
+        font_and_mat: &FontAndMaterial,
+        color: &Color,
+    ) {
         self.items.push(RenderItem {
             position,
             material_ref: (&font_and_mat.material_ref).into(),
             renderable: Renderable::Text(Text {
                 text: text.to_string(),
                 font_ref: (&font_and_mat.font_ref).into(),
+                color: color.clone(),
             }),
         });
     }
@@ -507,15 +518,15 @@ impl Render {
         let mut current_batch: Vec<&RenderItem> = Vec::new();
         let mut current_material: Option<&WeakMaterialRef> = None;
 
-        for sprite in &self.items {
-            if Some(&sprite.material_ref) != current_material {
+        for render_item in &self.items {
+            if Some(&render_item.material_ref) != current_material {
                 if !current_batch.is_empty() {
                     material_batches.push(current_batch.clone());
                     current_batch.clear();
                 }
-                current_material = Some(&sprite.material_ref);
+                current_material = Some(&render_item.material_ref);
             }
-            current_batch.push(sprite);
+            current_batch.push(render_item);
         }
 
         if !current_batch.is_empty() {
@@ -534,8 +545,7 @@ impl Render {
         let mut batch_vertex_ranges: Vec<(WeakMaterialRef, u32, u32)> = Vec::new();
 
         for render_items in &batches {
-            let quad_index = quad_matrix_and_uv.len() as u32;
-            let mut quad_count = 0;
+            let quad_len_before = quad_matrix_and_uv.len() as u32;
 
             // Fix: Access material_ref through reference and copy it
             let weak_material_ref = render_items
@@ -615,17 +625,16 @@ impl Render {
                             Vec4(params.color.to_f32_slice()),
                         );
                         quad_matrix_and_uv.push(quad_instance);
-                        quad_count += 1;
                     }
 
-                    Renderable::Text(font_and_mat) => {
-                        let result = fonts.get_weak(font_and_mat.font_ref);
+                    Renderable::Text(text) => {
+                        let result = fonts.get_weak(text.font_ref);
                         if result.is_none() {
                             continue;
                         }
                         let font = result.unwrap();
 
-                        let glyphs = font.draw(&font_and_mat.text);
+                        let glyphs = font.draw(&text.text);
                         for glyph in glyphs {
                             let pos = render_item.position + Vec3::from(glyph.relative_position);
                             let texture_size = glyph.texture_rectangle.size;
@@ -645,10 +654,9 @@ impl Render {
                                 model_matrix,
                                 tex_coords_mul_add,
                                 0,
-                                Vec4([1.0, 1.0, 1.0, 1.0]),
+                                Vec4(text.color.to_f32_slice()),
                             );
                             quad_matrix_and_uv.push(quad_instance);
-                            quad_count += 1;
                         }
                     }
 
@@ -695,13 +703,13 @@ impl Render {
                                 Vec4([1.0, 1.0, 1.0, 1.0]),
                             );
                             quad_matrix_and_uv.push(quad_instance);
-                            quad_count += 1;
                         }
                     }
                 }
-
-                batch_vertex_ranges.push((weak_material_ref, quad_index, quad_count));
             }
+
+            let quad_count = quad_matrix_and_uv.len() as u32 - quad_len_before;
+            batch_vertex_ranges.push((weak_material_ref, quad_len_before, quad_count));
         }
 
         // write all model_matrix and uv_coords to instance buffer once, before the render pass
