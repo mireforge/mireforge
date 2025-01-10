@@ -16,5 +16,5 @@ To use Swamp in your project, include it in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-swamp = "0.0.14-alpha.2"
+swamp = "0.0.14"
 ```
