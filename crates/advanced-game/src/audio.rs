@@ -46,7 +46,7 @@ impl<A: ApplicationAudio<L>, L: ApplicationLogic> GameAudioRender<A, L> {
         let mut assets = GameAssets::new(all_resources, clock.now());
         Self {
             audio: A::new(&mut assets),
-            _phantom: PhantomData::default(),
+            _phantom: PhantomData,
         }
     }
 }

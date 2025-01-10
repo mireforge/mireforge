@@ -351,7 +351,7 @@ pub fn load_texture_from_memory(
             origin: Origin3d::ZERO,
             aspect: TextureAspect::All,
         },
-        &img,
+        img,
         ImageDataLayout {
             offset: 0,
             bytes_per_row: Some(4 * width),
