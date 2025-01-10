@@ -27,6 +27,7 @@ pub struct GameLogic<L: ApplicationLogic> {
 }
 
 impl<L: ApplicationLogic> GameLogic<L> {
+    #[must_use]
     pub fn new() -> Self {
         Self { logic: L::new() }
     }
@@ -34,7 +35,7 @@ impl<L: ApplicationLogic> GameLogic<L> {
         for message in iter {
             match message {
                 InputMessage::KeyboardInput(button_state, key_code) => {
-                    self.logic.keyboard_input(*button_state, *key_code)
+                    self.logic.keyboard_input(*button_state, *key_code);
                 }
                 InputMessage::MouseInput(button_state, button) => {
                     self.logic.mouse_input(*button_state, *button);
@@ -80,7 +81,7 @@ impl<L: ApplicationLogic> GameLogic<L> {
             (clamped_to_viewport.y as u64 * virtual_surface_size.y as u64) / viewport.size.y as u64;
 
         let virtual_position = UVec2::new(virtual_position_x as u16, virtual_position_y as u16);
-        self.logic.cursor_moved(virtual_position)
+        self.logic.cursor_moved(virtual_position);
     }
 
     pub fn mouse_move(&mut self, iter: MessagesIterator<WindowMessage>, wgpu_render: &Render) {
@@ -150,7 +151,7 @@ pub fn advanced_gamepad_input_tick<L: ApplicationLogic>(
                 if let Some(gamepad) = gamepads.gamepad(*gamepad_id) {
                     internal_game
                         .logic
-                        .gamepad_activated(*gamepad_id, gamepad.name.as_str().to_string())
+                        .gamepad_activated(*gamepad_id, gamepad.name.as_str().to_string());
                 }
             }
             GamepadMessage::ButtonChanged(gamepad_id, button, value) => {
@@ -160,7 +161,7 @@ pub fn advanced_gamepad_input_tick<L: ApplicationLogic>(
                             gamepad,
                             *button,
                             Fp::from(*value),
-                        )
+                        );
                     }
                 }
             }
@@ -169,7 +170,7 @@ pub fn advanced_gamepad_input_tick<L: ApplicationLogic>(
                     if gamepad.is_active {
                         internal_game
                             .logic
-                            .gamepad_axis_changed(gamepad, *axis, Fp::from(*value))
+                            .gamepad_axis_changed(gamepad, *axis, Fp::from(*value));
                     }
                 }
             }
@@ -185,7 +186,8 @@ pub struct GameLogicPlugin<L: ApplicationLogic> {
 }
 
 impl<L: ApplicationLogic> GameLogicPlugin<L> {
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self {
             _phantom: PhantomData,
         }

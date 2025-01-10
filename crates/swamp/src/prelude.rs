@@ -15,7 +15,7 @@ pub use {
     limnus_local_resource::prelude::*,
     limnus_resource::prelude::*,
     limnus_resource::*,
-    limnus_screen::Window,
+    limnus_screen::{ScreenMode, Window},
     limnus_system_params::prelude::*,
     limnus_system_runner::*,
     limnus_wgpu_window::*,

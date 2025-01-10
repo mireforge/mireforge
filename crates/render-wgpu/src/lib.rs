@@ -20,7 +20,7 @@ use swamp_font::FontRef;
 use swamp_font::WeakFontRef;
 use swamp_render::prelude::*;
 use swamp_wgpu_sprites::{SpriteInfo, SpriteInstanceUniform};
-use tracing::{info, trace};
+use tracing::trace;
 use wgpu::{BindGroup, BindGroupLayout, Buffer, RenderPass, RenderPipeline};
 
 pub type MaterialRef = Id<Material>;
@@ -39,15 +39,16 @@ pub struct FixedAtlas {
 }
 
 impl FixedAtlas {
+    /// # Panics
+    ///
+    #[must_use]
     pub fn new(one_cell_size: UVec2, texture_size: UVec2, material_ref: MaterialRef) -> Self {
         let cell_count_size = UVec2::new(
             texture_size.x / one_cell_size.x,
             texture_size.y / one_cell_size.y,
         );
 
-        if cell_count_size.x == 0 {
-            panic!("illegal texture and one cell size");
-        }
+        assert_ne!(cell_count_size.x, 0, "illegal texture and one cell size");
 
         Self {
             material: material_ref,
@@ -210,7 +211,7 @@ impl Gfx for Render {
         material_ref: &MaterialRef,
         params: &SpriteParams,
     ) {
-        self.draw_sprite_ex(position, material_ref, params.clone());
+        self.draw_sprite_ex(position, material_ref, *params);
     }
 
     fn set_origin(&mut self, position: Vec2) {
@@ -255,7 +256,7 @@ impl Gfx for Render {
             renderable: Renderable::Text(Text {
                 text: text.to_string(),
                 font_ref: (&font_and_mat.font_ref).into(),
-                color: color.clone(),
+                color: *color,
             }),
         });
     }
@@ -361,6 +362,7 @@ impl Render {
         });
     }
 
+    #[must_use]
     pub fn viewport_from_integer_scale(physical_size: UVec2, virtual_size: UVec2) -> URect {
         let window_aspect = physical_size.x as f32 / physical_size.y as f32;
         let virtual_aspect = virtual_size.x as f32 / virtual_size.y as f32;
@@ -396,6 +398,7 @@ impl Render {
         )
     }
 
+    #[must_use]
     pub fn viewport_from_float_scale(physical_size: UVec2, virtual_size: UVec2) -> URect {
         let window_aspect = physical_size.x as f32 / physical_size.y as f32;
         let virtual_aspect = virtual_size.x as f32 / virtual_size.y as f32;
@@ -489,9 +492,7 @@ impl Render {
             position,
             material,
             Sprite {
-                params: SpriteParams {
-                    ..Default::default()
-                },
+                params: SpriteParams::default(),
             },
         );
     }
@@ -536,7 +537,13 @@ impl Render {
         material_batches
     }
 
+    /// # Panics
+    ///
+    #[allow(clippy::too_many_lines)]
     pub fn prepare_render(&mut self, materials: &Assets<Material>, fonts: &Assets<Font>) {
+        const FLIP_X_MASK: u32 = 0b0000_0100;
+        const FLIP_Y_MASK: u32 = 0b0000_1000;
+
         sort_render_items_by_z_and_material(&mut self.items);
 
         let batches = self.order_render_items_in_batches();
@@ -600,9 +607,6 @@ impl Render {
                             render_atlas,
                             current_texture_size,
                         );
-
-                        const FLIP_X_MASK: u32 = 0b00000100;
-                        const FLIP_Y_MASK: u32 = 0b00001000;
 
                         let mut rotation_value = match params.rotation {
                             Rotation::Degrees0 => 0,
@@ -722,6 +726,8 @@ impl Render {
         self.batch_offsets = batch_vertex_ranges;
     }
 
+    /// # Panics
+    ///
     pub fn render(
         &mut self,
         render_pass: &mut RenderPass,
@@ -798,7 +804,7 @@ impl Render {
 
         let num_indices = swamp_wgpu_sprites::INDICES.len() as u32;
 
-        for &(weak_material_ref, start, count) in self.batch_offsets.iter() {
+        for &(weak_material_ref, start, count) in &self.batch_offsets {
             let wgpu_material = materials
                 .get_weak(weak_material_ref)
                 .expect("no such material");
@@ -813,14 +819,14 @@ impl Render {
         self.items.clear();
     }
 
-    pub fn material_from_texture(&mut self, texture: wgpu::Texture, label: &str) -> Material {
+    pub fn material_from_texture(&self, texture: wgpu::Texture, label: &str) -> Material {
         trace!("load texture from memory with name: '{label}'");
         let size = &texture.size();
         let texture_and_sampler_bind_group =
             swamp_wgpu_sprites::create_sprite_texture_and_sampler_bind_group(
                 &self.device,
                 &self.texture_sampler_bind_group_layout,
-                texture,
+                &texture,
                 &self.sampler,
                 label,
             );

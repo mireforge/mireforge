@@ -7,6 +7,7 @@ use wgpu::{
     ShaderModuleDescriptor, ShaderSource,
 };
 
+#[must_use]
 pub fn create_shader_module(device: &Device, name: &str, shader_source: &str) -> ShaderModule {
     device.create_shader_module(ShaderModuleDescriptor {
         label: Some(name),
@@ -14,6 +15,7 @@ pub fn create_shader_module(device: &Device, name: &str, shader_source: &str) ->
     })
 }
 
+#[must_use]
 pub fn create_nearest_sampler(device: &Device, label: &str) -> Sampler {
     device.create_sampler(&SamplerDescriptor {
         label: Some(label),

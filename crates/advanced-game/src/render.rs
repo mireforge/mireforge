@@ -8,15 +8,13 @@ use crate::{ApplicationLogic, ApplicationRender};
 use limnus_app::prelude::{App, Plugin};
 use limnus_local_resource::prelude::LocalResource;
 use limnus_resource::ResourceStorage;
-use limnus_system_params::{LoRe, LoReM, Re, ReM};
+use limnus_system_params::{LoRe, LoReM, ReM};
 use limnus_system_runner::UpdatePhase;
-use limnus_wgpu_window::WgpuWindow;
 use monotonic_time_rs::{InstantMonotonicClock, Millis, MonotonicClock};
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
-use swamp_font::Font;
 use swamp_game_assets::GameAssets;
-use swamp_render_wgpu::{Material, Render};
+use swamp_render_wgpu::Render;
 use tracing::trace;
 
 #[derive(LocalResource)]
@@ -46,42 +44,19 @@ impl<R: ApplicationRender<L>, L: ApplicationLogic> GameRenderer<R, L> {
         }
     }
 
-    pub fn render(
-        &mut self,
-        logic: &L,
-        wgpu: &WgpuWindow,
-        wgpu_render: &mut Render,
-        materials: &limnus_assets::Assets<Material>,
-        fonts: &limnus_assets::Assets<Font>,
-        now: Millis,
-    ) {
+    pub fn render(&mut self, logic: &L, wgpu_render: &mut Render, now: Millis) {
         wgpu_render.set_now(now);
         self.renderer.render(wgpu_render, logic);
-
-        wgpu.render(wgpu_render.clear_color(), |render_pass| {
-            wgpu_render.render(render_pass, materials, fonts, now)
-        })
-        .unwrap();
     }
 }
 
 pub fn advanced_game_render_tick<R: ApplicationRender<L>, L: ApplicationLogic>(
     mut game_render: LoReM<GameRenderer<R, L>>,
     logic: LoRe<GameLogic<L>>,
-    materials: Re<limnus_assets::Assets<Material>>,
-    fonts: Re<limnus_assets::Assets<Font>>,
-    window: Re<WgpuWindow>,
     mut wgpu_render: ReM<Render>,
 ) {
     let now = game_render.clock.now();
-    game_render.render(
-        &logic.logic,
-        &window,
-        &mut wgpu_render,
-        &materials,
-        &fonts,
-        now,
-    );
+    game_render.render(&logic.logic, &mut wgpu_render, now);
 }
 
 #[derive(Default)]
@@ -90,7 +65,8 @@ pub struct GameRendererPlugin<R: ApplicationRender<L>, L: ApplicationLogic> {
 }
 
 impl<A: ApplicationRender<L>, L: ApplicationLogic> GameRendererPlugin<A, L> {
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self {
             _phantom: PhantomData,
         }

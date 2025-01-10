@@ -67,7 +67,7 @@ impl fmt::Display for AspectRatio {
             Self::Ratio16By10 => write!(f, "16:10"),
             Self::Ratio21By9 => write!(f, "21:9"),
             Self::Ratio4By3 => write!(f, "4:3"),
-            Self::Other(vec) => write!(f, "aspect ratio: {:?}", vec),
+            Self::Other(vec) => write!(f, "aspect ratio: {vec:?}"),
         }
     }
 }
@@ -92,6 +92,7 @@ impl Default for Color {
 }
 
 impl Color {
+    #[must_use]
     pub fn from_f32(r: f32, g: f32, b: f32, a: f32) -> Self {
         Self::from_octet(
             (r * 255.0) as u8,
@@ -101,6 +102,7 @@ impl Color {
         )
     }
 
+    #[must_use]
     pub fn to_f32_slice(&self) -> [f32; 4] {
         [
             self.r as f32 / 255.0,
@@ -110,10 +112,12 @@ impl Color {
         ]
     }
 
+    #[must_use]
     pub const fn from_octet(r: u8, g: u8, b: u8, a: u8) -> Self {
         Self { r, g, b, a }
     }
 
+    #[must_use]
     pub fn to_f64(&self) -> (f64, f64, f64, f64) {
         (
             self.r as f64 / 255.0,

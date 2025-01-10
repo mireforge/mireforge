@@ -23,18 +23,18 @@ swamp-game-audio = { path = "../game-audio", version = "0.0.14-alpha.2" }
 
 
 # Limnus
-limnus-assets = "0.0.12"
-limnus-app = "0.0.12"
-limnus-resource = "0.0.12"
-limnus-local-resource = "0.0.12"
-limnus-system-params =  "0.0.12"
-limnus-screen = "0.0.12"
-limnus-wgpu-window = "0.0.12"
-limnus-system-runner = "0.0.12"
-limnus-audio-mixer = "0.0.12"
-limnus-basic-input = "0.0.12"
-limnus-message = "0.0.12"
-limnus-gamepad = "0.0.12"
+limnus-assets = "0.0.13"
+limnus-app = "0.0.13"
+limnus-resource = "0.0.13"
+limnus-local-resource = "0.0.13"
+limnus-system-params =  "0.0.13"
+limnus-screen = "0.0.13"
+limnus-wgpu-window = "0.0.13"
+limnus-system-runner = "0.0.13"
+limnus-audio-mixer = "0.0.13"
+limnus-basic-input = "0.0.13"
+limnus-message = "0.0.13"
+limnus-gamepad = "0.0.13"
 fixed32 = "0.0.17"
 
 [dev-dependencies]

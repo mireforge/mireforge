@@ -16,8 +16,8 @@ swamp-font = { path = "../font", version = "0.0.14-alpha.2" }
 swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.14-alpha.2" }
 
 # Limnus
-limnus-assets = "0.0.12"
-limnus-asset-registry = "0.0.12"
-limnus-resource = "0.0.12"
-limnus-asset-id = "0.0.12"
-limnus-audio-mixer = "0.0.12"
+limnus-assets = "0.0.13"
+limnus-asset-registry = "0.0.13"
+limnus-resource = "0.0.13"
+limnus-asset-id = "0.0.13"
+limnus-audio-mixer = "0.0.13"

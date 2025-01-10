@@ -56,8 +56,8 @@ impl Debug for GameAssets<'_> {
 impl<'a> GameAssets<'a> {
     pub fn new(resource_storage: &'a mut ResourceStorage, now: Millis) -> Self {
         Self {
-            resource_storage,
             now,
+            resource_storage,
         }
     }
 }

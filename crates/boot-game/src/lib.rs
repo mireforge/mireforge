@@ -5,7 +5,7 @@
 pub mod prelude;
 
 use int_math::UVec2;
-use limnus::prelude::{App, AppReturnValue};
+use limnus::prelude::{App, AppReturnValue, ScreenMode};
 use limnus::prelude::{Plugin, Window};
 use limnus::DefaultPlugins;
 use swamp_font::FontPlugin;
@@ -13,6 +13,7 @@ use swamp_game::{Application, GamePlugin, GameSettings};
 use swamp_material::MaterialPlugin;
 use swamp_render_wgpu::plugin::RenderWgpuPlugin;
 
+// #[must_use] // TODO: should be able to convert AppReturnValue in the future
 pub fn run<T: Application>(
     title: &str,
     virtual_size: UVec2,
@@ -23,7 +24,7 @@ pub fn run<T: Application>(
             title: title.to_string(),
             requested_surface_size,
             minimal_surface_size: virtual_size,
-            fullscreen: false,
+            mode: ScreenMode::Windowed,
         })
         .insert_resource(GameSettings { virtual_size })
         .add_plugins((DefaultPlugins, SwampDefaultPlugins))

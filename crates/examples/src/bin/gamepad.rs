@@ -68,20 +68,17 @@ impl ApplicationLogic for ExampleLogic {
     }
 
     fn gamepad_button_changed(&mut self, _gamepad: &Gamepad, button: Button, value: Fp) {
-        if value > Fp::from(0.1) {
-            if let Button::South = button {
-                if self.character_action == Action::Idle {
-                    self.tick_count_since_attack = 0;
-                    self.attacking_ticks = 0;
-                    self.character_action = Action::Attacking;
-                    self.attack_id += 1;
-                }
-            }
+        if value > Fp::from(0.1) && button == Button::South && self.character_action == Action::Idle
+        {
+            self.tick_count_since_attack = 0;
+            self.attacking_ticks = 0;
+            self.character_action = Action::Attacking;
+            self.attack_id += 1;
         }
     }
 
     fn gamepad_axis_changed(&mut self, _gamepad: &Gamepad, axis: Axis, value: Fp) {
-        if let Axis::LeftStickX = axis {
+        if axis == Axis::LeftStickX {
             self.character_x_velocity = value * 3;
         }
     }
@@ -208,16 +205,16 @@ impl ApplicationAudio<ExampleLogic> for ExampleAudio {
 
     fn audio(&mut self, audio: &mut impl Audio, state: &ExampleLogic) {
         if state.character_action == Action::Attacking {
-            if self.attack_sound_played_id != state.attack_id {
-                self.attack_sound = Some(audio.play(&self.whoosh_sound));
-                self.attack_sound_ticks = 0;
-                self.attack_sound_played_id = state.attack_id;
-            } else {
+            if self.attack_sound_played_id == state.attack_id {
                 self.attack_sound_ticks += 1;
                 if self.attack_sound_ticks > 20 {
                     // TODO: HACK: check if sound is finished playing
                     self.attack_sound = None;
                 }
+            } else {
+                self.attack_sound = Some(audio.play(&self.whoosh_sound));
+                self.attack_sound_ticks = 0;
+                self.attack_sound_played_id = state.attack_id;
             }
         } else {
             self.attack_sound = None;

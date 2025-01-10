@@ -2,26 +2,45 @@
  * Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/swamp/swamp
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
-use crate::Render;
-
+use crate::{Material, Render};
 use limnus_app::prelude::{App, Plugin};
+use limnus_assets::prelude::Assets as LimnusAssets;
+use limnus_clock::Clock;
 use limnus_screen::{Window, WindowMessage};
-use limnus_system_params::{Msg, ReM};
+use limnus_system_params::{LoRe, Msg, Re, ReM};
 use limnus_system_runner::UpdatePhase;
 use limnus_wgpu_window::WgpuWindow;
-use monotonic_time_rs::Millis;
+use monotonic_time_rs::{Millis, MonotonicClock};
 use std::sync::Arc;
+use swamp_font::Font;
 use tracing::debug;
 
 fn tick(mut wgpu_render: ReM<Render>, window_messages: Msg<WindowMessage>) {
     for msg in window_messages.iter_previous() {
         if let WindowMessage::Resized(size) = msg {
             debug!("wgpu_render detected resized to {:?}", size);
-            wgpu_render.resize(*size)
+            wgpu_render.resize(*size);
         }
     }
 }
 
+/// # Panics
+///
+pub fn flush_render_tick(
+    script: LoRe<Clock>,
+    wgpu_window: Re<WgpuWindow>,
+    mut wgpu_render: ReM<Render>,
+    materials: Re<LimnusAssets<Material>>,
+    fonts: Re<LimnusAssets<Font>>,
+) {
+    let now = script.clock.now();
+
+    wgpu_window
+        .render(wgpu_render.clear_color(), |render_pass| {
+            wgpu_render.render(render_pass, &materials, &fonts, now);
+        })
+        .unwrap();
+}
 pub struct RenderWgpuPlugin;
 
 impl Plugin for RenderWgpuPlugin {
@@ -37,6 +56,8 @@ impl Plugin for RenderWgpuPlugin {
             Millis::new(0),
         );
         app.insert_resource(wgpu_render);
+
         app.add_system(UpdatePhase::First, tick);
+        app.add_system(UpdatePhase::PostUpdate, flush_render_tick);
     }
 }

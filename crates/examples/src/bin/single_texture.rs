@@ -49,6 +49,8 @@ impl Application for SingleTextureExample {
     }
 
     fn render(&mut self, gfx: &mut impl Gfx) {
+        const COLS: u16 = VIRTUAL_SCREEN_SIZE.x / TILE_SIZE.x;
+
         gfx.draw_sprite(
             (
                 VIRTUAL_SCREEN_SIZE.x as i16 / 2i16,
@@ -78,7 +80,6 @@ impl Application for SingleTextureExample {
 
         gfx.set_origin((pan, 0).into());
 
-        const COLS: u16 = VIRTUAL_SCREEN_SIZE.x / TILE_SIZE.x;
         for frame_index in 0..128u16 {
             gfx.sprite_atlas_frame(
                 (

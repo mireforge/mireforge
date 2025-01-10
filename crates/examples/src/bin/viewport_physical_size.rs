@@ -41,8 +41,9 @@ fn fun_value(tick_count: u32, speed: f32, min: i16, max: i16, offset: u32) -> i1
 }
 impl ViewportPhysicalSizeExample {
     fn converted_zoom(scroll_wheel_zoom: i16) -> f32 {
-        let mut converted_zoom = scroll_wheel_zoom as f32 / SCROLL_WHEEL_MAX as f32;
         const MAX_ZOOM: f32 = 0.05;
+
+        let mut converted_zoom = scroll_wheel_zoom as f32 / SCROLL_WHEEL_MAX as f32;
         converted_zoom *= MAX_ZOOM;
 
         converted_zoom.clamp(0.001, MAX_ZOOM)

@@ -40,7 +40,8 @@ impl Plugin for FontPlugin {
 pub struct FontConverter;
 
 impl FontConverter {
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self {}
     }
 }
@@ -63,7 +64,7 @@ impl AssetLoader for FontConverter {
         }
 
         debug!("convert from fnt {name}");
-        let font = bmf_parser::BMFont::from_octets(octets)?;
+        let font = BMFont::from_octets(octets)?;
 
         debug!("font complete {name}");
         let font_assets = resources.fetch_mut::<Assets<Font>>();
@@ -81,11 +82,17 @@ pub struct Glyph {
 }
 
 impl Font {
+    /// # Panics
+    ///
+    #[must_use]
     pub fn from_octets(bm_contents: &[u8]) -> Self {
         let font = BMFont::from_octets(bm_contents).unwrap();
         Self { font }
     }
 
+    /// # Panics
+    ///
+    #[must_use]
     pub fn draw(&self, text: &str) -> Vec<Glyph> {
         let mut x = 0;
         let y = 0;

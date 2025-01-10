@@ -16,7 +16,7 @@ swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.14-alpha.2" }
 swamp-font = { path = "../font", version = "0.0.14-alpha.2" }
 
 # Limnus
-# limnus-app = "0.0.12"
-# limnus-screen = "0.0.12"
+# limnus-app = "0.0.13"
+# limnus-screen = "0.0.13"
 
-limnus = "0.0.12"# TODO: Move DefaultPlugins
+limnus = "0.0.13"# TODO: Move DefaultPlugins

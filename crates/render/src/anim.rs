@@ -14,6 +14,7 @@ pub struct Tick(u64);
 
 impl Tick {
     #[inline]
+    #[must_use]
     pub const fn inner(&self) -> u64 {
         self.0
     }
@@ -46,6 +47,7 @@ pub struct FrameAnimationConfig {
 }
 
 impl FrameAnimationConfig {
+    #[must_use]
     pub fn new(start_frame: u16, count: u8, fps: Fps) -> Self {
         Self {
             start_frame,
@@ -71,6 +73,7 @@ pub struct FrameAnimation {
 }
 
 impl FrameAnimation {
+    #[must_use]
     pub fn new(config: FrameAnimationConfig) -> Self {
         Self {
             started_at_time: Millis::new(0),
@@ -80,6 +83,9 @@ impl FrameAnimation {
             play_mode: PlayMode::Once,
         }
     }
+
+    /// # Panics
+    ///
     pub fn update(&mut self, now: Millis) {
         if !self.is_playing {
             return;
@@ -105,19 +111,23 @@ impl FrameAnimation {
         }
     }
 
-    pub fn is_done(&self) -> bool {
+    #[must_use]
+    pub const fn is_done(&self) -> bool {
         !self.is_playing
     }
 
-    pub fn is_playing(&self) -> bool {
+    #[must_use]
+    pub const fn is_playing(&self) -> bool {
         self.is_playing
     }
 
-    pub fn absolute_frame(&self) -> u16 {
+    #[must_use]
+    pub const fn absolute_frame(&self) -> u16 {
         self.relative_frame as u16 + self.config.start_frame
     }
 
-    pub fn relative_frame(&self) -> u16 {
+    #[must_use]
+    pub const fn relative_frame(&self) -> u16 {
         self.relative_frame as u16
     }
 

@@ -52,7 +52,7 @@ impl Application for FontGlyphExample {
                     ),
                     glyph.texture_rectangle,
                     &self.font.material_ref,
-                )
+                );
             }
         }
     }

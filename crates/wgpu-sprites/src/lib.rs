@@ -6,7 +6,6 @@ use bytemuck::{Pod, Zeroable};
 use image::RgbaImage;
 use limnus_wgpu_math::{Matrix4, Vec4};
 use wgpu::util::DeviceExt;
-use wgpu::BindingResource;
 use wgpu::BufferBindingType;
 use wgpu::{
     util, BlendState, ColorTargetState, ColorWrites, Face, FrontFace, MultisampleState,
@@ -21,6 +20,7 @@ use wgpu::{
     TextureDimension, TextureFormat, TextureSampleType, TextureUsages, TextureViewDescriptor,
     TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode,
 };
+use wgpu::{BindingResource, PipelineCompilationOptions};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
@@ -51,6 +51,7 @@ impl Vertex {
 /// Buffer that stores a model and texture coordinates for one sprite
 // model: Mx4
 // tex_coords: V4
+#[must_use]
 pub fn create_sprite_uniform_buffer(device: &Device, label: &str) -> Buffer {
     device.create_buffer_init(&util::BufferInitDescriptor {
         label: Some(label),
@@ -86,6 +87,7 @@ unsafe impl Pod for SpriteInstanceUniform {}
 unsafe impl Zeroable for SpriteInstanceUniform {}
 
 impl SpriteInstanceUniform {
+    #[must_use]
     pub const fn new(model: Matrix4, tex_coords_mul_add: Vec4, rotation: u32, color: Vec4) -> Self {
         Self {
             model,
@@ -262,18 +264,12 @@ impl SpriteInfo {
         Self {
             sprite_pipeline,
             sampler,
-            index_buffer,
             vertex_buffer,
-
-            // Group 0
+            index_buffer,
             camera_bind_group_layout,
             camera_uniform_buffer,
             camera_bind_group,
-
-            // Group 1
             sprite_texture_sampler_bind_group_layout,
-
-            // Instance
             quad_matrix_and_uv_instance_buffer,
         }
     }
@@ -327,7 +323,7 @@ fn create_camera_uniform_bind_group(
 pub fn load_texture_from_memory(
     device: &Device,
     queue: &Queue,
-    img: RgbaImage,
+    img: &RgbaImage,
     label: &str,
 ) -> Texture {
     let (width, height) = img.dimensions();
@@ -371,6 +367,7 @@ pub fn load_texture_from_memory(
     texture
 }
 
+#[must_use]
 pub fn create_sprite_vertex_buffer(device: &Device, label: &str) -> Buffer {
     device.create_buffer_init(&util::BufferInitDescriptor {
         label: Some(label),
@@ -379,6 +376,7 @@ pub fn create_sprite_vertex_buffer(device: &Device, label: &str) -> Buffer {
     })
 }
 
+#[must_use]
 pub fn create_sprite_index_buffer(device: &Device, label: &str) -> Buffer {
     device.create_buffer_init(&util::BufferInitDescriptor {
         label: Some(label),
@@ -389,6 +387,7 @@ pub fn create_sprite_index_buffer(device: &Device, label: &str) -> Buffer {
 
 /// Binding0: Texture
 /// Binding1: Sampler
+#[must_use]
 pub fn create_sprite_texture_sampler_group_layout(device: &Device, label: &str) -> BindGroupLayout {
     device.create_bind_group_layout(&BindGroupLayoutDescriptor {
         label: Some(label),
@@ -417,7 +416,7 @@ pub fn create_sprite_texture_sampler_group_layout(device: &Device, label: &str) 
 pub fn create_sprite_texture_and_sampler_bind_group(
     device: &Device,
     bind_group_layout: &BindGroupLayout,
-    texture: Texture,
+    texture: &Texture,
     sampler: &Sampler,
     label: &str,
 ) -> BindGroup {
@@ -480,13 +479,13 @@ fn create_sprite_pipeline(
         vertex: wgpu::VertexState {
             module: vertex_shader,
             entry_point: Some("vs_main"),
-            compilation_options: Default::default(),
+            compilation_options: PipelineCompilationOptions::default(),
             buffers: &[Vertex::desc(), SpriteInstanceUniform::desc()],
         },
         fragment: Some(wgpu::FragmentState {
             module: fragment_shader,
             entry_point: Some("fs_main"),
-            compilation_options: Default::default(),
+            compilation_options: PipelineCompilationOptions::default(),
             targets: &[Some(ColorTargetState {
                 format,
                 blend: Some(BlendState::ALPHA_BLENDING),

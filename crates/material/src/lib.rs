@@ -33,7 +33,8 @@ impl Plugin for MaterialPlugin {
 pub struct MaterialWgpuProcessor;
 
 impl MaterialWgpuProcessor {
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self {}
     }
 }
@@ -66,7 +67,7 @@ impl AssetLoader for MaterialWgpuProcessor {
         let wgpu_texture = swamp_wgpu_sprites::load_texture_from_memory(
             &device_info.device,
             &device_info.queue,
-            img,
+            &img,
             name.value(),
         );
 

@@ -46,7 +46,7 @@ impl<A: ApplicationAudio<L>, L: ApplicationLogic> GameAudioRender<A, L> {
         let mut assets = GameAssets::new(all_resources, clock.now());
         Self {
             audio: A::new(&mut assets),
-            _phantom: Default::default(),
+            _phantom: PhantomData::default(),
         }
     }
 }
@@ -57,7 +57,8 @@ pub struct GameAudioRenderPlugin<A: ApplicationAudio<L>, L: ApplicationLogic> {
 }
 
 impl<A: ApplicationAudio<L>, L: ApplicationLogic> GameAudioRenderPlugin<A, L> {
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self {
             _phantom: PhantomData,
         }

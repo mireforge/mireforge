@@ -21,15 +21,13 @@ use limnus_resource::ResourceStorage;
 use limnus_screen::WindowMessage;
 use limnus_system_params::{LoReM, Msg, Re, ReAll, ReM};
 use limnus_system_runner::UpdatePhase;
-use limnus_wgpu_window::WgpuWindow;
 use monotonic_time_rs::{InstantMonotonicClock, Millis, MonotonicClock};
 use std::cmp::{max, min};
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
-use swamp_font::Font;
 use swamp_game_assets::{Assets, GameAssets};
 use swamp_game_audio::{Audio, GameAudio};
-use swamp_render_wgpu::{Gfx, Material, Render};
+use swamp_render_wgpu::{Gfx, Render};
 use tracing::debug;
 
 pub trait Application: Sized + 'static {
@@ -101,7 +99,7 @@ impl<G: Application> Game<G> {
         for message in iter {
             match message {
                 InputMessage::KeyboardInput(button_state, key_code) => {
-                    self.game.keyboard_input(*button_state, *key_code)
+                    self.game.keyboard_input(*button_state, *key_code);
                 }
                 InputMessage::MouseInput(button_state, button) => {
                     self.game.mouse_input(*button_state, *button);
@@ -147,7 +145,7 @@ impl<G: Application> Game<G> {
             (clamped_to_viewport.y as u64 * virtual_surface_size.y as u64) / viewport.size.y as u64;
 
         let virtual_position = UVec2::new(virtual_position_x as u16, virtual_position_y as u16);
-        self.game.cursor_moved(virtual_position)
+        self.game.cursor_moved(virtual_position);
     }
 
     pub fn mouse_move(&mut self, iter: MessagesIterator<WindowMessage>, wgpu_render: &Render) {
@@ -171,21 +169,9 @@ impl<G: Application> Game<G> {
         self.game.tick(&mut assets);
     }
 
-    pub fn render(
-        &mut self,
-        wgpu: &WgpuWindow,
-        wgpu_render: &mut Render,
-        materials: &limnus_assets::Assets<Material>,
-        fonts: &limnus_assets::Assets<Font>,
-        now: Millis,
-    ) {
+    pub fn render(&mut self, wgpu_render: &mut Render, now: Millis) {
         wgpu_render.set_now(now);
         self.game.render(wgpu_render);
-
-        wgpu.render(wgpu_render.clear_color(), |render_pass| {
-            wgpu_render.render(render_pass, materials, fonts, now)
-        })
-        .unwrap();
     }
 }
 
@@ -199,6 +185,7 @@ impl<G: Application> Default for GamePlugin<G> {
 }
 
 impl<G: Application> GamePlugin<G> {
+    #[must_use]
     pub const fn new() -> Self {
         Self {
             phantom_data: PhantomData,
@@ -243,14 +230,11 @@ pub fn logic_tick<G: Application>(mut internal_game: LoReM<Game<G>>, mut all_res
 
 pub fn render_tick<G: Application>(
     mut internal_game: LoReM<Game<G>>,
-    window: Re<WgpuWindow>,
     mut wgpu_render: ReM<Render>,
-    materials: Re<limnus_assets::Assets<Material>>,
-    fonts: Re<limnus_assets::Assets<Font>>,
 ) {
     let now = internal_game.clock.now();
 
-    internal_game.render(&window, &mut wgpu_render, &materials, &fonts, now);
+    internal_game.render(&mut wgpu_render, now);
 }
 
 pub fn gamepad_input_tick<G: Application>(
@@ -272,7 +256,7 @@ pub fn gamepad_input_tick<G: Application>(
                 if let Some(gamepad) = gamepads.gamepad(*gamepad_id) {
                     internal_game
                         .game
-                        .gamepad_activated(*gamepad_id, gamepad.name.as_str().to_string())
+                        .gamepad_activated(*gamepad_id, gamepad.name.as_str().to_string());
                 }
             }
             GamepadMessage::ButtonChanged(gamepad_id, button, value) => {
@@ -282,7 +266,7 @@ pub fn gamepad_input_tick<G: Application>(
                             gamepad,
                             *button,
                             Fp::from(*value),
-                        )
+                        );
                     }
                 }
             }
@@ -291,7 +275,7 @@ pub fn gamepad_input_tick<G: Application>(
                     if gamepad.is_active {
                         internal_game
                             .game
-                            .gamepad_axis_changed(gamepad, *axis, Fp::from(*value))
+                            .gamepad_axis_changed(gamepad, *axis, Fp::from(*value));
                     }
                 }
             }

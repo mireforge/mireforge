@@ -41,6 +41,7 @@ impl Application for FontExample {
                 .into(),
             REALLY_LONG_STRING,
             &self.font,
+            &Color::default(),
         );
     }
 }
