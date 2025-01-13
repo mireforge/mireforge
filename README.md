@@ -53,16 +53,28 @@ cd crates/examples
 
 ## Recommended Resolutions
 
-Most common desktop resolutions are:
+### Common Desktop Resolutions
 
 - 1920 x 1080
 - 2560 x 1440
 - 3840 x 2160
 
-Steam Deck is slightly different with 1280x800, but we can approximate it as 720p.
+### Steam Deck Resolution
 
-For those resolutions 720p is the common denominator and for a retro pixel-perfect feel we half the height, giving a resolution of **640 x 360**, to get a really old school feel, use **320 x 180**.
+The Steam Deck has a unique resolution of **1280 × 800**, which can be approximated to a **720p**-like resolution.
 
+### Base Resolutions for Pixel-Perfect Retro Feel
+
+For these resolutions, **720p** serves as a common denominator. To achieve a retro, pixel-perfect aesthetic, we recommend the following base resolutions:
+
+- **640 x 360**
+- **320 x 180** (for a truly old-school feel)
+
+If your target resolution is 1080p or higher, it can work with an intermediate base resolution such as:
+
+- **384 × 216**
+
+This approach allows for flexibility and maintains visual clarity across various display sizes.
 
 ## About Contributions
 
