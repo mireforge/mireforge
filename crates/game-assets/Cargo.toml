@@ -8,16 +8,15 @@ categories = ["game-development"]
 description = "Game asset loading"
 
 [dependencies]
-tracing = "0.1.40"
 int_math = "0.0.2"
-monotonic-time-rs = "0.0.5"
+monotonic-time-rs = "0.0.9"
 
 swamp-font = { path = "../font", version = "0.0.14" }
 swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.14" }
 
 # Limnus
-limnus-assets = "0.0.13"
-limnus-asset-registry = "0.0.13"
-limnus-resource = "0.0.13"
-limnus-asset-id = "0.0.13"
-limnus-audio-mixer = "0.0.13"
+limnus-assets = "0.0.15"
+limnus-asset-registry = "0.0.15"
+limnus-resource = "0.0.15"
+limnus-asset-id = "0.0.15"
+limnus-audio-mixer = "0.0.15"

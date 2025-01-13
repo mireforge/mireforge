@@ -1,5 +1,9 @@
 # Changelog
 
+## 🔖 [v0.0.14](https://github.com/swamp/swamp/releases/tag/v0.0.14) (2025-01-13)
+
+Upgrade limnus dependency to `0.0.15`.
+
 ## 🔖 [v0.0.13](https://github.com/swamp/swamp/releases/tag/v0.0.13) (2024-12-03)
 
 Upgrade limnus dependency to 0.0.12.

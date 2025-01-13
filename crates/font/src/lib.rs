@@ -11,6 +11,7 @@ use limnus_assets::Assets;
 use limnus_assets_loader::{
     AssetLoader, ConversionError, ResourceStorage, WrappedAssetLoaderRegistry,
 };
+use limnus_local_resource::LocalResourceStorage;
 use tracing::debug;
 
 pub type FontRef = Id<Font>;
@@ -54,6 +55,7 @@ impl AssetLoader for FontConverter {
         id: RawWeakId,
         octets: &[u8],
         resources: &mut ResourceStorage,
+        _local_resources: &mut LocalResourceStorage,
     ) -> Result<(), ConversionError> {
         let name: AssetName;
         {

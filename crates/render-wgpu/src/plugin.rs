@@ -10,7 +10,7 @@ use limnus_screen::{Window, WindowMessage};
 use limnus_system_params::{LoRe, Msg, Re, ReM};
 use limnus_system_runner::UpdatePhase;
 use limnus_wgpu_window::WgpuWindow;
-use monotonic_time_rs::{Millis, MonotonicClock};
+use monotonic_time_rs::Millis;
 use std::sync::Arc;
 use swamp_font::Font;
 use tracing::debug;
@@ -28,7 +28,7 @@ fn tick(mut wgpu_render: ReM<Render>, window_messages: Msg<WindowMessage>) {
 ///
 pub fn flush_render_tick(
     script: LoRe<Clock>,
-    wgpu_window: Re<WgpuWindow>,
+    wgpu_window: LoRe<WgpuWindow>,
     mut wgpu_render: ReM<Render>,
     materials: Re<LimnusAssets<Material>>,
     fonts: Re<LimnusAssets<Font>>,
@@ -45,7 +45,7 @@ pub struct RenderWgpuPlugin;
 
 impl Plugin for RenderWgpuPlugin {
     fn post_initialization(&self, app: &mut App) {
-        let window = app.resource::<WgpuWindow>();
+        let window = app.local_resources().fetch::<WgpuWindow>();
         let window_settings = app.resource::<Window>();
         let wgpu_render = Render::new(
             Arc::clone(window.device()),

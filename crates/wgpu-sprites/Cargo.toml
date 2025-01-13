@@ -11,8 +11,7 @@ keywords = ["game", "render", "sprites"]
 [dependencies]
 bytemuck = "1.19.0"
 image = "0.25.5"
-tracing = "0.1.40"
 wgpu = "23.0.0"
 
 swamp-wgpu = { path = "../wgpu", version = "0.0.14" }
-limnus-wgpu-math = "0.0.13"
+limnus-wgpu-math = "0.0.15"

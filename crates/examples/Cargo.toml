@@ -9,5 +9,4 @@ keywords = ["examples"]
 description = "Examples for the swamp 2D game engine"
 
 [dependencies]
-tracing = "0.1.40"
 swamp = { path = "../swamp", version = "0.0.14", features = ["audio"] }

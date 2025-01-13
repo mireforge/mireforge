@@ -15,26 +15,24 @@ int_math = "0.0.2"
 swamp-render = { path = "../render", version = "0.0.14" }
 swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.14" }
 
-monotonic-time-rs = "0.0.5"
-swamp-font = { path = "../font", version = "0.0.14" }
+monotonic-time-rs = "0.0.9"
 
 swamp-game-assets = { path = "../game-assets", version = "0.0.14" }
 swamp-game-audio = { path = "../game-audio", version = "0.0.14" }
 
 
 # Limnus
-limnus-assets = "0.0.13"
-limnus-app = "0.0.13"
-limnus-resource = "0.0.13"
-limnus-local-resource = "0.0.13"
-limnus-system-params =  "0.0.13"
-limnus-screen = "0.0.13"
-limnus-wgpu-window = "0.0.13"
-limnus-system-runner = "0.0.13"
-limnus-audio-mixer = "0.0.13"
-limnus-basic-input = "0.0.13"
-limnus-message = "0.0.13"
-limnus-gamepad = "0.0.13"
+limnus-assets = "0.0.15"
+limnus-app = "0.0.15"
+limnus-resource = "0.0.15"
+limnus-local-resource = "0.0.15"
+limnus-system-params =  "0.0.15"
+limnus-screen = "0.0.15"
+limnus-system-runner = "0.0.15"
+limnus-audio-mixer = "0.0.15"
+limnus-basic-input = "0.0.15"
+limnus-message = "0.0.15"
+limnus-gamepad = "0.0.15"
 fixed32 = "0.0.17"
 
 [dev-dependencies]

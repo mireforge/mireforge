@@ -9,6 +9,7 @@ use limnus_asset_id::{AssetName, RawWeakId};
 use limnus_asset_registry::AssetRegistry;
 use limnus_assets::Assets;
 use limnus_assets_loader::{AssetLoader, ConversionError, WrappedAssetLoaderRegistry};
+use limnus_local_resource::LocalResourceStorage;
 use limnus_resource::ResourceStorage;
 use limnus_wgpu_window::BasicDeviceInfo;
 use swamp_render_wgpu::{Material, Render};
@@ -47,8 +48,9 @@ impl AssetLoader for MaterialWgpuProcessor {
         id: RawWeakId,
         octets: &[u8],
         resources: &mut ResourceStorage,
+        local_resources: &mut LocalResourceStorage,
     ) -> Result<(), ConversionError> {
-        let device_info = resources.fetch::<BasicDeviceInfo>();
+        let device_info = local_resources.fetch::<BasicDeviceInfo>();
 
         let name: AssetName;
         {
