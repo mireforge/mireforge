@@ -11,7 +11,7 @@ Add swamp-wgpu-sprites to your project's `Cargo.toml`:
 
 ```toml
 [dependencies]
-swamp-wgpu-sprites = "0.0.14"
+swamp-wgpu-sprites = "0.0.15"
 ```
 
 ## License

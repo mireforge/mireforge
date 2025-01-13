@@ -1,6 +1,6 @@
 [package]
 name = "swamp-boot-game"
-version = "0.0.14"
+version = "0.0.15"
 edition = "2021"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
@@ -8,11 +8,11 @@ categories = ["game-development"]
 description = "Plugin to boot a swamp-game"
 
 [dependencies]
-swamp-game = { path = "../game", version = "0.0.14" }
+swamp-game = { path = "../game", version = "0.0.15" }
 int_math = "0.0.2"
-swamp-material = { path = "../material", version = "0.0.14" }
-swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.14" }
-swamp-font = { path = "../font", version = "0.0.14" }
+swamp-material = { path = "../material", version = "0.0.15" }
+swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.15" }
+swamp-font = { path = "../font", version = "0.0.15" }
 
 # Limnus
 limnus = "0.0.15"# // TODO: Should have a more minimal dependency

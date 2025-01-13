@@ -12,7 +12,7 @@ Add swamp-render-wgpu to your project’s Cargo.toml:
 
 ```toml
 [dependencies]
-swamp-render-wgpu = "0.0.14"
+swamp-render-wgpu = "0.0.15"
 ```
 
 ## License
