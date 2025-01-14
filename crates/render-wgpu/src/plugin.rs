@@ -6,9 +6,9 @@ use crate::{Material, Render};
 use limnus_app::prelude::{App, Plugin};
 use limnus_assets::prelude::Assets as LimnusAssets;
 use limnus_clock::Clock;
+use limnus_default_stages::{RenderFirst, RenderPostUpdate};
 use limnus_screen::{Window, WindowMessage};
 use limnus_system_params::{LoRe, Msg, Re, ReM};
-use limnus_system_runner::UpdatePhase;
 use limnus_wgpu_window::WgpuWindow;
 use monotonic_time_rs::Millis;
 use std::sync::Arc;
@@ -57,7 +57,7 @@ impl Plugin for RenderWgpuPlugin {
         );
         app.insert_resource(wgpu_render);
 
-        app.add_system(UpdatePhase::First, tick);
-        app.add_system(UpdatePhase::PostUpdate, flush_render_tick);
+        app.add_system(RenderFirst, tick);
+        app.add_system(RenderPostUpdate, flush_render_tick);
     }
 }

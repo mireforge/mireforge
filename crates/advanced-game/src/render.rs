@@ -6,10 +6,10 @@
 use crate::logic::GameLogic;
 use crate::{ApplicationLogic, ApplicationRender};
 use limnus_app::prelude::{App, Plugin};
+use limnus_default_stages::RenderUpdate;
 use limnus_local_resource::prelude::LocalResource;
 use limnus_resource::ResourceStorage;
 use limnus_system_params::{LoRe, LoReM, ReM};
-use limnus_system_runner::UpdatePhase;
 use monotonic_time_rs::{InstantMonotonicClock, Millis, MonotonicClock};
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
@@ -81,6 +81,6 @@ impl<R: ApplicationRender<L>, L: ApplicationLogic> Plugin for GameRendererPlugin
         let game_renderer = GameRenderer::<R, L>::new(all_resources);
         app.insert_local_resource(game_renderer);
 
-        app.add_system(UpdatePhase::Update, advanced_game_render_tick::<R, L>);
+        app.add_system(RenderUpdate, advanced_game_render_tick::<R, L>);
     }
 }

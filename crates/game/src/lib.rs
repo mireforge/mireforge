@@ -13,6 +13,7 @@ use limnus_app::prelude::{App, AppReturnValue, ApplicationExit, Plugin};
 use limnus_audio_mixer::{AudioMixer, StereoSample};
 use limnus_basic_input::prelude::{ButtonState, KeyCode, MouseButton, MouseScrollDelta};
 use limnus_basic_input::InputMessage;
+use limnus_default_stages::{FixedUpdate, RenderUpdate, Update};
 use limnus_gamepad::{Axis, Button, GamePadId, Gamepad, GamepadMessage, Gamepads};
 use limnus_local_resource::prelude::LocalResource;
 use limnus_message::MessagesIterator;
@@ -20,7 +21,6 @@ use limnus_resource::prelude::Resource;
 use limnus_resource::ResourceStorage;
 use limnus_screen::WindowMessage;
 use limnus_system_params::{LoReM, Msg, Re, ReAll, ReM};
-use limnus_system_runner::UpdatePhase;
 use monotonic_time_rs::{InstantMonotonicClock, Millis, MonotonicClock};
 use std::cmp::{max, min};
 use std::fmt::{Debug, Formatter};
@@ -291,11 +291,11 @@ impl<G: Application> Plugin for GamePlugin<G> {
         let internal_game = Game::<G>::new(all_resources);
         app.insert_local_resource(internal_game);
 
-        app.add_system(UpdatePhase::Update, gamepad_input_tick::<G>);
-        app.add_system(UpdatePhase::Update, keyboard_input_tick::<G>);
-        app.add_system(UpdatePhase::Update, mouse_input_tick::<G>);
-        app.add_system(UpdatePhase::Update, audio_tick::<G>);
-        app.add_system(UpdatePhase::Update, logic_tick::<G>);
-        app.add_system(UpdatePhase::Update, render_tick::<G>);
+        app.add_system(Update, gamepad_input_tick::<G>);
+        app.add_system(Update, keyboard_input_tick::<G>);
+        app.add_system(Update, mouse_input_tick::<G>);
+        app.add_system(Update, audio_tick::<G>);
+        app.add_system(FixedUpdate, logic_tick::<G>);
+        app.add_system(RenderUpdate, render_tick::<G>);
     }
 }

@@ -7,10 +7,10 @@ use crate::logic::GameLogic;
 use crate::{ApplicationAudio, ApplicationLogic};
 use limnus_app::prelude::{App, Plugin};
 use limnus_audio_mixer::{AudioMixer, StereoSample};
+use limnus_default_stages::FixedUpdate;
 use limnus_local_resource::prelude::LocalResource;
 use limnus_resource::ResourceStorage;
 use limnus_system_params::{LoRe, LoReM, Re};
-use limnus_system_runner::UpdatePhase;
 use monotonic_time_rs::{InstantMonotonicClock, MonotonicClock};
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
@@ -72,6 +72,6 @@ impl<A: ApplicationAudio<L>, L: ApplicationLogic> Plugin for GameAudioRenderPlug
         let internal_audio = GameAudioRender::<A, L>::new(all_resources);
         app.insert_local_resource(internal_audio);
 
-        app.add_system(UpdatePhase::Update, advanced_game_audio_tick::<A, L>);
+        app.add_system(FixedUpdate, advanced_game_audio_tick::<A, L>);
     }
 }

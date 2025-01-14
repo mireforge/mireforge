@@ -9,12 +9,12 @@ use int_math::{URect, UVec2};
 use limnus_app::prelude::{App, AppReturnValue, ApplicationExit, Plugin};
 use limnus_basic_input::prelude::MouseScrollDelta;
 use limnus_basic_input::InputMessage;
+use limnus_default_stages::{FixedUpdate, Update};
 use limnus_gamepad::{GamepadMessage, Gamepads};
 use limnus_local_resource::prelude::LocalResource;
 use limnus_message::MessagesIterator;
 use limnus_screen::WindowMessage;
 use limnus_system_params::{LoReM, Msg, Re, ReAll};
-use limnus_system_runner::UpdatePhase;
 use std::cmp::{max, min};
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
@@ -200,9 +200,9 @@ impl<L: ApplicationLogic> Plugin for GameLogicPlugin<L> {
         let game_logic = GameLogic::<L>::new();
         app.insert_local_resource(game_logic);
 
-        app.add_system(UpdatePhase::Update, advanced_gamepad_input_tick::<L>);
-        app.add_system(UpdatePhase::Update, advanced_game_logic_mouse_tick::<L>);
-        app.add_system(UpdatePhase::Update, advanced_game_logic_keyboard_tick::<L>);
-        app.add_system(UpdatePhase::Update, advanced_game_logic_tick::<L>);
+        app.add_system(Update, advanced_gamepad_input_tick::<L>);
+        app.add_system(Update, advanced_game_logic_mouse_tick::<L>);
+        app.add_system(Update, advanced_game_logic_keyboard_tick::<L>);
+        app.add_system(FixedUpdate, advanced_game_logic_tick::<L>);
     }
 }
