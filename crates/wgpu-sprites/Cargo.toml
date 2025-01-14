@@ -1,6 +1,6 @@
 [package]
 name = "swamp-wgpu-sprites"
-version = "0.0.15"
+version = "0.0.16-alpha.1"
 edition = "2021"
 license = "MIT"
 description = "wgpu sprite utility functions"
@@ -13,5 +13,5 @@ bytemuck = "1.19.0"
 image = "0.25.5"
 wgpu = "23.0.0"
 
-swamp-wgpu = { path = "../wgpu", version = "0.0.15" }
+swamp-wgpu = { path = "../wgpu", version = "0.0.16-alpha.1" }
 limnus-wgpu-math = "0.0.16"
