@@ -76,7 +76,7 @@ impl FrameLookup for FixedAtlas {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct FontAndMaterial {
     pub font_ref: FontRef,
     pub material_ref: MaterialRef,

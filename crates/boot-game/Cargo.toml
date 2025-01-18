@@ -15,4 +15,4 @@ swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.16-alpha.1" }
 swamp-font = { path = "../font", version = "0.0.16-alpha.1" }
 
 # Limnus
-limnus = "0.0.17-alpha.1"# // TODO: Should have a more minimal dependency
+limnus = "0.0.17-alpha.2"# // TODO: Should have a more minimal dependency

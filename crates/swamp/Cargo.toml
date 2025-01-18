@@ -21,7 +21,7 @@ tracing = "0.1.40"
 swamp-game = { path = "../game", version = "0.0.16-alpha.1" }
 swamp-advanced-game = { path = "../advanced-game", version = "0.0.16-alpha.1" }
 swamp-material = { path = "../material", version = "0.0.16-alpha.1" }
-limnus = "0.0.17-alpha.1" # // TODO: should have a more minimal dependency
+limnus = "0.0.17-alpha.2" # // TODO: should have a more minimal dependency
 limnus-local-resource = "0.0.16"
 limnus-resource = "0.0.16"
 limnus-app = "0.0.16"
