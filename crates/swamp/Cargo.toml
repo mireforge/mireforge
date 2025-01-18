@@ -1,6 +1,6 @@
 [package]
 name = "swamp"
-version = "0.0.16-alpha.1"
+version = "0.0.16-alpha.2"
 edition = "2021"
 license = "MIT"
 description = "2D Game Engine"
@@ -9,18 +9,18 @@ categories = ["game-development"]
 keywords = ["game", "engine"]
 
 [dependencies]
-swamp-boot-game = { path = "../boot-game", version = "0.0.16-alpha.1" }
-swamp-boot-advanced-game = { path = "../boot-advanced-game", version = "0.0.16-alpha.1" }
-swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.16-alpha.1" }
-swamp-game-assets = { path = "../game-assets", version = "0.0.16-alpha.1" }
-swamp-render = { path = "../render", version = "0.0.16-alpha.1" }
-swamp-game-audio = { path = "../game-audio", version = "0.0.16-alpha.1" }
-swamp-font = { path = "../font", version = "0.0.16-alpha.1" }
+swamp-boot-game = { path = "../boot-game", version = "0.0.16-alpha.2" }
+swamp-boot-advanced-game = { path = "../boot-advanced-game", version = "0.0.16-alpha.2" }
+swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.16-alpha.2" }
+swamp-game-assets = { path = "../game-assets", version = "0.0.16-alpha.2" }
+swamp-render = { path = "../render", version = "0.0.16-alpha.2" }
+swamp-game-audio = { path = "../game-audio", version = "0.0.16-alpha.2" }
+swamp-font = { path = "../font", version = "0.0.16-alpha.2" }
 int_math = "0.0.2"
 tracing = "0.1.40"
-swamp-game = { path = "../game", version = "0.0.16-alpha.1" }
-swamp-advanced-game = { path = "../advanced-game", version = "0.0.16-alpha.1" }
-swamp-material = { path = "../material", version = "0.0.16-alpha.1" }
+swamp-game = { path = "../game", version = "0.0.16-alpha.2" }
+swamp-advanced-game = { path = "../advanced-game", version = "0.0.16-alpha.2" }
+swamp-material = { path = "../material", version = "0.0.16-alpha.2" }
 limnus = "0.0.17-alpha.2" # // TODO: should have a more minimal dependency
 limnus-local-resource = "0.0.16"
 limnus-resource = "0.0.16"
