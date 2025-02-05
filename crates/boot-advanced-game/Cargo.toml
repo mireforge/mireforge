@@ -18,4 +18,4 @@ swamp-font = { path = "../font", version = "0.0.16-alpha.2" }
 # limnus-app = "0.0.16"
 # limnus-screen = "0.0.16"
 
-limnus = "0.0.17-alpha.2"# TODO: Move DefaultPlugins
+limnus = { version = "0.0.17-alpha.2",  default-features = false } # # TODO: Move DefaultPlugins
