@@ -6,7 +6,7 @@ pub mod plugin;
 pub mod prelude;
 
 use int_math::{URect, UVec2, Vec2, Vec3};
-use limnus_assets::prelude::{Asset, Id, WeakId};
+use limnus_assets::prelude::{Asset, Id, RawAssetId, RawWeakId, WeakId};
 use limnus_assets::Assets;
 use limnus_resource::prelude::Resource;
 use limnus_wgpu_math::{Matrix4, OrthoInfo, Vec4};
@@ -20,8 +20,9 @@ use swamp_font::FontRef;
 use swamp_font::WeakFontRef;
 use swamp_render::prelude::*;
 use swamp_wgpu_sprites::{SpriteInfo, SpriteInstanceUniform};
+use tracing::info;
 use tracing::trace;
-use wgpu::{BindGroup, BindGroupLayout, Buffer, RenderPass, RenderPipeline};
+use wgpu::{BindGroup, BindGroupLayout, Buffer, RenderPass, RenderPipeline, Texture};
 
 pub type MaterialRef = Id<Material>;
 pub type WeakMaterialRef = WeakId<Material>;
@@ -147,6 +148,7 @@ pub struct Text {
 #[derive(Debug)]
 enum Renderable {
     Sprite(Sprite),
+    QuadColor(QuadColor),
     TileMap(TileMap),
     Text(Text),
 }
@@ -501,6 +503,17 @@ impl Render {
         self.push_sprite(position, material, Sprite { params });
     }
 
+    pub fn draw_quad(&mut self, position: Vec3, size: UVec2, color: Color) {
+        self.items.push(RenderItem {
+            position,
+            material_ref: WeakId::<Material>::new(RawWeakId::with_asset_type::<Material>(
+                RawAssetId::new(0, 0),
+                "nothing".into(),
+            )),
+            renderable: Renderable::QuadColor(QuadColor { size, color }),
+        });
+    }
+
     pub const fn clear_color(&self) -> wgpu::Color {
         self.clear_color
     }
@@ -567,6 +580,7 @@ impl Render {
             let result = materials.get_weak(weak_material_ref);
             if result.is_none() {
                 // Material is not loaded yet
+                info!("not loaded yet");
                 continue;
             }
             let material = result.unwrap();
@@ -627,6 +641,76 @@ impl Render {
                             tex_coords_mul_add,
                             rotation_value,
                             Vec4(params.color.to_f32_slice()),
+                            true,
+                        );
+                        quad_matrix_and_uv.push(quad_instance);
+                    }
+
+                    Renderable::QuadColor(ref quad) => {
+                        /*
+                        let params = &sprite.params;
+                        let mut size = params.texture_size;
+                        if size.x == 0 && size.y == 0 {
+                            size = current_texture_size;
+                        }
+
+                        let render_atlas = URect {
+                            position: params.texture_pos,
+                            size,
+                        };
+
+
+                        match params.rotation {
+                            Rotation::Degrees90 | Rotation::Degrees270 => {
+                                swap(&mut size.x, &mut size.y);
+                            }
+                            _ => {}
+                        }
+                         */
+
+                        let model_matrix =
+                            Matrix4::from_translation(
+                                render_item.position.x as f32,
+                                render_item.position.y as f32,
+                                0.0,
+                            ) * Matrix4::from_scale(quad.size.x as f32, quad.size.y as f32, 1.0);
+
+                        /*
+                        let tex_coords_mul_add = Self::calculate_texture_coords_mul_add(
+                            render_atlas,
+                            current_texture_size,
+                        );
+
+
+                        let mut rotation_value = match params.rotation {
+                            Rotation::Degrees0 => 0,
+                            Rotation::Degrees90 => 1,
+                            Rotation::Degrees180 => 2,
+                            Rotation::Degrees270 => 3,
+                        };
+
+                        if params.flip_x {
+                            rotation_value |= FLIP_X_MASK;
+                        }
+                        if params.flip_y {
+                            rotation_value |= FLIP_Y_MASK;
+                        }
+
+                         */
+
+                        let tex_coords_mul_add = Vec4([
+                            0.0, //x
+                            0.0, //y
+                            0.0, 0.0,
+                        ]);
+                        let rotation_value = 0;
+
+                        let quad_instance = SpriteInstanceUniform::new(
+                            model_matrix,
+                            tex_coords_mul_add,
+                            rotation_value,
+                            Vec4(quad.color.to_f32_slice()),
+                            false,
                         );
                         quad_matrix_and_uv.push(quad_instance);
                     }
@@ -659,6 +743,7 @@ impl Render {
                                 tex_coords_mul_add,
                                 0,
                                 Vec4(text.color.to_f32_slice()),
+                                true,
                             );
                             quad_matrix_and_uv.push(quad_instance);
                         }
@@ -705,6 +790,7 @@ impl Render {
                                 cell_tex_coords_mul_add,
                                 0,
                                 Vec4([1.0, 1.0, 1.0, 1.0]),
+                                true,
                             );
                             quad_matrix_and_uv.push(quad_instance);
                         }
@@ -808,6 +894,7 @@ impl Render {
             let wgpu_material = materials
                 .get_weak(weak_material_ref)
                 .expect("no such material");
+
             // Bind the texture and sampler bind group (Bind Group 1)
             render_pass.set_bind_group(1, &wgpu_material.texture_and_sampler_bind_group, &[]);
 
@@ -942,6 +1029,12 @@ pub struct Sprite {
 }
 
 #[derive(Debug)]
+pub struct QuadColor {
+    pub size: UVec2,
+    pub color: Color,
+}
+
+#[derive(Debug)]
 pub struct TileMap {
     pub tiles_data_grid_size: UVec2,
     pub cell_count_size: UVec2,
@@ -981,6 +1074,7 @@ struct VertexOutput {
     @builtin(position) position: vec4<f32>,
     @location(0) tex_coords: vec2<f32>,
     @location(1) color: vec4<f32>,
+    @location(2) use_texture: u32,
 };
 
 // Vertex shader entry point
@@ -995,6 +1089,7 @@ fn vs_main(
     @location(6) tex_multiplier: vec4<f32>,
     @location(7) rotation_step: u32,
     @location(8) color: vec4<f32>,
+    @location(9) use_texture: u32,
 ) -> VertexOutput {
     var output: VertexOutput;
 
@@ -1042,6 +1137,7 @@ fn vs_main(
     // Modify texture coordinates
     output.tex_coords = rotated_tex_coords * tex_multiplier.xy + tex_multiplier.zw;
     output.color = color;
+    output.use_texture = use_texture;
 
     return output;
 }
@@ -1062,16 +1158,22 @@ struct VertexOutput {
     @builtin(position) position: vec4<f32>,
     @location(0) tex_coords: vec2<f32>,
     @location(1) color: vec4<f32>,
+    @location(2) use_texture: u32,
 };
 
 // Fragment shader entry point
 @fragment
 fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
+    var final_color: vec4<f32>;
+
     // Sample the texture using the texture coordinates
     let texture_color = textureSample(diffuse_texture, sampler_diffuse, input.tex_coords);
-
-    // Apply color modulation and opacity
-    let final_color = texture_color * input.color;
+    if (input.use_texture == 1u) { // Check if use_texture is true (1)
+        // Apply color modulation and opacity
+        final_color = texture_color * input.color;
+    } else {
+        final_color = input.color;
+    }
 
     return final_color;
 }

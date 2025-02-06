@@ -60,6 +60,7 @@ pub fn create_sprite_uniform_buffer(device: &Device, label: &str) -> Buffer {
             tex_coords_mul_add: Vec4([0.0, 0.0, 1.0, 1.0]),
             rotation: 0,
             color: Vec4([1.0, 0.0, 1.0, 1.0]),
+            use_texture: 0,
         }]),
         usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
     })
@@ -81,6 +82,7 @@ pub struct SpriteInstanceUniform {
     pub tex_coords_mul_add: Vec4,
     pub rotation: u32,
     pub color: Vec4,
+    pub use_texture: u32,
 }
 
 unsafe impl Pod for SpriteInstanceUniform {}
@@ -88,12 +90,19 @@ unsafe impl Zeroable for SpriteInstanceUniform {}
 
 impl SpriteInstanceUniform {
     #[must_use]
-    pub const fn new(model: Matrix4, tex_coords_mul_add: Vec4, rotation: u32, color: Vec4) -> Self {
+    pub const fn new(
+        model: Matrix4,
+        tex_coords_mul_add: Vec4,
+        rotation: u32,
+        color: Vec4,
+        use_texture: bool,
+    ) -> Self {
         Self {
             model,
             tex_coords_mul_add,
             rotation,
             color,
+            use_texture: use_texture as u32,
         }
     }
 }
@@ -138,10 +147,16 @@ impl SpriteInstanceUniform {
                     format: VertexFormat::Uint32,
                 },
                 // color (RGBA)
-                wgpu::VertexAttribute {
+                VertexAttribute {
                     offset: 84,
                     shader_location: 8,
-                    format: wgpu::VertexFormat::Float32x4,
+                    format: VertexFormat::Float32x4,
+                },
+                // use_texture (bool)
+                VertexAttribute {
+                    offset: 84 + 4 * 4,
+                    shader_location: 9,
+                    format: VertexFormat::Uint32,
                 },
             ],
         }
