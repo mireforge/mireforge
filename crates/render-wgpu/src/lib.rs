@@ -5,7 +5,7 @@
 pub mod plugin;
 pub mod prelude;
 
-use int_math::{Rect, URect, UVec2, Vec2, Vec3};
+use int_math::{URect, UVec2, Vec2, Vec3};
 use limnus_assets::prelude::{Asset, Id, RawAssetId, RawWeakId, WeakId};
 use limnus_assets::Assets;
 use limnus_resource::prelude::Resource;
@@ -515,11 +515,24 @@ impl Render {
         });
     }
 
-    pub fn draw_nine_slice(&mut self, position: Vec3, material_ref: &MaterialRef, size: UVec2, corner_size: UVec2, color: Color) {
+    pub fn draw_nine_slice(
+        &mut self,
+        position: Vec3,
+        size: UVec2,
+        corner_size: UVec2,
+        material_ref: &MaterialRef,
+        atlas_offset: UVec2,
+        color: Color,
+    ) {
         self.items.push(RenderItem {
             position,
             material_ref: material_ref.into(),
-            renderable: Renderable::NineSlice(NineSlice { corner_size, size, color }),
+            renderable: Renderable::NineSlice(NineSlice {
+                corner_size,
+                size,
+                atlas_offset,
+                color,
+            }),
         });
     }
 
@@ -559,25 +572,22 @@ impl Render {
         material_batches
     }
 
-    pub fn quad_helper(position: Vec3, render_atlas: URect, current_texture_size: UVec2, color: Color, material: &MaterialRef) -> SpriteInstanceUniform {
-        let quad_size = render_atlas.size;
+    pub fn quad_helper_uniform(
+        position: Vec3,
+        quad_size: UVec2,
+        render_atlas: URect,
+        color: Color,
 
-        let model_matrix = Matrix4::from_translation(
-            position.x as f32,
-            position.y as f32,
-            0.0,
-        ) * Matrix4::from_scale(
-            quad_size.x as f32,
-            quad_size.y as f32,
-            1.0,
-        );
+        current_texture_size: UVec2,
+        //material: &MaterialRef,
+    ) -> SpriteInstanceUniform {
+        let model_matrix = Matrix4::from_translation(position.x as f32, position.y as f32, 0.0)
+            * Matrix4::from_scale(quad_size.x as f32, quad_size.y as f32, 1.0);
 
-        let tex_coords_mul_add = Self::calculate_texture_coords_mul_add(
-            render_atlas,
-            current_texture_size,
-        );
+        let tex_coords_mul_add =
+            Self::calculate_texture_coords_mul_add(render_atlas, current_texture_size);
 
-        let mut rotation_value = 0;
+        let rotation_value = 0;
 
         SpriteInstanceUniform::new(
             model_matrix,
@@ -685,8 +695,213 @@ impl Render {
                     }
 
                     Renderable::NineSlice(nine_slice) => {
+                        let x = render_item.position.x;
+                        let y = render_item.position.y;
+                        let z = render_item.position.z;
 
+                        let position_offset = render_item.position;
+                        let corner_size = nine_slice.corner_size;
+                        let corner_height = corner_size.y;
+                        let corner_width = corner_size.x;
+                        let color = nine_slice.color;
+                        let outer_size = nine_slice.size - corner_size * 2;
+                        let side_width = outer_size.x;
+                        let side_height = outer_size.y;
+                        let window_size = nine_slice.size;
 
+                        let atlas_origin = nine_slice.atlas_offset;
+
+                        // Lower left
+                        let lower_left_pos = Vec3::new(position_offset.x, position_offset.y, 0);
+                        let lower_left_quad_size = UVec2::new(corner_width, corner_height);
+                        let lower_left_atlas = URect::new(
+                            atlas_origin.x,
+                            atlas_origin.y,
+                            corner_size.x,
+                            corner_size.y,
+                        );
+                        let lower_left_quad = Self::quad_helper_uniform(
+                            lower_left_pos,
+                            lower_left_quad_size,
+                            lower_left_atlas,
+                            color,
+                            current_texture_size,
+                        );
+                        quad_matrix_and_uv.push(lower_left_quad);
+
+                        // Lower side
+                        let lower_side_position = Vec3::new(
+                            position_offset.x + corner_width as i16,
+                            position_offset.y,
+                            0,
+                        );
+                        let lower_side_quad_size = UVec2::new(side_width, corner_height);
+                        let lower_side_atlas = URect::new(
+                            atlas_origin.x + corner_width,
+                            atlas_origin.y,
+                            corner_size.x,
+                            corner_size.y,
+                        );
+                        let lower_side_quad = Self::quad_helper_uniform(
+                            lower_side_position,
+                            lower_side_quad_size,
+                            lower_side_atlas,
+                            color,
+                            current_texture_size,
+                        );
+                        quad_matrix_and_uv.push(lower_side_quad);
+
+                        // Lower right corner
+                        let lower_side_position = Vec3::new(
+                            position_offset.x + window_size.x as i16 - corner_width as i16,
+                            position_offset.y,
+                            0,
+                        );
+                        let lower_right_quad_size = UVec2::new(corner_width, corner_height);
+                        let lower_right_atlas = URect::new(
+                            atlas_origin.x + corner_width * 2,
+                            atlas_origin.y,
+                            corner_size.x,
+                            corner_size.y,
+                        );
+                        let lower_right_quad = Self::quad_helper_uniform(
+                            lower_side_position,
+                            lower_right_quad_size,
+                            lower_right_atlas,
+                            color,
+                            current_texture_size,
+                        );
+                        quad_matrix_and_uv.push(lower_right_quad);
+
+                        // Left side
+                        let left_side_pos = Vec3::new(
+                            position_offset.x,
+                            position_offset.y + corner_height as i16,
+                            0,
+                        );
+                        let left_side_quad_size = UVec2::new(corner_width, side_height);
+                        let left_side_atlas = URect::new(
+                            atlas_origin.x,
+                            atlas_origin.y - corner_height,
+                            corner_size.x,
+                            corner_size.y,
+                        );
+                        let left_side_quad = Self::quad_helper_uniform(
+                            left_side_pos,
+                            left_side_quad_size,
+                            left_side_atlas,
+                            color,
+                            current_texture_size,
+                        );
+                        quad_matrix_and_uv.push(left_side_quad);
+
+                        // Middle
+                        let middle_pos = Vec3::new(
+                            position_offset.x + corner_width as i16,
+                            position_offset.y + corner_height as i16,
+                            0,
+                        );
+                        let middle_quad_size = UVec2::new(
+                            nine_slice.size.x - corner_width * 2,
+                            nine_slice.size.y - corner_height * 2,
+                        );
+                        let middle_atlas = URect::new(
+                            atlas_origin.x + corner_width,
+                            atlas_origin.y - corner_height,
+                            corner_size.x,
+                            corner_size.y,
+                        );
+                        let middle_quad = Self::quad_helper_uniform(
+                            middle_pos,
+                            middle_quad_size,
+                            middle_atlas,
+                            color,
+                            current_texture_size,
+                        );
+                        quad_matrix_and_uv.push(middle_quad);
+
+                        // RightSide
+                        let right_side_pos = Vec3::new(
+                            position_offset.x + window_size.x as i16 - corner_width as i16,
+                            position_offset.y + corner_height as i16,
+                            0,
+                        );
+                        let right_side_quad_size =
+                            UVec2::new(corner_width, window_size.y - corner_height * 2);
+                        let right_side_atlas = URect::new(
+                            atlas_origin.x + corner_width * 2,
+                            atlas_origin.y - corner_height,
+                            corner_size.x,
+                            corner_size.y,
+                        );
+                        let right_side_quad = Self::quad_helper_uniform(
+                            right_side_pos,
+                            right_side_quad_size,
+                            right_side_atlas,
+                            color,
+                            current_texture_size,
+                        );
+                        quad_matrix_and_uv.push(right_side_quad);
+
+                        // -----------------------
+
+                        let upper_y =
+                            position_offset.y + window_size.y as i16 - corner_height as i16;
+                        let atlas_upper_y = atlas_origin.y - corner_height * 2;
+                        // Upper left
+                        let upper_left_pos = Vec3::new(position_offset.x, upper_y, 0);
+                        let upper_left_quad_size = UVec2::new(corner_width, corner_height);
+                        let upper_left_atlas =
+                            URect::new(atlas_origin.x, atlas_upper_y, corner_size.x, corner_size.y);
+                        let upper_left_quad = Self::quad_helper_uniform(
+                            upper_left_pos,
+                            upper_left_quad_size,
+                            upper_left_atlas,
+                            color,
+                            current_texture_size,
+                        );
+                        quad_matrix_and_uv.push(upper_left_quad);
+
+                        // Upper side
+                        let upper_side_position =
+                            Vec3::new(position_offset.x + corner_width as i16, upper_y, 0);
+                        let upper_side_quad_size = UVec2::new(side_width, corner_height);
+                        let upper_side_atlas = URect::new(
+                            atlas_origin.x + corner_width,
+                            atlas_upper_y,
+                            corner_size.x,
+                            corner_size.y,
+                        );
+                        let upper_side_quad = Self::quad_helper_uniform(
+                            upper_side_position,
+                            upper_side_quad_size,
+                            upper_side_atlas,
+                            color,
+                            current_texture_size,
+                        );
+                        quad_matrix_and_uv.push(upper_side_quad);
+
+                        // Upper right corner
+                        let upper_side_position = Vec3::new(
+                            position_offset.x + window_size.x as i16 - corner_width as i16,
+                            upper_y,
+                            0,
+                        );
+                        let upper_right_quad_size = UVec2::new(corner_width, corner_height);
+                        let upper_right_atlas = URect::new(
+                            atlas_origin.x + corner_width * 2,
+                            atlas_upper_y,
+                            corner_size.x,
+                            corner_size.y,
+                        );
+                        let upper_right_quad = Self::quad_helper_uniform(
+                            upper_side_position,
+                            upper_right_quad_size,
+                            upper_right_atlas,
+                            color,
+                            current_texture_size,
+                        );
+                        quad_matrix_and_uv.push(upper_right_quad);
                     }
 
                     Renderable::QuadColor(ref quad) => {
@@ -1081,6 +1296,7 @@ pub struct QuadColor {
 pub struct NineSlice {
     pub corner_size: UVec2,
     pub size: UVec2,
+    pub atlas_offset: UVec2,
     pub color: Color,
 }
 
