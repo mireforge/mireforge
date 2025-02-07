@@ -5,7 +5,7 @@
 pub mod plugin;
 pub mod prelude;
 
-use int_math::{URect, UVec2, Vec2, Vec3};
+use int_math::{Rect, URect, UVec2, Vec2, Vec3};
 use limnus_assets::prelude::{Asset, Id, RawAssetId, RawWeakId, WeakId};
 use limnus_assets::Assets;
 use limnus_resource::prelude::Resource;
@@ -22,7 +22,7 @@ use swamp_render::prelude::*;
 use swamp_wgpu_sprites::{SpriteInfo, SpriteInstanceUniform};
 use tracing::info;
 use tracing::trace;
-use wgpu::{BindGroup, BindGroupLayout, Buffer, RenderPass, RenderPipeline, Texture};
+use wgpu::{BindGroup, BindGroupLayout, Buffer, RenderPass, RenderPipeline};
 
 pub type MaterialRef = Id<Material>;
 pub type WeakMaterialRef = WeakId<Material>;
@@ -149,6 +149,7 @@ pub struct Text {
 enum Renderable {
     Sprite(Sprite),
     QuadColor(QuadColor),
+    NineSlice(NineSlice),
     TileMap(TileMap),
     Text(Text),
 }
@@ -514,6 +515,14 @@ impl Render {
         });
     }
 
+    pub fn draw_nine_slice(&mut self, position: Vec3, material_ref: &MaterialRef, size: UVec2, corner_size: UVec2, color: Color) {
+        self.items.push(RenderItem {
+            position,
+            material_ref: material_ref.into(),
+            renderable: Renderable::NineSlice(NineSlice { corner_size, size, color }),
+        });
+    }
+
     pub const fn clear_color(&self) -> wgpu::Color {
         self.clear_color
     }
@@ -548,6 +557,35 @@ impl Render {
         }
 
         material_batches
+    }
+
+    pub fn quad_helper(position: Vec3, render_atlas: URect, current_texture_size: UVec2, color: Color, material: &MaterialRef) -> SpriteInstanceUniform {
+        let quad_size = render_atlas.size;
+
+        let model_matrix = Matrix4::from_translation(
+            position.x as f32,
+            position.y as f32,
+            0.0,
+        ) * Matrix4::from_scale(
+            quad_size.x as f32,
+            quad_size.y as f32,
+            1.0,
+        );
+
+        let tex_coords_mul_add = Self::calculate_texture_coords_mul_add(
+            render_atlas,
+            current_texture_size,
+        );
+
+        let mut rotation_value = 0;
+
+        SpriteInstanceUniform::new(
+            model_matrix,
+            tex_coords_mul_add,
+            rotation_value,
+            Vec4(color.to_f32_slice()),
+            true,
+        )
     }
 
     /// # Panics
@@ -644,6 +682,11 @@ impl Render {
                             true,
                         );
                         quad_matrix_and_uv.push(quad_instance);
+                    }
+
+                    Renderable::NineSlice(nine_slice) => {
+
+
                     }
 
                     Renderable::QuadColor(ref quad) => {
@@ -1030,6 +1073,13 @@ pub struct Sprite {
 
 #[derive(Debug)]
 pub struct QuadColor {
+    pub size: UVec2,
+    pub color: Color,
+}
+
+#[derive(Debug)]
+pub struct NineSlice {
+    pub corner_size: UVec2,
     pub size: UVec2,
     pub color: Color,
 }
