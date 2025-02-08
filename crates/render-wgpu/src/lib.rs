@@ -520,6 +520,7 @@ impl Render {
         position: Vec3,
         size: UVec2,
         corner_size: UVec2,
+        texture_window_size: UVec2,
         material_ref: &MaterialRef,
         atlas_offset: UVec2,
         color: Color,
@@ -529,6 +530,7 @@ impl Render {
             material_ref: material_ref.into(),
             renderable: Renderable::NineSlice(NineSlice {
                 corner_size,
+                texture_window_size,
                 size,
                 atlas_offset,
                 color,
@@ -883,6 +885,7 @@ impl Render {
         let side_width = outer_size.x;
         let side_height = outer_size.y;
         let window_size = nine_slice.size;
+        let texture_window_size = nine_slice.texture_window_size;
 
         let atlas_origin = nine_slice.atlas_offset;
 
@@ -910,7 +913,7 @@ impl Render {
         let lower_side_atlas = URect::new(
             atlas_origin.x + corner_width,
             atlas_origin.y,
-            corner_size.x,
+            texture_window_size.x - corner_width * 2,
             corner_size.y,
         );
         let lower_side_quad = Self::quad_helper_uniform(
@@ -979,8 +982,8 @@ impl Render {
         let middle_atlas = URect::new(
             atlas_origin.x + corner_width,
             atlas_origin.y - corner_height,
-            corner_size.x,
-            corner_size.y,
+            texture_window_size.x - corner_width * 2,
+            texture_window_size.y - corner_height * 2,
         );
         let middle_quad = Self::quad_helper_uniform(
             middle_pos,
@@ -1037,7 +1040,7 @@ impl Render {
         let upper_side_atlas = URect::new(
             atlas_origin.x + corner_width,
             atlas_upper_y,
-            corner_size.x,
+            texture_window_size.x - corner_width * 2,
             corner_size.y,
         );
         let upper_side_quad = Self::quad_helper_uniform(
@@ -1297,6 +1300,7 @@ pub struct QuadColor {
 #[derive(Debug)]
 pub struct NineSlice {
     pub corner_size: UVec2,
+    pub texture_window_size: UVec2,
     pub size: UVec2,
     pub atlas_offset: UVec2,
     pub color: Color,
