@@ -1,6 +1,6 @@
 [package]
 name = "swamp-boot-advanced-game"
-version = "0.0.16-alpha.2"
+version = "0.0.17"
 edition = "2024"
 license = "MIT"
 description = "boot up an advanced game (logic, render, audio)"
@@ -8,11 +8,11 @@ repository = "https://github.com/swamp/swamp"
 categories = ["game-development"]
 
 [dependencies]
-swamp-advanced-game = { path = "../advanced-game", version = "0.0.16-alpha.2" }
+swamp-advanced-game = { path = "../advanced-game", version = "0.0.17" }
 int_math = "0.0.2"
-swamp-material = { path = "../material", version = "0.0.16-alpha.2" }
-swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.16-alpha.2" }
-swamp-font = { path = "../font", version = "0.0.16-alpha.2" }
+swamp-material = { path = "../material", version = "0.0.17" }
+swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.17" }
+swamp-font = { path = "../font", version = "0.0.17" }
 
 # Limnus
 # limnus-app = "0.0.16"
