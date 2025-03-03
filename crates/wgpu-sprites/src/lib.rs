@@ -5,12 +5,8 @@
 use bytemuck::{Pod, Zeroable};
 use image::RgbaImage;
 use limnus_wgpu_math::{Matrix4, Vec4};
-use wgpu::util::DeviceExt;
 use wgpu::BufferBindingType;
-use wgpu::{
-    util, BlendState, ColorTargetState, ColorWrites, Face, FrontFace, MultisampleState,
-    PolygonMode, PrimitiveState, PrimitiveTopology,
-};
+use wgpu::util::DeviceExt;
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferAddress, BufferDescriptor, BufferUsages,
@@ -21,6 +17,10 @@ use wgpu::{
     TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode,
 };
 use wgpu::{BindingResource, PipelineCompilationOptions};
+use wgpu::{
+    BlendState, ColorTargetState, ColorWrites, Face, FrontFace, MultisampleState, PolygonMode,
+    PrimitiveState, PrimitiveTopology, util,
+};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]

@@ -6,9 +6,9 @@
 pub use {
     fixed32::Fp,
     int_math::prelude::*,
+    limnus::DefaultPlugins,
     limnus::prelude::AssetName,
     limnus::prelude::{ButtonState, KeyCode, MouseButton, MouseScrollDelta, StereoSampleRef},
-    limnus::DefaultPlugins,
     limnus_app::prelude::*,
     limnus_assets::prelude::Assets as LimnusAssets,
     limnus_default_stages::*,

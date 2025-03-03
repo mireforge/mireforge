@@ -6,8 +6,8 @@ pub mod plugin;
 pub mod prelude;
 
 use int_math::{URect, UVec2, Vec2, Vec3};
-use limnus_assets::prelude::{Asset, Id, RawAssetId, RawWeakId, WeakId};
 use limnus_assets::Assets;
+use limnus_assets::prelude::{Asset, Id, RawAssetId, RawWeakId, WeakId};
 use limnus_resource::prelude::Resource;
 use limnus_wgpu_math::{Matrix4, OrthoInfo, Vec4};
 use monotonic_time_rs::Millis;
@@ -636,7 +636,7 @@ impl Render {
 
             for render_item in render_items {
                 match &render_item.renderable {
-                    Renderable::Sprite(ref sprite) => {
+                    Renderable::Sprite(sprite) => {
                         let params = &sprite.params;
                         let mut size = params.texture_size;
                         if size.x == 0 && size.y == 0 {
@@ -703,7 +703,7 @@ impl Render {
                         );
                     }
 
-                    Renderable::QuadColor(ref quad) => {
+                    Renderable::QuadColor(quad) => {
                         /*
                         let params = &sprite.params;
                         let mut size = params.texture_size;
@@ -806,7 +806,7 @@ impl Render {
                         }
                     }
 
-                    Renderable::TileMap(ref tile_map) => {
+                    Renderable::TileMap(tile_map) => {
                         for (index, tile) in tile_map.tiles.iter().enumerate() {
                             let cell_pos_x = (index as u16 % tile_map.tiles_data_grid_size.x)
                                 * tile_map.one_cell_size.x

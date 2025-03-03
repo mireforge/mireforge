@@ -142,7 +142,7 @@ impl ApplicationRender<ExampleLogic> for ExampleRender {
 
         gfx.set_origin((0, (VIRTUAL_SCREEN_SIZE.y / 2 - CHARACTER_HEIGHT) as i16).into());
 
-        if let Some(ref bat_atlas) = &self.bat_atlas {
+        if let Some(bat_atlas) = &self.bat_atlas {
             gfx.sprite_atlas_frame(
                 (
                     (VIRTUAL_SCREEN_SIZE.x / 2u16 - 23) as i16,

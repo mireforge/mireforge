@@ -5,9 +5,9 @@
 pub mod prelude;
 
 use int_math::UVec2;
+use limnus::DefaultPlugins;
 use limnus::prelude::{App, AppReturnValue, ScreenMode};
 use limnus::prelude::{Plugin, Window};
-use limnus::DefaultPlugins;
 use swamp_font::FontPlugin;
 use swamp_game::{Application, GamePlugin, GameSettings};
 use swamp_material::MaterialPlugin;

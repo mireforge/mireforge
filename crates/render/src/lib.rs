@@ -14,11 +14,7 @@ pub enum VirtualScale {
 }
 
 fn gcd(a: u16, b: u16) -> u16 {
-    if b == 0 {
-        a
-    } else {
-        gcd(b, a % b)
-    }
+    if b == 0 { a } else { gcd(b, a % b) }
 }
 
 fn aspect_ratio(size: UVec2) -> (u16, u16) {

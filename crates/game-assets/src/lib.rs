@@ -102,11 +102,12 @@ impl Assets for GameAssets<'_> {
     }
 
     fn text_glyphs(&self, text: &str, font_and_mat: &FontAndMaterial) -> Option<Vec<Glyph>> {
-        if let Some(font) = self.font(&font_and_mat.font_ref) {
-            let glyphs = font.draw(text);
-            Some(glyphs)
-        } else {
-            None
+        match self.font(&font_and_mat.font_ref) {
+            Some(font) => {
+                let glyphs = font.draw(text);
+                Some(glyphs)
+            }
+            _ => None,
         }
     }
 
