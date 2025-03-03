@@ -20,7 +20,6 @@ use swamp_font::FontRef;
 use swamp_font::WeakFontRef;
 use swamp_render::prelude::*;
 use swamp_wgpu_sprites::{SpriteInfo, SpriteInstanceUniform};
-use tracing::info;
 use tracing::trace;
 use wgpu::{BindGroup, BindGroupLayout, Buffer, RenderPass, RenderPipeline};
 
