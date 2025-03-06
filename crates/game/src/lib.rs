@@ -68,7 +68,7 @@ pub trait Application: Sized + 'static {
     }
 }
 
-#[derive(Debug, Resource)]
+#[derive(Debug,  Resource)]
 pub struct GameSettings {
     pub virtual_size: UVec2,
 }

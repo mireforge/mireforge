@@ -14,4 +14,4 @@ image = "0.25.5"
 wgpu = "23.0.0"
 
 swamp-wgpu = { path = "../wgpu", version = "0.0.17" }
-limnus-wgpu-math = "0.0.16"
+limnus-wgpu-math = "0.0.17"
