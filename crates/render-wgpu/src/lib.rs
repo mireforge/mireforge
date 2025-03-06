@@ -514,6 +514,7 @@ impl Render {
         });
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn draw_nine_slice(
         &mut self,
         position: Vec3,
@@ -869,7 +870,7 @@ impl Render {
         self.batch_offsets = batch_vertex_ranges;
     }
 
-    #[allow(clippy::too_many_arguments, clippy::too_many_lines)]
+    #[allow(clippy::too_many_lines)]
     #[inline]
     pub fn prepare_nine_slice(
         nine_slice: &NineSlice,
