@@ -1,6 +1,6 @@
 [package]
 name = "swamp"
-version = "0.0.17"
+version = "0.0.18"
 edition = "2024"
 license = "MIT"
 description = "2D Game Engine"
@@ -9,18 +9,18 @@ categories = ["game-development"]
 keywords = ["game", "engine"]
 
 [dependencies]
-swamp-boot-game = { path = "../boot-game", version = "0.0.17" }
-swamp-boot-advanced-game = { path = "../boot-advanced-game", version = "0.0.17" }
-swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.17" }
-swamp-game-assets = { path = "../game-assets", version = "0.0.17" }
-swamp-render = { path = "../render", version = "0.0.17" }
-swamp-game-audio = { path = "../game-audio", version = "0.0.17" }
-swamp-font = { path = "../font", version = "0.0.17" }
+swamp-boot-game = { path = "../boot-game", version = "0.0.18" }
+swamp-boot-advanced-game = { path = "../boot-advanced-game", version = "0.0.18" }
+swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.18" }
+swamp-game-assets = { path = "../game-assets", version = "0.0.18" }
+swamp-render = { path = "../render", version = "0.0.18" }
+swamp-game-audio = { path = "../game-audio", version = "0.0.18" }
+swamp-font = { path = "../font", version = "0.0.18" }
 int_math = "0.0.2"
 tracing = "0.1.40"
-swamp-game = { path = "../game", version = "0.0.17" }
-swamp-advanced-game = { path = "../advanced-game", version = "0.0.17" }
-swamp-material = { path = "../material", version = "0.0.17" }
+swamp-game = { path = "../game", version = "0.0.18" }
+swamp-advanced-game = { path = "../advanced-game", version = "0.0.18" }
+swamp-material = { path = "../material", version = "0.0.18" }
 limnus = { version = "0.0.17", default-features = false } # // TODO: should have a more minimal dependency
 limnus-local-resource = "0.0.17"
 limnus-resource = "0.0.17"

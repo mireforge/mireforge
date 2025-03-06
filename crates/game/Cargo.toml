@@ -1,6 +1,6 @@
 [package]
 name = "swamp-game"
-version = "0.0.17"
+version = "0.0.18"
 edition = "2024"
 repository = "https://github.com/swamp/swamp"
 license = "MIT"
@@ -12,13 +12,13 @@ description = "common swamp game types"
 tracing = "0.1.40"
 int_math = "0.0.2"
 
-swamp-render = { path = "../render", version = "0.0.17" }
-swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.17" }
+swamp-render = { path = "../render", version = "0.0.18" }
+swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.18" }
 
 monotonic-time-rs = "0.0.9"
 
-swamp-game-assets = { path = "../game-assets", version = "0.0.17" }
-swamp-game-audio = { path = "../game-audio", version = "0.0.17" }
+swamp-game-assets = { path = "../game-assets", version = "0.0.18" }
+swamp-game-audio = { path = "../game-audio", version = "0.0.18" }
 
 
 # Limnus
