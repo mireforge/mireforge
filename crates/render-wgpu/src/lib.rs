@@ -869,6 +869,7 @@ impl Render {
         self.batch_offsets = batch_vertex_ranges;
     }
 
+    #[allow(clippy::too_many_arguments, clippy::too_many_lines)]
     #[inline]
     pub fn prepare_nine_slice(
         nine_slice: &NineSlice,
