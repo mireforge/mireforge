@@ -2,11 +2,11 @@
 name = "mireforge-examples"
 version = "0.0.18"
 edition = "2024"
-repository = "https://github.com/swamp/mireforge"
+repository = "https://github.com/mireforge/mireforge"
 license = "MIT"
 categories = ["game-development"]
 keywords = ["examples"]
-description = "Examples for the swamp 2D game engine"
+description = "Examples for the mireforge 2D game engine"
 
 [dependencies]
 mireforge = { path = "../mireforge", version = "0.0.18", features = ["audio"] }

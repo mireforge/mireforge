@@ -5,7 +5,6 @@
 pub mod prelude;
 
 use int_math::UVec2;
-use limnus::DefaultPlugins;
 use limnus::prelude::{App, AppReturnValue, ScreenMode};
 use limnus::prelude::{Plugin, Window};
 use mireforge_font::FontPlugin;
@@ -27,14 +26,14 @@ pub fn run<T: Application>(
             mode: ScreenMode::Windowed,
         })
         .insert_resource(GameSettings { virtual_size })
-        .add_plugins((DefaultPlugins, SwampDefaultPlugins))
+        .add_plugins((limnus::DefaultPlugins, DefaultPlugins))
         .add_plugins(GamePlugin::<T>::new())
         .run()
 }
 
-pub struct SwampDefaultPlugins;
+pub struct DefaultPlugins;
 
-impl Plugin for SwampDefaultPlugins {
+impl Plugin for DefaultPlugins {
     fn build(&self, app: &mut App) {
         app.add_plugins((RenderWgpuPlugin, MaterialPlugin, FontPlugin));
     }

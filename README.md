@@ -37,7 +37,7 @@ cd crates/examples
 
 | Crate          | Description                                                          |
 | -------------- | -------------------------------------------------------------------- |
-| `swamp`        | Main engine crate that ties everything together                      |
+| `mireforge`    | Main engine crate that ties everything together                      |
 | `game`         | Core game types and traits for building 2D games (Application trait) |
 | `render`       | Render types and non render api specific code                        |
 | `render-wgpu`  | WebGPU implementation of the render traits                           |

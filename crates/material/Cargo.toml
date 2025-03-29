@@ -2,7 +2,7 @@
 name = "mireforge-material"
 version = "0.0.18"
 edition = "2024"
-repository = "https://github.com/swamp/mireforge"
+repository = "https://github.com/mireforge/mireforge"
 license = "MIT"
 categories = ["game-development"]
 description = "image asset loading and material creation"

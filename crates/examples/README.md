@@ -1,6 +1,6 @@
-# Swamp examples 🐊
+# Mireforge examples 🐊
 
-The Swamp Examples are designed to help developers quickly get started with the Swamp Render API
+The Mireforge Examples are designed to help developers quickly get started with the Mireforge Render API
 by providing ready-to-run examples.
 
 ## Usage
@@ -8,7 +8,7 @@ by providing ready-to-run examples.
 - List the available examples:
 
 ```bash
-cargo run --bin 
+cargo run --bin
 ```
 
 - Run one of the examples with:
@@ -16,12 +16,15 @@ cargo run --bin
 ```bash
 cargo run --release --bin <example_name>
 ```
+
 Replace <example_name> with the specific example you want to run.
 
 - To see detailed logs of the application’s behavior, you can run with logging enabled:
+
 ```bash
 RUST_LOG=debug,wgpu_core=warn,naga=warn,wgpu_hal=warn,winit=warn cargo run --example <example_name>
 ```
+
 Replace <example_name> with the specific example you want to run.
 
 ## Asset Licenses

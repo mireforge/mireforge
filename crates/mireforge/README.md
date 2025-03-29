@@ -1,6 +1,6 @@
-# Swamp
+# Mireforge
 
-Swamp is a lightweight 2D game engine designed for simplicity and performance, offering features for 2D
+Mireforge is a lightweight 2D game engine designed for simplicity and performance, offering features for 2D
 rendering and audio support. It targets multiple platforms, including Windows, macOS, Linux, and WebAssembly (WASM).
 
 ## Features
@@ -12,9 +12,9 @@ rendering and audio support. It targets multiple platforms, including Windows, m
 
 ## Installation
 
-To use Swamp in your project, include it in your `Cargo.toml`:
+To use mireforge in your project, include it in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-swamp = "0.0.18"
+mireforge = "0.0.18"
 ```

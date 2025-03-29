@@ -4,7 +4,7 @@ version = "0.0.18"
 edition = "2024"
 license = "MIT"
 description = "render pixel perfect 2D sprites"
-repository = "https://github.com/swamp/mireforge"
+repository = "https://github.com/mireforge/mireforge"
 categories = ["game-development"]
 keywords = ["game", "render"]
 
