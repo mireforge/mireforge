@@ -1,8 +1,7 @@
 /*
- * Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/swamp/swamp
+ * Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/swamp/mireforge
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
-
 use crate::logic::GameLogic;
 use crate::{ApplicationLogic, ApplicationRender};
 use limnus_app::prelude::{App, Plugin};
