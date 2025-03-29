@@ -1,10 +1,10 @@
 [package]
-name = "swamp-wgpu-sprites"
+name = "mireforge-wgpu-sprites"
 version = "0.0.18"
 edition = "2024"
 license = "MIT"
 description = "wgpu sprite utility functions"
-repository = "https://github.com/swamp/swamp"
+repository = "https://github.com/swamp/mireforge"
 categories = ["game-development"]
 keywords = ["game", "render", "sprites"]
 
@@ -13,5 +13,5 @@ bytemuck = "1.19.0"
 image = "0.25.5"
 wgpu = "23.0.0"
 
-swamp-wgpu = { path = "../wgpu", version = "0.0.18" }
+mireforge-wgpu = { path = "../wgpu", version = "0.0.18" }
 limnus-wgpu-math = "0.0.17"

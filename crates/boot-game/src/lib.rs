@@ -8,10 +8,10 @@ use int_math::UVec2;
 use limnus::DefaultPlugins;
 use limnus::prelude::{App, AppReturnValue, ScreenMode};
 use limnus::prelude::{Plugin, Window};
-use swamp_font::FontPlugin;
-use swamp_game::{Application, GamePlugin, GameSettings};
-use swamp_material::MaterialPlugin;
-use swamp_render_wgpu::plugin::RenderWgpuPlugin;
+use mireforge_font::FontPlugin;
+use mireforge_game::{Application, GamePlugin, GameSettings};
+use mireforge_material::MaterialPlugin;
+use mireforge_render_wgpu::plugin::RenderWgpuPlugin;
 
 // #[must_use] // TODO: should be able to convert AppReturnValue in the future
 pub fn run<T: Application>(

@@ -1,16 +1,16 @@
 [package]
-name = "swamp-material"
+name = "mireforge-material"
 version = "0.0.18"
 edition = "2024"
-repository = "https://github.com/swamp/swamp"
+repository = "https://github.com/swamp/mireforge"
 license = "MIT"
 categories = ["game-development"]
 description = "image asset loading and material creation"
 
 
 [dependencies]
-swamp-wgpu-sprites = { path = "../wgpu-sprites", version = "0.0.18" }
-swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.18" }
+mireforge-wgpu-sprites = { path = "../wgpu-sprites", version = "0.0.18" }
+mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.18" }
 tracing = "0.1.40"
 image = "0.25.5"
 

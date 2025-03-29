@@ -1,12 +1,12 @@
 [package]
-name = "swamp-examples"
+name = "mireforge-examples"
 version = "0.0.18"
 edition = "2024"
-repository = "https://github.com/swamp/swamp"
+repository = "https://github.com/swamp/mireforge"
 license = "MIT"
 categories = ["game-development"]
 keywords = ["examples"]
 description = "Examples for the swamp 2D game engine"
 
 [dependencies]
-swamp = { path = "../swamp", version = "0.0.18", features = ["audio"] }
+mireforge = { path = "../mireforge", version = "0.0.18", features = ["audio"] }

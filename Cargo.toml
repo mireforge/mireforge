@@ -2,11 +2,11 @@
 [workspace]
 resolver = "2"
 members = [
+    "crates/mireforge",
     "crates/examples",
     "crates/wgpu-sprites",
     "crates/wgpu",
     "crates/examples",
-    "crates/swamp",
     "crates/font",
     "crates/game",
     "crates/render",

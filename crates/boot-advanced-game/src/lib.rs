@@ -4,13 +4,13 @@
  */
 use int_math::UVec2;
 use limnus::prelude::{App, AppReturnValue, DefaultPlugins, ScreenMode, Window};
-use swamp_advanced_game::audio::GameAudioRenderPlugin;
-use swamp_advanced_game::logic::GameLogicPlugin;
-use swamp_advanced_game::render::GameRendererPlugin;
-use swamp_advanced_game::{ApplicationAudio, ApplicationLogic, ApplicationRender};
-use swamp_font::FontPlugin;
-use swamp_material::MaterialPlugin;
-use swamp_render_wgpu::plugin::RenderWgpuPlugin;
+use mireforge_advanced_game::audio::GameAudioRenderPlugin;
+use mireforge_advanced_game::logic::GameLogicPlugin;
+use mireforge_advanced_game::render::GameRendererPlugin;
+use mireforge_advanced_game::{ApplicationAudio, ApplicationLogic, ApplicationRender};
+use mireforge_font::FontPlugin;
+use mireforge_material::MaterialPlugin;
+use mireforge_render_wgpu::plugin::RenderWgpuPlugin;
 
 // #[must_use] // TODO: should be able to convert AppReturnValue in the future
 pub fn run_advanced<L: ApplicationLogic, R: ApplicationRender<L>, A: ApplicationAudio<L>>(

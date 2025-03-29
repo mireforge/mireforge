@@ -21,13 +21,13 @@ use limnus_resource::ResourceStorage;
 use limnus_resource::prelude::Resource;
 use limnus_screen::WindowMessage;
 use limnus_system_params::{LoReM, Msg, Re, ReAll, ReM};
+use mireforge_game_assets::{Assets, GameAssets};
+use mireforge_game_audio::{Audio, GameAudio};
+use mireforge_render_wgpu::{Gfx, Render};
 use monotonic_time_rs::{InstantMonotonicClock, Millis, MonotonicClock};
 use std::cmp::{max, min};
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
-use swamp_game_assets::{Assets, GameAssets};
-use swamp_game_audio::{Audio, GameAudio};
-use swamp_render_wgpu::{Gfx, Render};
 use tracing::debug;
 
 pub trait Application: Sized + 'static {
@@ -68,7 +68,7 @@ pub trait Application: Sized + 'static {
     }
 }
 
-#[derive(Debug,  Resource)]
+#[derive(Debug, Resource)]
 pub struct GameSettings {
     pub virtual_size: UVec2,
 }

@@ -12,7 +12,7 @@ use limnus_assets_loader::{AssetLoader, ConversionError, WrappedAssetLoaderRegis
 use limnus_local_resource::LocalResourceStorage;
 use limnus_resource::ResourceStorage;
 use limnus_wgpu_window::BasicDeviceInfo;
-use swamp_render_wgpu::{Material, Render};
+use mireforge_render_wgpu::{Material, Render};
 use tracing::debug;
 
 pub struct MaterialPlugin;
@@ -66,7 +66,7 @@ impl AssetLoader for MaterialWgpuProcessor {
         let img = img.to_rgba8();
 
         debug!("creating texture {name}");
-        let wgpu_texture = swamp_wgpu_sprites::load_texture_from_memory(
+        let wgpu_texture = mireforge_wgpu_sprites::load_texture_from_memory(
             &device_info.device,
             &device_info.queue,
             &img,
@@ -75,8 +75,9 @@ impl AssetLoader for MaterialWgpuProcessor {
 
         debug!("creating material {name}");
         {
-            let swamp_render_wgpu = resources.fetch_mut::<Render>();
-            let wgpu_material = swamp_render_wgpu.material_from_texture(wgpu_texture, name.value());
+            let mireforge_render_wgpu = resources.fetch_mut::<Render>();
+            let wgpu_material =
+                mireforge_render_wgpu.material_from_texture(wgpu_texture, name.value());
 
             let image_assets = resources.fetch_mut::<Assets<Material>>();
             image_assets.set_raw(id, wgpu_material);

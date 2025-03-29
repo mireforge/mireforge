@@ -10,9 +10,9 @@ use limnus_default_stages::{RenderFirst, RenderPostUpdate};
 use limnus_screen::{Window, WindowMessage};
 use limnus_system_params::{LoRe, Msg, Re, ReM};
 use limnus_wgpu_window::WgpuWindow;
+use mireforge_font::Font;
 use monotonic_time_rs::Millis;
 use std::sync::Arc;
-use swamp_font::Font;
 use tracing::debug;
 
 fn tick(mut wgpu_render: ReM<Render>, window_messages: Msg<WindowMessage>) {

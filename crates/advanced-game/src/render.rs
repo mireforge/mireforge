@@ -10,11 +10,11 @@ use limnus_default_stages::RenderUpdate;
 use limnus_local_resource::prelude::LocalResource;
 use limnus_resource::ResourceStorage;
 use limnus_system_params::{LoRe, LoReM, ReM};
+use mireforge_game_assets::GameAssets;
+use mireforge_render_wgpu::Render;
 use monotonic_time_rs::{InstantMonotonicClock, Millis, MonotonicClock};
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
-use swamp_game_assets::GameAssets;
-use swamp_render_wgpu::Render;
 use tracing::trace;
 
 #[derive(LocalResource)]

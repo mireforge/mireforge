@@ -1,17 +1,30 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <link rel="stylesheet" href="index.css" />
-</head>
-<body>
-  <canvas class="" height="720" id="swamp_canvas" width="1280" tabindex="0" style="width: 100%; height: 100%; min-width: 180px; min-height: 120px;" alt="App"></canvas>
-  <script type="module">
-    import init from './swamp-app-examples.js'
-    init().catch((error) => {
-      if (!error.message.startsWith("error!")) {
-        throw error;
-      }
-    });
-  </script>
-</body>
+    <head>
+        <link rel="stylesheet" href="index.css" />
+    </head>
+    <body>
+        <canvas
+            class=""
+            height="720"
+            id="mireforge_canvas"
+            width="1280"
+            tabindex="0"
+            style="
+                width: 100%;
+                height: 100%;
+                min-width: 180px;
+                min-height: 120px;
+            "
+            alt="App"
+        ></canvas>
+        <script type="module">
+            import init from "./swamp-app-examples.js";
+            init().catch((error) => {
+                if (!error.message.startsWith("error!")) {
+                    throw error;
+                }
+            });
+        </script>
+    </body>
 </html>

@@ -11,11 +11,11 @@ use limnus_default_stages::FixedUpdate;
 use limnus_local_resource::prelude::LocalResource;
 use limnus_resource::ResourceStorage;
 use limnus_system_params::{LoRe, LoReM, Re};
+use mireforge_game_assets::GameAssets;
+use mireforge_game_audio::GameAudio;
 use monotonic_time_rs::{InstantMonotonicClock, MonotonicClock};
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
-use swamp_game_assets::GameAssets;
-use swamp_game_audio::GameAudio;
 use tracing::trace;
 
 impl<A: ApplicationAudio<L>, L: ApplicationLogic> Debug for GameAudioRender<A, L> {

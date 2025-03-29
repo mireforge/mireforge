@@ -9,11 +9,11 @@ use limnus_asset_id::{AssetName, Id};
 use limnus_asset_registry::AssetRegistry;
 use limnus_audio_mixer::{StereoSample, StereoSampleRef};
 use limnus_resource::ResourceStorage;
+use mireforge_font::Font;
+use mireforge_font::Glyph;
+use mireforge_render_wgpu::{FixedAtlas, FontAndMaterial, Material, MaterialRef};
 use monotonic_time_rs::Millis;
 use std::fmt::Debug;
-use swamp_font::Font;
-use swamp_font::Glyph;
-use swamp_render_wgpu::{FixedAtlas, FontAndMaterial, Material, MaterialRef};
 
 pub trait Assets {
     #[must_use]

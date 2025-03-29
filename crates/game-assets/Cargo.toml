@@ -1,8 +1,8 @@
 [package]
-name = "swamp-game-assets"
+name = "mireforge-game-assets"
 version = "0.0.18"
 edition = "2024"
-repository = "https://github.com/swamp/swamp"
+repository = "https://github.com/swamp/mireforge"
 license = "MIT"
 categories = ["game-development"]
 description = "Game asset loading"
@@ -11,8 +11,8 @@ description = "Game asset loading"
 int_math = "0.0.2"
 monotonic-time-rs = "0.0.9"
 
-swamp-font = { path = "../font", version = "0.0.18" }
-swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.18" }
+mireforge-font = { path = "../font", version = "0.0.18" }
+mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.18" }
 
 # Limnus
 limnus-assets = "0.0.17"

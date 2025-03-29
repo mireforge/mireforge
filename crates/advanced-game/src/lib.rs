@@ -12,9 +12,9 @@ use fixed32::Fp;
 use int_math::{UVec2, Vec2};
 use limnus_basic_input::prelude::{ButtonState, KeyCode, MouseButton};
 use limnus_gamepad::{Axis, Button, GamePadId, Gamepad};
-use swamp_game_assets::Assets;
-use swamp_game_audio::Audio;
-use swamp_render_wgpu::Gfx;
+use mireforge_game_assets::Assets;
+use mireforge_game_audio::Audio;
+use mireforge_render_wgpu::Gfx;
 
 pub trait ApplicationLogic: Sized + 'static {
     fn new() -> Self;

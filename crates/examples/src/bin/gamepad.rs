@@ -4,7 +4,7 @@
  */
 extern crate core;
 
-use swamp::prelude::*;
+use mireforge::prelude::*;
 
 const TILE_SIZE: UVec2 = UVec2::new(128, 128);
 const CHARACTER_HEIGHT: u16 = 36;

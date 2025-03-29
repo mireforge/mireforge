@@ -1,8 +1,8 @@
 [package]
-name = "swamp-font"
+name = "mireforge-font"
 version = "0.0.18"
 edition = "2024"
-repository = "https://github.com/swamp/swamp"
+repository = "https://github.com/swamp/mireforge"
 license = "MIT"
 categories = ["game-development"]
 description = "Font asset loading"

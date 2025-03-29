@@ -2,7 +2,7 @@
  * Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/swamp/swamp
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
-use swamp::prelude::*;
+use mireforge::prelude::*;
 
 const TILE_SIZE: UVec2 = UVec2::new(128, 128);
 const CHARACTER_HEIGHT: u16 = 36;

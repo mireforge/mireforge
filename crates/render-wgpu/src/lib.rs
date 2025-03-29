@@ -10,16 +10,16 @@ use limnus_assets::Assets;
 use limnus_assets::prelude::{Asset, Id, RawAssetId, RawWeakId, WeakId};
 use limnus_resource::prelude::Resource;
 use limnus_wgpu_math::{Matrix4, OrthoInfo, Vec4};
+use mireforge_font::Font;
+use mireforge_font::FontRef;
+use mireforge_font::WeakFontRef;
+use mireforge_render::prelude::*;
+use mireforge_wgpu_sprites::{SpriteInfo, SpriteInstanceUniform};
 use monotonic_time_rs::Millis;
 use std::cmp::Ordering;
 use std::fmt::Debug;
 use std::mem::swap;
 use std::sync::Arc;
-use swamp_font::Font;
-use swamp_font::FontRef;
-use swamp_font::WeakFontRef;
-use swamp_render::prelude::*;
-use swamp_wgpu_sprites::{SpriteInfo, SpriteInstanceUniform};
 use tracing::trace;
 use wgpu::{BindGroup, BindGroupLayout, Buffer, RenderPass, RenderPipeline};
 
@@ -1152,7 +1152,7 @@ impl Render {
         // Camera is the same for everything
         render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
 
-        let num_indices = swamp_wgpu_sprites::INDICES.len() as u32;
+        let num_indices = mireforge_wgpu_sprites::INDICES.len() as u32;
 
         for &(weak_material_ref, start, count) in &self.batch_offsets {
             let wgpu_material = materials
@@ -1174,7 +1174,7 @@ impl Render {
         trace!("load texture from memory with name: '{label}'");
         let size = &texture.size();
         let texture_and_sampler_bind_group =
-            swamp_wgpu_sprites::create_sprite_texture_and_sampler_bind_group(
+            mireforge_wgpu_sprites::create_sprite_texture_and_sampler_bind_group(
                 &self.device,
                 &self.texture_sampler_bind_group_layout,
                 &texture,

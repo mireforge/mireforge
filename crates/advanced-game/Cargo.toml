@@ -1,23 +1,23 @@
 [package]
-name = "swamp-advanced-game"
+name = "mireforge-advanced-game"
 version = "0.0.18"
 edition = "2024"
 license = "MIT"
 description = "advanced game (logic, render, audio)"
-repository = "https://github.com/swamp/swamp"
+repository = "https://github.com/swamp/mireforge"
 categories = ["game-development"]
 
 [dependencies]
 tracing = "0.1.40"
 int_math = "0.0.2"
 
-swamp-render = { path = "../render", version = "0.0.18" }
-swamp-render-wgpu = { path = "../render-wgpu", version = "0.0.18" }
+mireforge-render = { path = "../render", version = "0.0.18" }
+mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.18" }
 
 monotonic-time-rs = "0.0.9"
 
-swamp-game-assets = { path = "../game-assets", version = "0.0.18" }
-swamp-game-audio = { path = "../game-audio", version = "0.0.18" }
+mireforge-game-assets = { path = "../game-assets", version = "0.0.18" }
+mireforge-game-audio = { path = "../game-audio", version = "0.0.18" }
 
 
 # Limnus

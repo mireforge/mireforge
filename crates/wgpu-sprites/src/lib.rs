@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/swamp/swamp
+ * Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/mineforge/mineforge
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
 use bytemuck::{Pod, Zeroable};
@@ -222,9 +222,9 @@ impl SpriteInfo {
         view_proj_matrix: Matrix4,
     ) -> Self {
         let vertex_shader =
-            swamp_wgpu::create_shader_module(device, "sprite vertex", vertex_shader_source);
+            mireforge_wgpu::create_shader_module(device, "sprite vertex", vertex_shader_source);
         let fragment_shader =
-            swamp_wgpu::create_shader_module(device, "sprite fragment", fragment_shader_source);
+            mireforge_wgpu::create_shader_module(device, "sprite fragment", fragment_shader_source);
 
         let index_buffer = create_sprite_index_buffer(device, "identity quad index buffer");
         let vertex_buffer = create_sprite_vertex_buffer(device, "identity quad vertex buffer");
@@ -274,7 +274,7 @@ impl SpriteInfo {
             &fragment_shader,
         );
 
-        let sampler = swamp_wgpu::create_nearest_sampler(device, "sprite nearest sampler");
+        let sampler = mireforge_wgpu::create_nearest_sampler(device, "sprite nearest sampler");
 
         Self {
             sprite_pipeline,
