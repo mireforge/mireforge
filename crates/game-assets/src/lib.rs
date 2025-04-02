@@ -10,7 +10,9 @@ use limnus_audio_mixer::{StereoSample, StereoSampleRef};
 use limnus_resource::ResourceStorage;
 use mireforge_font::Font;
 use mireforge_font::Glyph;
-use mireforge_render_wgpu::{FixedAtlas, FontAndMaterial, Material, MaterialRef};
+use mireforge_render_wgpu::{
+    FixedAtlas, FontAndMaterial, Material, MaterialRef, NineSliceAndMaterial, Slices,
+};
 use monotonic_time_rs::Millis;
 use std::fmt::Debug;
 
@@ -28,6 +30,13 @@ pub trait Assets {
         grid_size: UVec2,
         texture_size: UVec2,
     ) -> FixedAtlas;
+
+    #[must_use]
+    fn nine_slice_material_png(
+        &mut self,
+        name: impl Into<AssetName>,
+        slices: Slices,
+    ) -> NineSliceAndMaterial;
 
     #[must_use]
     fn bm_font(&mut self, name: impl Into<AssetName>) -> FontAndMaterial;
@@ -83,6 +92,19 @@ impl Assets for GameAssets<'_> {
         let material_ref = self.material_png(name);
 
         FixedAtlas::new(grid_size, texture_size, material_ref)
+    }
+
+    fn nine_slice_material_png(
+        &mut self,
+        name: impl Into<AssetName>,
+        slices: Slices,
+    ) -> NineSliceAndMaterial {
+        let material_ref = self.material_png(name);
+
+        NineSliceAndMaterial {
+            slices,
+            material_ref,
+        }
     }
 
     fn bm_font(&mut self, name: impl Into<AssetName>) -> FontAndMaterial {
