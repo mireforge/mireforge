@@ -386,7 +386,7 @@ impl Render {
         });
     }
 
-    fn push_nine_slice(
+    pub fn push_nine_slice(
         &mut self,
         position: Vec3,
         size: UVec2,
