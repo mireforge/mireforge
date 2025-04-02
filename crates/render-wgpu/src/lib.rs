@@ -6,8 +6,8 @@ pub mod plugin;
 pub mod prelude;
 
 use int_math::{URect, UVec2, Vec2, Vec3};
-use limnus_assets::prelude::{Asset, Id, RawAssetId, RawWeakId, WeakId};
 use limnus_assets::Assets;
+use limnus_assets::prelude::{Asset, Id, RawAssetId, RawWeakId, WeakId};
 use limnus_resource::prelude::Resource;
 use limnus_wgpu_math::{Matrix4, OrthoInfo, Vec4};
 use mireforge_font::Font;
@@ -584,7 +584,7 @@ impl Render {
                 size,
                 slices,
                 color,
-                origin_in_atlas: UVec2::new(0,0),
+                origin_in_atlas: UVec2::new(0, 0),
                 size_inside_atlas: None,
             }),
         });
