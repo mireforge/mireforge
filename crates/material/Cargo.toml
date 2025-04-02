@@ -1,6 +1,6 @@
 [package]
 name = "mireforge-material"
-version = "0.0.18"
+version = "0.0.19"
 edition = "2024"
 repository = "https://github.com/mireforge/mireforge"
 license = "MIT"
@@ -9,8 +9,8 @@ description = "image asset loading and material creation"
 
 
 [dependencies]
-mireforge-wgpu-sprites = { path = "../wgpu-sprites", version = "0.0.18" }
-mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.18" }
+mireforge-wgpu-sprites = { path = "../wgpu-sprites", version = "0.0.19" }
+mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.19" }
 tracing = "0.1.40"
 image = "0.25.5"
 

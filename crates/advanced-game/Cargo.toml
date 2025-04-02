@@ -1,6 +1,6 @@
 [package]
 name = "mireforge-advanced-game"
-version = "0.0.18"
+version = "0.0.19"
 edition = "2024"
 license = "MIT"
 description = "advanced game (logic, render, audio)"
@@ -11,13 +11,13 @@ categories = ["game-development"]
 tracing = "0.1.40"
 int_math = "0.0.2"
 
-mireforge-render = { path = "../render", version = "0.0.18" }
-mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.18" }
+mireforge-render = { path = "../render", version = "0.0.19" }
+mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.19" }
 
 monotonic-time-rs = "0.0.9"
 
-mireforge-game-assets = { path = "../game-assets", version = "0.0.18" }
-mireforge-game-audio = { path = "../game-audio", version = "0.0.18" }
+mireforge-game-assets = { path = "../game-assets", version = "0.0.19" }
+mireforge-game-audio = { path = "../game-audio", version = "0.0.19" }
 
 
 # Limnus
