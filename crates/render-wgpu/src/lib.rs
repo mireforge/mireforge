@@ -6,8 +6,8 @@ pub mod plugin;
 pub mod prelude;
 
 use int_math::{URect, UVec2, Vec2, Vec3};
-use limnus_assets::prelude::{Asset, Id, RawAssetId, RawWeakId, WeakId};
 use limnus_assets::Assets;
+use limnus_assets::prelude::{Asset, Id, WeakId};
 use limnus_resource::prelude::Resource;
 use limnus_wgpu_math::{Matrix4, OrthoInfo, Vec4};
 use mireforge_font::Font;
@@ -17,14 +17,18 @@ use mireforge_render::prelude::*;
 use mireforge_wgpu_sprites::{SpriteInfo, SpriteInstanceUniform};
 use monotonic_time_rs::Millis;
 use std::cmp::Ordering;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display, Formatter};
 use std::mem::swap;
 use std::sync::Arc;
 use tracing::trace;
 use wgpu::{BindGroup, BindGroupLayout, Buffer, RenderPass, RenderPipeline};
 
-pub type MaterialRef = Id<Material>;
-pub type WeakMaterialRef = WeakId<Material>;
+pub type MaterialRef = Arc<Material>;
+
+pub type WeakMaterialRef = Arc<Material>;
+
+pub type TextureRef = Id<Texture>;
+pub type WeakTextureRef = WeakId<Texture>;
 
 pub trait FrameLookup {
     fn lookup(&self, frame: u16) -> (&MaterialRef, URect);
@@ -144,7 +148,7 @@ fn to_wgpu_color(c: Color) -> wgpu::Color {
 #[derive(Debug)]
 struct RenderItem {
     position: Vec3,
-    material_ref: WeakMaterialRef,
+    material_ref: MaterialRef,
 
     renderable: Renderable,
 }
@@ -167,10 +171,10 @@ enum Renderable {
 
 #[derive(Resource)]
 pub struct Render {
-    index_buffer: Buffer,  // Only indicies for a single identity quad
+    index_buffer: Buffer,  // Only indices for a single identity quad
     vertex_buffer: Buffer, // Only one identity quad (0,0,1,1)
     sampler: wgpu::Sampler,
-    pipeline: RenderPipelineRef,
+    pub normal_sprite_pipeline: Arc<Pipeline>,
     physical_surface_size: UVec2,
     viewport_strategy: ViewportStrategy,
     // Group 0
@@ -256,7 +260,7 @@ impl Gfx for Render {
     ) {
         self.items.push(RenderItem {
             position,
-            material_ref: (&atlas_ref.material).into(),
+            material_ref: (&atlas_ref.material).clone(),
             renderable: Renderable::TileMap(TileMap {
                 tiles_data_grid_size: UVec2::new(width, tiles.len() as u16 / width),
                 cell_count_size: atlas_ref.cell_count_size,
@@ -276,7 +280,7 @@ impl Gfx for Render {
     ) {
         self.items.push(RenderItem {
             position,
-            material_ref: (&font_and_mat.material_ref).into(),
+            material_ref: (&font_and_mat.material_ref).clone(),
             renderable: Renderable::Text(Text {
                 text: text.to_string(),
                 font_ref: (&font_and_mat.font_ref).into(),
@@ -333,13 +337,18 @@ impl Render {
             create_view_uniform_view_projection_matrix(physical_size),
         );
 
+        let pipeline = Pipeline {
+            name: "NormalSprite".to_string(),
+            render_pipeline: sprite_info.sprite_pipeline,
+        };
+
         Self {
             device,
             queue,
             items: Vec::new(),
             //   fonts: Vec::new(),
             sampler: sprite_info.sampler,
-            pipeline: Arc::new(sprite_info.sprite_pipeline),
+            normal_sprite_pipeline: Arc::new(pipeline),
             texture_sampler_bind_group_layout: sprite_info.sprite_texture_sampler_bind_group_layout,
             index_buffer: sprite_info.index_buffer,
             vertex_buffer: sprite_info.vertex_buffer,
@@ -381,7 +390,7 @@ impl Render {
     fn push_sprite(&mut self, position: Vec3, material: &MaterialRef, sprite: Sprite) {
         self.items.push(RenderItem {
             position,
-            material_ref: material.into(),
+            material_ref: material.clone(),
             renderable: Renderable::Sprite(sprite),
         });
     }
@@ -403,7 +412,7 @@ impl Render {
 
         self.items.push(RenderItem {
             position,
-            material_ref: (&nine_slice_and_material.material_ref).into(),
+            material_ref: (&nine_slice_and_material.material_ref).clone(),
             renderable: Renderable::NineSlice(nine_slice_info),
         });
     }
@@ -558,12 +567,16 @@ impl Render {
     }
 
     pub fn draw_quad(&mut self, position: Vec3, size: UVec2, color: Color) {
+        let material = Material {
+            base: MaterialBase {
+                pipeline: self.normal_sprite_pipeline.clone(),
+            },
+            kind: MaterialKind::Quad,
+        };
+
         self.items.push(RenderItem {
             position,
-            material_ref: WeakId::<Material>::new(RawWeakId::with_asset_type::<Material>(
-                RawAssetId::new(0, 0),
-                "nothing".into(),
-            )),
+            material_ref: MaterialRef::from(material),
             renderable: Renderable::QuadColor(QuadColor { size, color }),
         });
     }
@@ -579,7 +592,7 @@ impl Render {
     ) {
         self.items.push(RenderItem {
             position,
-            material_ref: material_ref.into(),
+            material_ref: material_ref.clone(),
             renderable: Renderable::NineSlice(NineSlice {
                 size,
                 slices,
@@ -634,15 +647,15 @@ impl Render {
     fn order_render_items_in_batches(&self) -> Vec<Vec<&RenderItem>> {
         let mut material_batches: Vec<Vec<&RenderItem>> = Vec::new();
         let mut current_batch: Vec<&RenderItem> = Vec::new();
-        let mut current_material: Option<&WeakMaterialRef> = None;
+        let mut current_material: Option<MaterialRef> = None;
 
         for render_item in &self.items {
-            if Some(&render_item.material_ref) != current_material {
+            if Some(&render_item.material_ref) != current_material.as_ref() {
                 if !current_batch.is_empty() {
                     material_batches.push(current_batch.clone());
                     current_batch.clear();
                 }
-                current_material = Some(&render_item.material_ref);
+                current_material = Some(render_item.material_ref.clone());
             }
             current_batch.push(render_item);
         }
@@ -683,7 +696,12 @@ impl Render {
     /// # Panics
     ///
     #[allow(clippy::too_many_lines)]
-    pub fn prepare_render(&mut self, materials: &Assets<Material>, fonts: &Assets<Font>) {
+    pub fn prepare_render(
+        &mut self,
+        //materials: &Assets<Material>,
+        textures: &Assets<Texture>,
+        fonts: &Assets<Font>,
+    ) {
         const FLIP_X_MASK: u32 = 0b0000_0100;
         const FLIP_Y_MASK: u32 = 0b0000_1000;
 
@@ -692,7 +710,7 @@ impl Render {
         let batches = self.order_render_items_in_batches();
 
         let mut quad_matrix_and_uv: Vec<SpriteInstanceUniform> = Vec::new();
-        let mut batch_vertex_ranges: Vec<(WeakMaterialRef, u32, u32)> = Vec::new();
+        let mut batch_vertex_ranges: Vec<(MaterialRef, u32, u32)> = Vec::new();
 
         for render_items in &batches {
             let quad_len_before = quad_matrix_and_uv.len() as u32;
@@ -702,22 +720,35 @@ impl Render {
                 .first()
                 .map(|item| {
                     // Force copy semantics by dereferencing the shared reference
-                    let material_ref: WeakId<Material> = item.material_ref;
+                    let material_ref: MaterialRef = item.material_ref.clone();
                     material_ref
                 })
                 .expect("Render items batch was empty");
 
-            let result = materials.get_weak(weak_material_ref);
-            if result.is_none() {
+            if !weak_material_ref.is_complete(textures) {
                 // Material is not loaded yet
+                trace!(?weak_material_ref, "material is not complete yet");
                 continue;
             }
-            let material = result.unwrap();
-            let current_texture_size = material.texture_size;
+            let material = weak_material_ref.clone();
+
+            let maybe_texture_ref = material.primary_texture();
+            let maybe_texture = if let Some(found_primary_texture_ref) = maybe_texture_ref {
+                let found_primary_texture = textures.get(&found_primary_texture_ref);
+                if let Some(found_primary_texture_for_real) = found_primary_texture {
+                    Some(found_primary_texture_for_real)
+                } else {
+                    None
+                }
+            } else {
+                None
+            };
 
             for render_item in render_items {
                 match &render_item.renderable {
                     Renderable::Sprite(sprite) => {
+                        let current_texture_size = maybe_texture.unwrap().texture_size;
+
                         let params = &sprite.params;
                         let mut size = params.texture_size;
                         if size.x == 0 && size.y == 0 {
@@ -776,6 +807,7 @@ impl Render {
                     }
 
                     Renderable::NineSlice(nine_slice) => {
+                        let current_texture_size = maybe_texture.unwrap().texture_size;
                         Self::prepare_nine_slice(
                             nine_slice,
                             render_item.position,
@@ -854,6 +886,7 @@ impl Render {
                     }
 
                     Renderable::Text(text) => {
+                        let current_texture_size = maybe_texture.unwrap().texture_size;
                         let result = fonts.get_weak(text.font_ref);
                         if result.is_none() {
                             continue;
@@ -918,6 +951,7 @@ impl Render {
                                 1.0,
                             );
 
+                            let current_texture_size = maybe_texture.unwrap().texture_size;
                             let cell_tex_coords_mul_add = Self::calculate_texture_coords_mul_add(
                                 cell_texture_area,
                                 current_texture_size,
@@ -1217,7 +1251,8 @@ impl Render {
     pub fn render(
         &mut self,
         render_pass: &mut RenderPass,
-        materials: &Assets<Material>,
+        //        materials: &Assets<Material>,
+        textures: &Assets<Texture>,
         fonts: &Assets<Font>,
         now: Millis,
     ) {
@@ -1265,7 +1300,7 @@ impl Render {
             bytemuck::cast_slice(&[total_matrix]),
         );
 
-        self.prepare_render(materials, fonts);
+        self.prepare_render(textures, fonts);
 
         render_pass.set_viewport(
             self.viewport.position.x as f32,
@@ -1276,7 +1311,7 @@ impl Render {
             1.0,
         );
 
-        render_pass.set_pipeline(&self.pipeline);
+        //        render_pass.set_pipeline(&self.pipeline);
 
         // Index and vertex buffers never change
         render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
@@ -1290,13 +1325,41 @@ impl Render {
 
         let num_indices = mireforge_wgpu_sprites::INDICES.len() as u32;
 
-        for &(weak_material_ref, start, count) in &self.batch_offsets {
-            let wgpu_material = materials
-                .get_weak(weak_material_ref)
-                .expect("no such material");
+        let mut current_pipeline: Option<&PipelineRef> = None;
 
-            // Bind the texture and sampler bind group (Bind Group 1)
-            render_pass.set_bind_group(1, &wgpu_material.texture_and_sampler_bind_group, &[]);
+        for &(ref weak_material_ref, start, count) in &self.batch_offsets {
+            let wgpu_material = weak_material_ref;
+
+            let pipeline = &wgpu_material.base.pipeline;
+
+            if current_pipeline != Some(pipeline) {
+                trace!(%pipeline, "setting pipeline");
+                render_pass.set_pipeline(&pipeline.render_pipeline);
+                current_pipeline = Some(pipeline);
+            }
+
+            match &wgpu_material.kind {
+                MaterialKind::NormalSprite { primary_texture } => {
+                    let texture = textures.get(primary_texture).unwrap();
+                    trace!(%texture, "set normal sprite material");
+                    // Bind the texture and sampler bind group (Bind Group 1)
+                    render_pass.set_bind_group(1, &texture.texture_and_sampler_bind_group, &[]);
+                }
+                MaterialKind::AlphaMasker {
+                    primary_texture: _,
+                    alpha_texture: _,
+                } => {
+                    todo!()
+                }
+                MaterialKind::Quad => {
+                    //let texture = textures.get(primary_texture).unwrap();
+                    trace!("set quad material");
+                    // Bind the texture and sampler bind group (Bind Group 1)
+                    //render_pass.set_bind_group(1, None, &[]);
+                    // Intentionally do nothing
+                    todo!()
+                }
+            }
 
             // Issue the instanced draw call for the batch
             trace!(material=%weak_material_ref, start=%start, count=%count, "draw instanced");
@@ -1306,7 +1369,7 @@ impl Render {
         self.items.clear();
     }
 
-    pub fn material_from_texture(&self, texture: wgpu::Texture, label: &str) -> Material {
+    pub fn texture_resource_from_texture(&self, texture: wgpu::Texture, label: &str) -> Texture {
         trace!("load texture from memory with name: '{label}'");
         let size = &texture.size();
         let texture_and_sampler_bind_group =
@@ -1320,7 +1383,7 @@ impl Render {
 
         let texture_size = UVec2::new(size.width as u16, size.height as u16);
 
-        Material {
+        Texture {
             texture_and_sampler_bind_group,
             //pipeline: Arc::clone(&self.pipeline),
             texture_size,
@@ -1361,9 +1424,8 @@ fn create_view_uniform_view_projection_matrix(viewport_size: UVec2) -> Matrix4 {
     view_projection_matrix.into()
 }
 
-
 fn sort_render_items_by_z_and_material(items: &mut [RenderItem]) {
-    items.sort_by_key(|item| (item.position.z, item.material_ref));
+    items.sort_by_key(|item| (item.position.z, item.material_ref.clone()));
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -1402,14 +1464,22 @@ impl Default for SpriteParams {
     }
 }
 
+pub type BindGroupRef = Arc<BindGroup>;
+
 #[derive(Debug, PartialEq, Eq, Asset)]
-pub struct Material {
+pub struct Texture {
     pub texture_and_sampler_bind_group: BindGroup,
-//    pub pipeline: RenderPipelineRef,
+    //    pub pipeline: RenderPipelineRef,
     pub texture_size: UVec2,
 }
 
-impl PartialOrd<Self> for Material {
+impl Display for Texture {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(f, "{:?}", self.texture_size)
+    }
+}
+
+impl PartialOrd<Self> for Texture {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(
             self.texture_and_sampler_bind_group
@@ -1418,10 +1488,87 @@ impl PartialOrd<Self> for Material {
     }
 }
 
-impl Ord for Material {
+impl Ord for Texture {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.texture_and_sampler_bind_group
             .cmp(&other.texture_and_sampler_bind_group)
+    }
+}
+
+#[derive(Debug, Ord, PartialOrd, PartialEq, Eq)]
+pub struct MaterialBase {
+    pub pipeline: PipelineRef,
+}
+
+#[derive(Debug, Ord, PartialOrd, PartialEq, Eq)]
+pub struct Material {
+    pub base: MaterialBase,
+    pub kind: MaterialKind,
+}
+
+impl Material {
+    #[inline]
+    pub fn primary_texture(&self) -> Option<TextureRef> {
+        self.kind.primary_texture()
+    }
+
+    #[inline]
+    pub fn is_complete(&self, textures: &Assets<Texture>) -> bool {
+        if let Some(found_primary_texture) = self.primary_texture() {
+            textures.contains(&found_primary_texture)
+        } else {
+            true
+        }
+    }
+}
+
+impl Display for Material {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} ({})", self.kind, self.base.pipeline)
+    }
+}
+
+#[derive(Debug, Ord, PartialOrd, PartialEq, Eq)]
+pub enum MaterialKind {
+    NormalSprite {
+        primary_texture: Id<Texture>,
+    },
+    AlphaMasker {
+        primary_texture: Id<Texture>,
+        alpha_texture: Id<Texture>,
+    },
+    Quad,
+}
+
+impl MaterialKind {
+    pub fn primary_texture(&self) -> Option<Id<Texture>> {
+        match &self {
+            MaterialKind::NormalSprite {
+                primary_texture, ..
+            } => Some(primary_texture.clone()),
+            MaterialKind::AlphaMasker {
+                primary_texture, ..
+            } => Some(primary_texture.clone()),
+            MaterialKind::Quad => None,
+        }
+    }
+}
+
+impl Display for MaterialKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let texture_name = if let Some(x) = self.primary_texture() {
+            x.to_string()
+        } else {
+            "".to_string()
+        };
+
+        let kind_name = match self {
+            MaterialKind::NormalSprite { .. } => "NormalSprite",
+            MaterialKind::Quad { .. } => "Quad",
+            MaterialKind::AlphaMasker { .. } => "AlphaMasker",
+        };
+
+        write!(f, "{kind_name} texture {texture_name}")
     }
 }
 
@@ -1462,7 +1609,19 @@ pub struct TileMap {
     pub scale: u8,
 }
 
-pub type RenderPipelineRef = Arc<RenderPipeline>;
+#[derive(PartialEq, Debug, Eq, Ord, PartialOrd)]
+pub struct Pipeline {
+    name: String,
+    render_pipeline: RenderPipeline,
+}
+
+impl Display for Pipeline {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "pipeline: {}", self.name)
+    }
+}
+
+pub type PipelineRef = Arc<Pipeline>;
 
 const fn sources() -> (&'static str, &'static str) {
     let vertex_shader_source = "

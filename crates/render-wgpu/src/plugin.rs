@@ -2,7 +2,7 @@
  * Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/mireforge/mireforge
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
-use crate::{Material, Render};
+use crate::{Render, Texture};
 use limnus_app::prelude::{App, Plugin};
 use limnus_assets::prelude::Assets as LimnusAssets;
 use limnus_clock::Clock;
@@ -30,14 +30,15 @@ pub fn flush_render_tick(
     script: LoRe<Clock>,
     wgpu_window: LoRe<WgpuWindow>,
     mut wgpu_render: ReM<Render>,
-    materials: Re<LimnusAssets<Material>>,
+    //materials: Re<LimnusAssets<Material>>,
+    textures: Re<LimnusAssets<Texture>>,
     fonts: Re<LimnusAssets<Font>>,
 ) {
     let now = script.clock.now();
 
     wgpu_window
         .render(wgpu_render.clear_color(), |render_pass| {
-            wgpu_render.render(render_pass, &materials, &fonts, now);
+            wgpu_render.render(render_pass, &textures, &fonts, now);
         })
         .unwrap();
 }
@@ -55,6 +56,7 @@ impl Plugin for RenderWgpuPlugin {
             window_settings.minimal_surface_size,
             Millis::new(0),
         );
+
         app.insert_resource(wgpu_render);
 
         app.add_system(RenderFirst, tick);

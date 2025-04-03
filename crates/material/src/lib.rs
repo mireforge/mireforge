@@ -12,7 +12,7 @@ use limnus_assets_loader::{AssetLoader, ConversionError, WrappedAssetLoaderRegis
 use limnus_local_resource::LocalResourceStorage;
 use limnus_resource::ResourceStorage;
 use limnus_wgpu_window::BasicDeviceInfo;
-use mireforge_render_wgpu::{Material, Render};
+use mireforge_render_wgpu::{Render, Texture};
 use tracing::debug;
 
 pub struct MaterialPlugin;
@@ -26,7 +26,7 @@ impl Plugin for MaterialPlugin {
             registry.value.lock().unwrap().register_loader(loader);
         }
 
-        app.insert_resource(Assets::<Material>::default());
+        app.insert_resource(Assets::<Texture>::default());
     }
 }
 
@@ -41,7 +41,7 @@ impl MaterialWgpuProcessor {
 }
 
 impl AssetLoader for MaterialWgpuProcessor {
-    type AssetType = Material;
+    type AssetType = Texture;
 
     fn convert_and_insert(
         &self,
@@ -60,11 +60,11 @@ impl AssetLoader for MaterialWgpuProcessor {
                 .expect("should know about this Id");
         }
 
-        debug!("convert from png {name}");
+        debug!(?name, "convert from png");
         let dynamic_image = image::load_from_memory_with_format(octets, image::ImageFormat::Png)
             .expect("Failed to load image");
 
-        debug!("creating texture {name}");
+        debug!(?name, "creating texture");
         let wgpu_texture = mireforge_wgpu_sprites::load_texture_from_memory(
             &device_info.device,
             &device_info.queue,
@@ -72,17 +72,15 @@ impl AssetLoader for MaterialWgpuProcessor {
             name.value(),
         );
 
-        debug!("creating material {name}");
         {
             let mireforge_render_wgpu = resources.fetch_mut::<Render>();
             let wgpu_material =
-                mireforge_render_wgpu.material_from_texture(wgpu_texture, name.value());
+                mireforge_render_wgpu.texture_resource_from_texture(wgpu_texture, name.value());
 
-            let image_assets = resources.fetch_mut::<Assets<Material>>();
+            let image_assets = resources.fetch_mut::<Assets<Texture>>();
             image_assets.set_raw(id, wgpu_material);
+            debug!(?id, ?name, "texture inserted");
         }
-
-        debug!("material complete {name}");
 
         Ok(())
     }

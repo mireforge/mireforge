@@ -7,12 +7,8 @@ use image::DynamicImage;
 use image::GenericImageView;
 use limnus_wgpu_math::{Matrix4, Vec4};
 use tracing::{debug, warn};
-use wgpu::util::DeviceExt;
 use wgpu::BufferBindingType;
-use wgpu::{
-    util, BlendState, ColorTargetState, ColorWrites, Face, FrontFace, MultisampleState,
-    PolygonMode, PrimitiveState, PrimitiveTopology,
-};
+use wgpu::util::DeviceExt;
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferAddress, BufferDescriptor, BufferUsages,
@@ -23,6 +19,10 @@ use wgpu::{
     VertexStepMode,
 };
 use wgpu::{BindingResource, PipelineCompilationOptions};
+use wgpu::{
+    BlendState, ColorTargetState, ColorWrites, Face, FrontFace, MultisampleState, PolygonMode,
+    PrimitiveState, PrimitiveTopology, util,
+};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]

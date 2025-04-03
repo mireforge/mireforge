@@ -11,10 +11,12 @@ use limnus_resource::ResourceStorage;
 use mireforge_font::Font;
 use mireforge_font::Glyph;
 use mireforge_render_wgpu::{
-    FixedAtlas, FontAndMaterial, Material, MaterialRef, NineSliceAndMaterial, Slices,
+    FixedAtlas, FontAndMaterial, Material, MaterialBase, MaterialKind, MaterialRef,
+    NineSliceAndMaterial, Render, Slices, Texture,
 };
 use monotonic_time_rs::Millis;
 use std::fmt::Debug;
+use std::sync::Arc;
 
 pub trait Assets {
     #[must_use]
@@ -68,6 +70,10 @@ impl<'a> GameAssets<'a> {
             resource_storage,
         }
     }
+
+    fn renderer(&self) -> &Render {
+        self.resource_storage.fetch::<Render>()
+    }
 }
 
 impl Assets for GameAssets<'_> {
@@ -80,7 +86,19 @@ impl Assets for GameAssets<'_> {
             .resource_storage
             .get_mut::<AssetRegistry>()
             .expect("should exist registry");
-        asset_loader.load::<Material>(name.into().with_extension("png"))
+
+        let texture_ref = asset_loader.load::<Texture>(name.into().with_extension("png"));
+
+        let material = Material {
+            base: MaterialBase {
+                pipeline: self.renderer().normal_sprite_pipeline.clone(),
+            },
+            kind: MaterialKind::NormalSprite {
+                primary_texture: texture_ref,
+            },
+        };
+
+        Arc::new(material)
     }
 
     fn frame_fixed_grid_material_png(
@@ -114,11 +132,20 @@ impl Assets for GameAssets<'_> {
             .get_mut::<AssetRegistry>()
             .expect("should exist registry");
         let font_ref = asset_loader.load::<Font>(asset_name.clone().with_extension("fnt"));
-        let material_ref = asset_loader.load::<Material>(asset_name.clone().with_extension("png"));
+        let texture_id = asset_loader.load::<Texture>(asset_name.clone().with_extension("png"));
+
+        let material = Material {
+            base: MaterialBase {
+                pipeline: self.renderer().normal_sprite_pipeline.clone(),
+            },
+            kind: MaterialKind::NormalSprite {
+                primary_texture: texture_id,
+            },
+        };
 
         FontAndMaterial {
             font_ref,
-            material_ref,
+            material_ref: Arc::new(material),
         }
     }
 
