@@ -3,10 +3,17 @@
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
 use bytemuck::{Pod, Zeroable};
+use image::DynamicImage;
+use image::GenericImageView;
 use image::RgbaImage;
 use limnus_wgpu_math::{Matrix4, Vec4};
-use wgpu::BufferBindingType;
+use tracing::{debug, error, info, warn};
 use wgpu::util::DeviceExt;
+use wgpu::BufferBindingType;
+use wgpu::{
+    util, BlendState, ColorTargetState, ColorWrites, Face, FrontFace, MultisampleState,
+    PolygonMode, PrimitiveState, PrimitiveTopology,
+};
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferAddress, BufferDescriptor, BufferUsages,
@@ -17,10 +24,6 @@ use wgpu::{
     TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode,
 };
 use wgpu::{BindingResource, PipelineCompilationOptions};
-use wgpu::{
-    BlendState, ColorTargetState, ColorWrites, Face, FrontFace, MultisampleState, PolygonMode,
-    PrimitiveState, PrimitiveTopology, util,
-};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
@@ -338,48 +341,90 @@ fn create_camera_uniform_bind_group(
 pub fn load_texture_from_memory(
     device: &Device,
     queue: &Queue,
-    img: &RgbaImage,
+    img: DynamicImage,
     label: &str,
 ) -> Texture {
     let (width, height) = img.dimensions();
+    let texture_size = Extent3d {
+        width,
+        height,
+        depth_or_array_layers: 1,
+    };
 
-    // Create the texture and upload the data (same as before)
-    let texture = device.create_texture(&TextureDescriptor {
+    let (texture_format, texture_data): (TextureFormat, Vec<u8>) = match img {
+        DynamicImage::ImageLuma8(buffer) => {
+            debug!(
+                ?label,
+                "Detected Luma8 image. Using texture format R8Unorm."
+            );
+            if !label.contains(".alpha") {
+                warn!("it is recommended that filename includes '.alpha' for luma8 textures");
+            }
+            (TextureFormat::R8Unorm, buffer.into_raw())
+        }
+        DynamicImage::ImageLumaA8(buffer) => {
+            warn!(
+                ?label,
+                "Detected LumaA8 image. Discarding alpha channel and using Luma for alpha R8Unorm. Please do not use this format, since half of it is discarded."
+            );
+            if !label.contains(".alpha") {
+                warn!("it is recommended that filename includes '.alpha' for luma8 textures");
+            }
+            // Extract only the Luma channel
+            let luma_data = buffer
+                .pixels()
+                .flat_map(|p| [p[0]]) // p[0] is Luma, p[1] is Alpha
+                .collect();
+            (TextureFormat::R8Unorm, luma_data)
+        }
+        DynamicImage::ImageRgba8(buffer) => {
+            debug!(
+                ?label,
+                "Detected Rgba8 image. Using texture format Rgba8UnormSrgb."
+            );
+            (TextureFormat::Rgba8UnormSrgb, buffer.into_raw())
+        }
+        DynamicImage::ImageRgb8(buffer) => {
+            warn!(
+                ?label,
+                "Detected Rgb8 image. Converting to Rgba8. Using texture format Rgba8UnormSrgb."
+            );
+            let rgba_buffer = buffer.pixels().fold(
+                Vec::with_capacity((width * height * 4) as usize),
+                |mut acc, rgb| {
+                    acc.extend_from_slice(&[rgb[0], rgb[1], rgb[2], 255u8]);
+                    acc
+                },
+            );
+            (TextureFormat::Rgba8UnormSrgb, rgba_buffer)
+        }
+        _ => {
+            warn!(
+                ?label,
+                "Detected unknown format. Converting to Rgba8. Using texture format Rgba8UnormSrgb."
+            );
+            let rgba_buffer = img.clone().into_rgba8();
+            (TextureFormat::Rgba8UnormSrgb, rgba_buffer.into_raw())
+        }
+    };
+
+    let texture_descriptor = TextureDescriptor {
         label: Some(label),
-        size: Extent3d {
-            width,
-            height,
-            depth_or_array_layers: 1,
-        },
+        size: texture_size,
         mip_level_count: 1,
         sample_count: 1,
         dimension: TextureDimension::D2,
-        format: TextureFormat::Rgba8UnormSrgb,
+        format: texture_format, // Use the detected format
         usage: TextureUsages::TEXTURE_BINDING | TextureUsages::COPY_DST,
-        view_formats: &[TextureFormat::Rgba8UnormSrgb],
-    });
+        view_formats: &[texture_format],
+    };
 
-    queue.write_texture(
-        ImageCopyTexture {
-            texture: &texture,
-            mip_level: 0,
-            origin: Origin3d::ZERO,
-            aspect: TextureAspect::All,
-        },
-        img,
-        ImageDataLayout {
-            offset: 0,
-            bytes_per_row: Some(4 * width),
-            rows_per_image: Some(height),
-        },
-        Extent3d {
-            width,
-            height,
-            depth_or_array_layers: 1,
-        },
-    );
-
-    texture
+    device.create_texture_with_data(
+        queue,
+        &texture_descriptor,
+        wgpu::util::TextureDataOrder::LayerMajor,
+        &texture_data,
+    )
 }
 
 #[must_use]

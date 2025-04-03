@@ -6,8 +6,8 @@ pub mod plugin;
 pub mod prelude;
 
 use int_math::{URect, UVec2, Vec2, Vec3};
-use limnus_assets::Assets;
 use limnus_assets::prelude::{Asset, Id, RawAssetId, RawWeakId, WeakId};
+use limnus_assets::Assets;
 use limnus_resource::prelude::Resource;
 use limnus_wgpu_math::{Matrix4, OrthoInfo, Vec4};
 use mireforge_font::Font;
@@ -1322,7 +1322,7 @@ impl Render {
 
         Material {
             texture_and_sampler_bind_group,
-            //render_pipeline: Arc::clone(&self.pipeline),
+            //pipeline: Arc::clone(&self.pipeline),
             texture_size,
         }
     }
@@ -1360,6 +1360,7 @@ fn create_view_uniform_view_projection_matrix(viewport_size: UVec2) -> Matrix4 {
 
     view_projection_matrix.into()
 }
+
 
 fn sort_render_items_by_z_and_material(items: &mut [RenderItem]) {
     items.sort_by_key(|item| (item.position.z, item.material_ref));
@@ -1404,6 +1405,7 @@ impl Default for SpriteParams {
 #[derive(Debug, PartialEq, Eq, Asset)]
 pub struct Material {
     pub texture_and_sampler_bind_group: BindGroup,
+//    pub pipeline: RenderPipelineRef,
     pub texture_size: UVec2,
 }
 
@@ -1597,4 +1599,39 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
 
 ";
     (vertex_shader_source, fragment_shader_source)
+}
+
+const fn masked_texture_tinted() -> &'static str {
+    r"
+// Masked Texture and tinted shader
+
+
+@group(1) @binding(0) var t_color: texture_2d<f32>;
+@group(1) @binding(1) var t_mask: texture_2d<f32>;
+@group(1) @binding(2) var s_sampler: sampler;
+// New uniform binding for mask parameters
+@group(1) @binding(3) var<uniform> mask_params: MaskParams;
+
+struct VertexOutput {
+    @builtin(position) position: vec4<f32>,
+    @location(0) tex_coords: vec2<f32>, // Original UVs from vertex
+    @location(1) color: vec4<f32>,
+};
+
+@fragment
+fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
+    let color_sample = textureSample(t_color, s_sampler, input.tex_coords);
+
+    let mask_coords = input.tex_coords + mask_params.offset;
+
+    // TODO: Scale rot and other // let mask_coords = (input.tex_coords * mask_params.scale) + mask_params.offset;
+
+    let mask_alpha = textureSample(t_mask, s_sampler, mask_coords).r;
+
+    let final_rgb = color_sample.rgb * input.color.rgb;
+    let final_alpha = mask_alpha * input.color.a;
+
+    return vec4<f32>(final_rgb, final_alpha);
+}
+    "
 }

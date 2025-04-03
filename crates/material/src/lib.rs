@@ -61,15 +61,14 @@ impl AssetLoader for MaterialWgpuProcessor {
         }
 
         debug!("convert from png {name}");
-        let img = image::load_from_memory_with_format(octets, image::ImageFormat::Png)
+        let dynamic_image = image::load_from_memory_with_format(octets, image::ImageFormat::Png)
             .expect("Failed to load image");
-        let img = img.to_rgba8();
 
         debug!("creating texture {name}");
         let wgpu_texture = mireforge_wgpu_sprites::load_texture_from_memory(
             &device_info.device,
             &device_info.queue,
-            &img,
+            dynamic_image,
             name.value(),
         );
 

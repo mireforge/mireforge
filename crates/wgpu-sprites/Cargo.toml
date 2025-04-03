@@ -12,6 +12,7 @@ keywords = ["game", "render", "sprites"]
 bytemuck = "1.19.0"
 image = "0.25.5"
 wgpu = "23.0.0"
+tracing = "0.1.40"
 
 mireforge-wgpu = { path = "../wgpu", version = "0.0.19" }
 limnus-wgpu-math = "0.0.17"
