@@ -9,11 +9,13 @@ const START_WINDOW_SIZE: UVec2 = UVec2::new(1280, 800);
 
 #[derive(Debug)]
 pub struct AlphaExample {
+    #[allow(unused)]
     alpha: MaterialRef,
     tick_count: u32,
 }
 
 impl AlphaExample {
+    /*
     fn fun_value(&self, speed: f32, min: i16, max: i16, offset: u32) -> i16 {
         let angle = (self.tick_count + offset) as f32 * 0.1 * speed;
         let sin_value = angle.sin();
@@ -23,6 +25,8 @@ impl AlphaExample {
 
         pos_sin_int as i16 + min
     }
+
+     */
 }
 
 impl Application for AlphaExample {
@@ -39,10 +43,7 @@ impl Application for AlphaExample {
         self.tick_count += 1;
     }
 
-    fn render(&mut self, gfx: &mut impl Gfx) {
-        let width = self.fun_value(0.15, 30, 310, self.tick_count + 25);
-        let height = self.fun_value(0.05, 30, 230, self.tick_count);
-    }
+    fn render(&mut self, _gfx: &mut impl Gfx) {}
 }
 
 fn main() {

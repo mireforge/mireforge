@@ -395,7 +395,7 @@ impl Render {
     ) {
         let nine_slice_info = NineSlice {
             size,
-            slices: nine_slice_and_material.slices.clone(),
+            slices: nine_slice_and_material.slices,
             color,
             origin_in_atlas: UVec2::new(0, 0),
             size_inside_atlas: None,
@@ -1601,6 +1601,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
     (vertex_shader_source, fragment_shader_source)
 }
 
+#[allow(unused)]
 const fn masked_texture_tinted() -> &'static str {
     r"
 // Masked Texture and tinted shader

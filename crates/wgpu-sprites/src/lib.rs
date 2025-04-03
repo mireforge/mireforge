@@ -5,9 +5,8 @@
 use bytemuck::{Pod, Zeroable};
 use image::DynamicImage;
 use image::GenericImageView;
-use image::RgbaImage;
 use limnus_wgpu_math::{Matrix4, Vec4};
-use tracing::{debug, error, info, warn};
+use tracing::{debug, warn};
 use wgpu::util::DeviceExt;
 use wgpu::BufferBindingType;
 use wgpu::{
@@ -17,11 +16,11 @@ use wgpu::{
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferAddress, BufferDescriptor, BufferUsages,
-    Device, Extent3d, ImageCopyTexture, ImageDataLayout, Origin3d, PipelineLayout,
-    PipelineLayoutDescriptor, Queue, RenderPipeline, RenderPipelineDescriptor, Sampler,
-    SamplerBindingType, ShaderModule, ShaderStages, Texture, TextureAspect, TextureDescriptor,
-    TextureDimension, TextureFormat, TextureSampleType, TextureUsages, TextureViewDescriptor,
-    TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode,
+    Device, Extent3d, PipelineLayout, PipelineLayoutDescriptor, Queue, RenderPipeline,
+    RenderPipelineDescriptor, Sampler, SamplerBindingType, ShaderModule, ShaderStages, Texture,
+    TextureDescriptor, TextureDimension, TextureFormat, TextureSampleType, TextureUsages,
+    TextureViewDescriptor, TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat,
+    VertexStepMode,
 };
 use wgpu::{BindingResource, PipelineCompilationOptions};
 
