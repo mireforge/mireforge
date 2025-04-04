@@ -11,6 +11,7 @@ const START_WINDOW_SIZE: UVec2 = UVec2::new(1280, 800);
 pub struct AlphaExample {
     #[allow(unused)]
     alpha_masked: MaterialRef,
+    before: MaterialRef,
     tick_count: u32,
 }
 
@@ -31,9 +32,11 @@ impl AlphaExample {
 
 impl Application for AlphaExample {
     fn new(assets: &mut impl Assets) -> Self {
-        let alpha_masked = assets.material_alpha_mask("nine_slice_debug", "test_mask.alpha"); //
+        let before = assets.material_png("nine_slice_debug");
+        let alpha_masked = assets.material_alpha_mask("nine_slice_debug", "test_mask.alpha");
 
         Self {
+            before,
             alpha_masked,
             tick_count: 0,
         }
@@ -44,10 +47,12 @@ impl Application for AlphaExample {
     }
 
     fn render(&mut self, gfx: &mut impl Gfx) {
-        let color = Color::from_f32(1.0, 1.0, 1.0, 1.0);
+        gfx.draw_sprite((20, 0, 0).into(), &self.before);
+
+        let color = Color::from_f32(1.0, 0.3, 1.0, 1.0);
         gfx.draw_with_mask(
-            (0, 0, 0).into(),
-            (100, 100).into(),
+            (100, 0, 0).into(),
+            (200, 200).into(),
             color,
             &self.alpha_masked,
         );
