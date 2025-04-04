@@ -62,7 +62,6 @@ pub fn create_sprite_uniform_buffer(device: &Device, label: &str) -> Buffer {
             tex_coords_mul_add: Vec4([0.0, 0.0, 1.0, 1.0]),
             rotation: 0,
             color: Vec4([1.0, 0.0, 1.0, 1.0]),
-            use_texture: 0,
         }]),
         usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
     })
@@ -80,11 +79,15 @@ unsafe impl Zeroable for CameraUniform {}
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct SpriteInstanceUniform {
-    pub model: Matrix4, // Model Transformation matrix
+    //     transformed_pos = transformed_pos * vec2<f32>(instance.scale) + vec2<f32>(instance.position);
+    //     let world_pos = vec4<f32>(transformed_pos, 0.0, 1.0);
+    //     output.position = camera.view_proj * world_pos;
+    //pub position: [i32; 2],      // Integer pixel positions
+    //pub scale: [u32; 2],         // Integer pixel dimensions
+    pub model: Matrix4, // Model Transformation matrix. use
     pub tex_coords_mul_add: Vec4,
     pub rotation: u32,
     pub color: Vec4,
-    pub use_texture: u32,
 }
 
 unsafe impl Pod for SpriteInstanceUniform {}
@@ -92,19 +95,12 @@ unsafe impl Zeroable for SpriteInstanceUniform {}
 
 impl SpriteInstanceUniform {
     #[must_use]
-    pub const fn new(
-        model: Matrix4,
-        tex_coords_mul_add: Vec4,
-        rotation: u32,
-        color: Vec4,
-        use_texture: bool,
-    ) -> Self {
+    pub const fn new(model: Matrix4, tex_coords_mul_add: Vec4, rotation: u32, color: Vec4) -> Self {
         Self {
             model,
             tex_coords_mul_add,
             rotation,
             color,
-            use_texture: use_texture as u32,
         }
     }
 }
@@ -154,12 +150,6 @@ impl SpriteInstanceUniform {
                     shader_location: 8,
                     format: VertexFormat::Float32x4,
                 },
-                // use_texture (bool)
-                VertexAttribute {
-                    offset: 84 + 4 * 4,
-                    shader_location: 9,
-                    format: VertexFormat::Uint32,
-                },
             ],
         }
     }
@@ -193,8 +183,8 @@ pub const INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
 
 #[derive(Debug)]
 pub struct SpriteInfo {
-    //pub sprite_pipeline: RenderPipeline,
     pub sprite_shader_info: ShaderInfo,
+    pub quad_shader_info: ShaderInfo,
 
     pub sampler: Sampler,
     pub vertex_buffer: Buffer,
@@ -226,7 +216,7 @@ pub fn create_shader_info(
     device: &Device,
     surface_texture_format: TextureFormat,
     camera_bind_group_layout: &BindGroupLayout,
-    specific_layout: &BindGroupLayout,
+    specific_layout: Option<&BindGroupLayout>,
     vertex_source: &str,
     fragment_source: &str,
     name: &str,
@@ -236,19 +226,20 @@ pub fn create_shader_info(
     let fragment_shader =
         mireforge_wgpu::create_shader_module(device, &format!("{name} fragment"), fragment_source);
 
-    let sprite_pipeline_layout = create_pipeline_layout_with_camera_first(
+    let custom_layout = create_pipeline_layout_with_camera_first(
         device,
         &camera_bind_group_layout,
-        &specific_layout,
+        specific_layout,
         &format!("{} pipeline layout (with camera first)", name),
     );
 
-    let pipeline = create_sprite_pipeline(
+    let pipeline = create_pipeline(
         device,
         surface_texture_format,
-        &sprite_pipeline_layout,
+        &custom_layout,
         &vertex_shader,
         &fragment_shader,
+        name,
     );
 
     ShaderInfo {
@@ -286,7 +277,6 @@ impl SpriteInfo {
         );
 
         // Create normal sprite shader
-
         let (vertex_shader_source, fragment_shader_source) = normal_sprite_sources();
 
         let sprite_texture_sampler_bind_group_layout =
@@ -296,13 +286,26 @@ impl SpriteInfo {
             device,
             surface_texture_format,
             &camera_bind_group_layout,
-            &sprite_texture_sampler_bind_group_layout,
+            Some(&sprite_texture_sampler_bind_group_layout),
             vertex_shader_source,
             fragment_shader_source,
             "Sprite",
         );
 
-        // -------------------------- Texture and Sampler in Group 1 -----------------------------------------------
+        // Create quad shader
+        let quad_shader_info = {
+            let (vertex_shader_source, fragment_shader_source) = quad_shaders();
+
+            create_shader_info(
+                device,
+                surface_texture_format,
+                &camera_bind_group_layout,
+                None,
+                vertex_shader_source,
+                fragment_shader_source,
+                "Quad",
+            )
+        };
 
         // -------------------------- Sprite Instance in Group 2 -----------------------------------------------
         let quad_matrix_and_uv_instance_buffer = create_quad_matrix_and_uv_instance_buffer(
@@ -315,6 +318,7 @@ impl SpriteInfo {
 
         Self {
             sprite_shader_info,
+            quad_shader_info,
             sampler,
             vertex_buffer,
             index_buffer,
@@ -550,25 +554,34 @@ pub fn create_quad_matrix_and_uv_instance_buffer(
 fn create_pipeline_layout_with_camera_first(
     device: &Device,
     camera_bind_group_layout: &BindGroupLayout,
-    texture_sampler_group_layout: &BindGroupLayout,
+    texture_sampler_group_layout: Option<&BindGroupLayout>,
     label: &str,
 ) -> PipelineLayout {
-    device.create_pipeline_layout(&PipelineLayoutDescriptor {
-        label: Some(label),
-        bind_group_layouts: &[camera_bind_group_layout, texture_sampler_group_layout],
-        push_constant_ranges: &[],
-    })
+    if let Some(specific) = texture_sampler_group_layout {
+        device.create_pipeline_layout(&PipelineLayoutDescriptor {
+            label: Some(label),
+            bind_group_layouts: &[camera_bind_group_layout, specific],
+            push_constant_ranges: &[],
+        })
+    } else {
+        device.create_pipeline_layout(&PipelineLayoutDescriptor {
+            label: Some(label),
+            bind_group_layouts: &[camera_bind_group_layout],
+            push_constant_ranges: &[],
+        })
+    }
 }
 
-fn create_sprite_pipeline(
+fn create_pipeline(
     device: &Device,
     format: TextureFormat,
     pipeline_layout: &PipelineLayout,
     vertex_shader: &ShaderModule,
     fragment_shader: &ShaderModule,
+    label: &str,
 ) -> RenderPipeline {
     device.create_render_pipeline(&RenderPipelineDescriptor {
-        label: Some("sprite alpha blend pipeline"),
+        label: Some(label),
         layout: Some(pipeline_layout),
         vertex: wgpu::VertexState {
             module: vertex_shader,
@@ -628,11 +641,11 @@ struct VertexInput {
 };
 
 // Vertex output structure to fragment shader
+// Must be exactly the same as the fragment shader
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
     @location(0) tex_coords: vec2<f32>,
     @location(1) color: vec4<f32>,
-    @location(2) use_texture: u32,
 };
 
 // Vertex shader entry point
@@ -647,7 +660,6 @@ fn vs_main(
     @location(6) tex_multiplier: vec4<f32>,
     @location(7) rotation_step: u32,
     @location(8) color: vec4<f32>,
-    @location(9) use_texture: u32,
 ) -> VertexOutput {
     var output: VertexOutput;
 
@@ -695,7 +707,6 @@ fn vs_main(
     // Modify texture coordinates
     output.tex_coords = rotated_tex_coords * tex_multiplier.xy + tex_multiplier.zw;
     output.color = color;
-    output.use_texture = use_texture;
 
     return output;
 }
@@ -716,7 +727,6 @@ struct VertexOutput {
     @builtin(position) position: vec4<f32>,
     @location(0) tex_coords: vec2<f32>,
     @location(1) color: vec4<f32>,
-    @location(2) use_texture: u32,
 };
 
 // Fragment shader entry point
@@ -726,14 +736,8 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
 
     // Sample the texture using the texture coordinates
     let texture_color = textureSample(diffuse_texture, sampler_diffuse, input.tex_coords);
-    if (input.use_texture == 1u) { // Check if use_texture is true (1)
-        // Apply color modulation and opacity
-        final_color = texture_color * input.color;
-    } else {
-        final_color = input.color;
-    }
 
-    return final_color;
+    return  texture_color * input.color;;
 }
 
 ";
@@ -796,8 +800,10 @@ struct VertexInput {
 };
 
 // Vertex output structure to fragment shader
+// Must be exactly the same in both places
 struct VertexOutput {
-    @location(1) color: vec4<f32>,
+    @builtin(position) position: vec4<f32>, // MUST BE HERE, DO NOT REMOVE
+    @location(0) color: vec4<f32>,
 };
 
 // Vertex shader entry point
@@ -809,7 +815,7 @@ fn vs_main(
     @location(3) model_matrix1: vec4<f32>, // Always fixed
     @location(4) model_matrix2: vec4<f32>, // Always fixed
     @location(5) model_matrix3: vec4<f32>, // Always fixed
-    @location(6) color: vec4<f32>,
+    @location(8) color: vec4<f32>, //  Always fixed at position 8
 ) -> VertexOutput {
     var output: VertexOutput;
 
@@ -826,7 +832,6 @@ fn vs_main(
 
     // Apply view-projection matrix
     output.position = camera_uniforms.view_proj * world_position;
-
     output.color = color;
 
     return output;
@@ -836,9 +841,10 @@ fn vs_main(
 
     let fragment_shader_source = "
 
-// Fragment input structure from vertex shader
+// Fragment input structure from vertex shader,
+// Must be exactly the same in both places
 struct VertexOutput {
-    //@builtin(position) position: vec4<f32>,
+    @builtin(position) position: vec4<f32>, // MUST BE HERE, DO NOT REMOVE
     @location(0) color: vec4<f32>,
 };
 

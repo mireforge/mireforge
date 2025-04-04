@@ -97,6 +97,8 @@ pub trait Gfx {
     fn sprite_atlas(&mut self, position: Vec3, atlas_rect: URect, material_ref: &MaterialRef);
     fn draw_sprite(&mut self, position: Vec3, material_ref: &MaterialRef);
     fn draw_sprite_ex(&mut self, position: Vec3, material_ref: &MaterialRef, params: &SpriteParams);
+    fn quad(&mut self, position: Vec3, size: UVec2, color: Color);
+
     fn nine_slice(
         &mut self,
         position: Vec3,
@@ -175,6 +177,7 @@ pub struct Render {
     vertex_buffer: Buffer, // Only one identity quad (0,0,1,1)
     sampler: wgpu::Sampler,
     pub normal_sprite_pipeline: ShaderInfo,
+    pub quad_shader_info: ShaderInfo,
     physical_surface_size: UVec2,
     viewport_strategy: ViewportStrategy,
     // Group 0
@@ -230,6 +233,10 @@ impl Gfx for Render {
         params: &SpriteParams,
     ) {
         self.draw_sprite_ex(position, material_ref, *params);
+    }
+
+    fn quad(&mut self, position: Vec3, size: UVec2, color: Color) {
+        self.draw_quad(position, size, color);
     }
 
     fn nine_slice(
@@ -340,6 +347,7 @@ impl Render {
             //   fonts: Vec::new(),
             sampler: sprite_info.sampler,
             normal_sprite_pipeline: sprite_info.sprite_shader_info,
+            quad_shader_info: sprite_info.quad_shader_info,
             texture_sampler_bind_group_layout: sprite_info.sprite_texture_sampler_bind_group_layout,
             index_buffer: sprite_info.index_buffer,
             vertex_buffer: sprite_info.vertex_buffer,
@@ -565,6 +573,8 @@ impl Render {
             kind: MaterialKind::Quad,
         };
 
+        //debug!(?position, ?size, ?color, "draw quad");
+
         self.items.push(RenderItem {
             position,
             material_ref: MaterialRef::from(material),
@@ -680,7 +690,6 @@ impl Render {
             tex_coords_mul_add,
             rotation_value,
             Vec4(color.to_f32_slice()),
-            true,
         )
     }
 
@@ -792,7 +801,6 @@ impl Render {
                             tex_coords_mul_add,
                             rotation_value,
                             Vec4(params.color.to_f32_slice()),
-                            true,
                         );
                         quad_matrix_and_uv.push(quad_instance);
                     }
@@ -808,56 +816,12 @@ impl Render {
                     }
 
                     Renderable::QuadColor(quad) => {
-                        /*
-                        let params = &sprite.params;
-                        let mut size = params.texture_size;
-                        if size.x == 0 && size.y == 0 {
-                            size = current_texture_size;
-                        }
-
-                        let render_atlas = URect {
-                            position: params.texture_pos,
-                            size,
-                        };
-
-
-                        match params.rotation {
-                            Rotation::Degrees90 | Rotation::Degrees270 => {
-                                swap(&mut size.x, &mut size.y);
-                            }
-                            _ => {}
-                        }
-                         */
-
                         let model_matrix =
                             Matrix4::from_translation(
                                 render_item.position.x as f32,
                                 render_item.position.y as f32,
                                 0.0,
                             ) * Matrix4::from_scale(quad.size.x as f32, quad.size.y as f32, 1.0);
-
-                        /*
-                        let tex_coords_mul_add = Self::calculate_texture_coords_mul_add(
-                            render_atlas,
-                            current_texture_size,
-                        );
-
-
-                        let mut rotation_value = match params.rotation {
-                            Rotation::Degrees0 => 0,
-                            Rotation::Degrees90 => 1,
-                            Rotation::Degrees180 => 2,
-                            Rotation::Degrees270 => 3,
-                        };
-
-                        if params.flip_x {
-                            rotation_value |= FLIP_X_MASK;
-                        }
-                        if params.flip_y {
-                            rotation_value |= FLIP_Y_MASK;
-                        }
-
-                         */
 
                         let tex_coords_mul_add = Vec4([
                             0.0, //x
@@ -871,7 +835,6 @@ impl Render {
                             tex_coords_mul_add,
                             rotation_value,
                             Vec4(quad.color.to_f32_slice()),
-                            false,
                         );
                         quad_matrix_and_uv.push(quad_instance);
                     }
@@ -905,7 +868,6 @@ impl Render {
                                 tex_coords_mul_add,
                                 0,
                                 Vec4(text.color.to_f32_slice()),
-                                true,
                             );
                             quad_matrix_and_uv.push(quad_instance);
                         }
@@ -953,7 +915,6 @@ impl Render {
                                 cell_tex_coords_mul_add,
                                 0,
                                 Vec4([1.0, 1.0, 1.0, 1.0]),
-                                true,
                             );
                             quad_matrix_and_uv.push(quad_instance);
                         }
@@ -1302,17 +1263,12 @@ impl Render {
             1.0,
         );
 
-        //        render_pass.set_pipeline(&self.pipeline);
-
         // Index and vertex buffers never change
         render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
         render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
 
         // Vertex buffer is reused
         render_pass.set_vertex_buffer(1, self.quad_matrix_and_uv_instance_buffer.slice(..));
-
-        // Camera is the same for everything
-        render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
 
         let num_indices = mireforge_wgpu_sprites::INDICES.len() as u32;
 
@@ -1324,14 +1280,17 @@ impl Render {
             let pipeline_kind = &wgpu_material.kind;
 
             if current_pipeline != Some(pipeline_kind) {
-                trace!(%pipeline_kind, "setting pipeline");
                 let pipeline = match pipeline_kind {
                     MaterialKind::NormalSprite { .. } => &self.normal_sprite_pipeline.pipeline,
-                    MaterialKind::Quad { .. } => &self.normal_sprite_pipeline.pipeline,
+                    MaterialKind::Quad => &self.quad_shader_info.pipeline,
                     MaterialKind::AlphaMasker { .. } => &self.normal_sprite_pipeline.pipeline,
                 };
-                render_pass.set_pipeline(&pipeline);
+                //trace!(%pipeline_kind, ?pipeline, "setting pipeline");
+                render_pass.set_pipeline(pipeline);
+                // Apparently after setting pipeline,
+                // you must set all bind groups again
                 current_pipeline = Some(pipeline_kind);
+                render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
             }
 
             match &wgpu_material.kind {
@@ -1348,12 +1307,8 @@ impl Render {
                     todo!()
                 }
                 MaterialKind::Quad => {
-                    //let texture = textures.get(primary_texture).unwrap();
                     trace!("set quad material");
-                    // Bind the texture and sampler bind group (Bind Group 1)
-                    //render_pass.set_bind_group(1, None, &[]);
                     // Intentionally do nothing
-                    continue;
                 }
             }
 

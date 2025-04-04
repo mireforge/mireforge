@@ -12,7 +12,7 @@ use mireforge_font::Font;
 use mireforge_font::Glyph;
 use mireforge_render_wgpu::{
     FixedAtlas, FontAndMaterial, Material, MaterialBase, MaterialKind, MaterialRef,
-    NineSliceAndMaterial, Render, Slices, Texture,
+    NineSliceAndMaterial, Slices, Texture,
 };
 use monotonic_time_rs::Millis;
 use std::fmt::Debug;
@@ -67,15 +67,11 @@ impl Debug for GameAssets<'_> {
 }
 
 impl<'a> GameAssets<'a> {
-    pub fn new(resource_storage: &'a mut ResourceStorage, now: Millis) -> Self {
+    pub const fn new(resource_storage: &'a mut ResourceStorage, now: Millis) -> Self {
         Self {
             now,
             resource_storage,
         }
-    }
-
-    fn renderer(&self) -> &Render {
-        self.resource_storage.fetch::<Render>()
     }
 }
 
