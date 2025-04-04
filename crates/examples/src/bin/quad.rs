@@ -9,8 +9,8 @@ const START_WINDOW_SIZE: UVec2 = UVec2::new(1280, 800);
 
 #[derive(Debug)]
 pub struct QuadExample {
-    #[allow(unused)]
     tick_count: u32,
+    #[allow(unused)]
     alpha: MaterialRef,
 }
 

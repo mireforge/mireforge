@@ -212,6 +212,7 @@ pub struct ShaderInfo {
     pub pipeline: RenderPipeline,
 }
 
+#[must_use]
 pub fn create_shader_info(
     device: &Device,
     surface_texture_format: TextureFormat,
@@ -228,9 +229,9 @@ pub fn create_shader_info(
 
     let custom_layout = create_pipeline_layout_with_camera_first(
         device,
-        &camera_bind_group_layout,
+        camera_bind_group_layout,
         specific_layout,
-        &format!("{} pipeline layout (with camera first)", name),
+        &format!("{name} pipeline layout (with camera first)"),
     );
 
     let pipeline = create_pipeline(
@@ -460,7 +461,7 @@ pub fn load_texture_from_memory(
     device.create_texture_with_data(
         queue,
         &texture_descriptor,
-        wgpu::util::TextureDataOrder::LayerMajor,
+        util::TextureDataOrder::LayerMajor,
         &texture_data,
     )
 }
@@ -557,19 +558,22 @@ fn create_pipeline_layout_with_camera_first(
     texture_sampler_group_layout: Option<&BindGroupLayout>,
     label: &str,
 ) -> PipelineLayout {
-    if let Some(specific) = texture_sampler_group_layout {
-        device.create_pipeline_layout(&PipelineLayoutDescriptor {
-            label: Some(label),
-            bind_group_layouts: &[camera_bind_group_layout, specific],
-            push_constant_ranges: &[],
-        })
-    } else {
-        device.create_pipeline_layout(&PipelineLayoutDescriptor {
-            label: Some(label),
-            bind_group_layouts: &[camera_bind_group_layout],
-            push_constant_ranges: &[],
-        })
-    }
+    texture_sampler_group_layout.map_or_else(
+        || {
+            device.create_pipeline_layout(&PipelineLayoutDescriptor {
+                label: Some(label),
+                bind_group_layouts: &[camera_bind_group_layout],
+                push_constant_ranges: &[],
+            })
+        },
+        |specific| {
+            device.create_pipeline_layout(&PipelineLayoutDescriptor {
+                label: Some(label),
+                bind_group_layouts: &[camera_bind_group_layout, specific],
+                push_constant_ranges: &[],
+            })
+        },
+    )
 }
 
 fn create_pipeline(
@@ -616,6 +620,7 @@ fn create_pipeline(
     })
 }
 
+#[must_use]
 pub const fn normal_sprite_sources() -> (&'static str, &'static str) {
     let vertex_shader_source = "
 // Bind Group 0: Uniforms (view-projection matrix)

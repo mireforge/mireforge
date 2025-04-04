@@ -6,8 +6,8 @@ pub mod plugin;
 pub mod prelude;
 
 use int_math::{URect, UVec2, Vec2, Vec3};
-use limnus_assets::Assets;
 use limnus_assets::prelude::{Asset, Id, WeakId};
+use limnus_assets::Assets;
 use limnus_resource::prelude::Resource;
 use limnus_wgpu_math::{Matrix4, OrthoInfo, Vec4};
 use mireforge_font::Font;
@@ -267,7 +267,7 @@ impl Gfx for Render {
     ) {
         self.items.push(RenderItem {
             position,
-            material_ref: (&atlas_ref.material).clone(),
+            material_ref: atlas_ref.material.clone(),
             renderable: Renderable::TileMap(TileMap {
                 tiles_data_grid_size: UVec2::new(width, tiles.len() as u16 / width),
                 cell_count_size: atlas_ref.cell_count_size,
@@ -287,7 +287,7 @@ impl Gfx for Render {
     ) {
         self.items.push(RenderItem {
             position,
-            material_ref: (&font_and_mat.material_ref).clone(),
+            material_ref: font_and_mat.material_ref.clone(),
             renderable: Renderable::Text(Text {
                 text: text.to_string(),
                 font_ref: (&font_and_mat.font_ref).into(),
@@ -365,7 +365,7 @@ impl Render {
         }
     }
 
-    pub fn set_now(&mut self, now: Millis) {
+    pub const fn set_now(&mut self, now: Millis) {
         self.last_render_at = now;
     }
 
@@ -385,7 +385,7 @@ impl Render {
         self.viewport
     }
 
-    #[inline(always)]
+    #[inline]
     fn push_sprite(&mut self, position: Vec3, material: &MaterialRef, sprite: Sprite) {
         self.items.push(RenderItem {
             position,
@@ -411,7 +411,7 @@ impl Render {
 
         self.items.push(RenderItem {
             position,
-            material_ref: (&nine_slice_and_material.material_ref).clone(),
+            material_ref: nine_slice_and_material.material_ref.clone(),
             renderable: Renderable::NineSlice(nine_slice_info),
         });
     }
@@ -733,16 +733,10 @@ impl Render {
             let material = weak_material_ref.clone();
 
             let maybe_texture_ref = material.primary_texture();
-            let maybe_texture = if let Some(found_primary_texture_ref) = maybe_texture_ref {
+            let maybe_texture = maybe_texture_ref.and_then(|found_primary_texture_ref| {
                 let found_primary_texture = textures.get(&found_primary_texture_ref);
-                if let Some(found_primary_texture_for_real) = found_primary_texture {
-                    Some(found_primary_texture_for_real)
-                } else {
-                    None
-                }
-            } else {
-                None
-            };
+                found_primary_texture
+            });
 
             for render_item in render_items {
                 match &render_item.renderable {
@@ -1507,16 +1501,14 @@ impl MaterialKind {
 
 impl Display for MaterialKind {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let texture_name = if let Some(x) = self.primary_texture() {
-            x.to_string()
-        } else {
-            "".to_string()
-        };
+        let texture_name = self
+            .primary_texture()
+            .map_or_else(|| "".to_string(), |x| x.to_string());
 
         let kind_name = match self {
-            MaterialKind::NormalSprite { .. } => "NormalSprite",
-            MaterialKind::Quad { .. } => "Quad",
-            MaterialKind::AlphaMasker { .. } => "AlphaMasker",
+            Self::NormalSprite { .. } => "NormalSprite",
+            Self::Quad => "Quad",
+            Self::AlphaMasker { .. } => "AlphaMasker",
         };
 
         write!(f, "{kind_name} texture {texture_name}")
