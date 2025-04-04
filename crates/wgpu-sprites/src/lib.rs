@@ -185,6 +185,7 @@ pub const INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
 pub struct SpriteInfo {
     pub sprite_shader_info: ShaderInfo,
     pub quad_shader_info: ShaderInfo,
+    pub mask_shader_info: ShaderInfo,
 
     pub sampler: Sampler,
     pub vertex_buffer: Buffer,
@@ -217,7 +218,7 @@ pub fn create_shader_info(
     device: &Device,
     surface_texture_format: TextureFormat,
     camera_bind_group_layout: &BindGroupLayout,
-    specific_layout: Option<&BindGroupLayout>,
+    specific_layout: &[&BindGroupLayout],
     vertex_source: &str,
     fragment_source: &str,
     name: &str,
@@ -287,7 +288,7 @@ impl SpriteInfo {
             device,
             surface_texture_format,
             &camera_bind_group_layout,
-            Some(&sprite_texture_sampler_bind_group_layout),
+            &[&sprite_texture_sampler_bind_group_layout],
             vertex_shader_source,
             fragment_shader_source,
             "Sprite",
@@ -301,10 +302,31 @@ impl SpriteInfo {
                 device,
                 surface_texture_format,
                 &camera_bind_group_layout,
-                None,
+                &[],
                 vertex_shader_source,
                 fragment_shader_source,
                 "Quad",
+            )
+        };
+
+        let mask_shader_info = {
+            let vertex_shader_source = masked_texture_tinted_vertex_source();
+            let fragment_shader_source = masked_texture_tinted_fragment_source();
+
+            let diffuse_texture_group =
+                create_texture_and_sampler_group_layout(device, "normal diffuse texture group");
+
+            let alpha_texture_group =
+                create_texture_and_sampler_group_layout(device, "alpha texture group");
+
+            create_shader_info(
+                device,
+                surface_texture_format,
+                &camera_bind_group_layout,
+                &[&diffuse_texture_group, &alpha_texture_group],
+                vertex_shader_source,
+                fragment_shader_source,
+                "AlphaMask",
             )
         };
 
@@ -320,6 +342,7 @@ impl SpriteInfo {
         Self {
             sprite_shader_info,
             quad_shader_info,
+            mask_shader_info,
             sampler,
             vertex_buffer,
             index_buffer,
@@ -555,25 +578,18 @@ pub fn create_quad_matrix_and_uv_instance_buffer(
 fn create_pipeline_layout_with_camera_first(
     device: &Device,
     camera_bind_group_layout: &BindGroupLayout,
-    texture_sampler_group_layout: Option<&BindGroupLayout>,
+    specific_layout: &[&BindGroupLayout],
     label: &str,
 ) -> PipelineLayout {
-    texture_sampler_group_layout.map_or_else(
-        || {
-            device.create_pipeline_layout(&PipelineLayoutDescriptor {
-                label: Some(label),
-                bind_group_layouts: &[camera_bind_group_layout],
-                push_constant_ranges: &[],
-            })
-        },
-        |specific| {
-            device.create_pipeline_layout(&PipelineLayoutDescriptor {
-                label: Some(label),
-                bind_group_layouts: &[camera_bind_group_layout, specific],
-                push_constant_ranges: &[],
-            })
-        },
-    )
+    let mut layouts = Vec::new();
+    layouts.push(camera_bind_group_layout);
+    layouts.extend_from_slice(specific_layout);
+
+    device.create_pipeline_layout(&PipelineLayoutDescriptor {
+        label: Some(label),
+        bind_group_layouts: &layouts,
+        push_constant_ranges: &[],
+    })
 }
 
 fn create_pipeline(
@@ -750,17 +766,23 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
 }
 
 #[allow(unused)]
-const fn masked_texture_tinted() -> &'static str {
+pub const fn masked_texture_tinted_fragment_source() -> &'static str {
     r"
 // Masked Texture and tinted shader
 
+// Bind Group 1: Texture and Sampler (Unused in Vertex Shader but needed for consistency?)
+@group(1) @binding(0)
+var diffuse_texture: texture_2d<f32>;
+@group(1) @binding(1)
+var sampler_diffuse: sampler;
 
-@group(1) @binding(0) var t_color: texture_2d<f32>;
-@group(1) @binding(1) var t_mask: texture_2d<f32>;
-@group(1) @binding(2) var s_sampler: sampler;
-// New uniform binding for mask parameters
-@group(1) @binding(3) var<uniform> mask_params: MaskParams;
+// Bind Group 2: Texture and Sampler (Unused in Vertex Shader but needed for consistency?)
+@group(2) @binding(0)
+var alpha_texture: texture_2d<f32>;
+@group(2) @binding(1)
+var sampler_alpha: sampler;
 
+// Must be the same as vertex shader
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
     @location(0) tex_coords: vec2<f32>, // Original UVs from vertex
@@ -769,13 +791,13 @@ struct VertexOutput {
 
 @fragment
 fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
-    let color_sample = textureSample(t_color, s_sampler, input.tex_coords);
+    let color_sample = textureSample(diffuse_texture, sampler_diffuse, input.tex_coords);
 
-    let mask_coords = input.tex_coords + mask_params.offset;
-
+    //let mask_coords = input.tex_coords + mask_params.offset;
     // TODO: Scale rot and other // let mask_coords = (input.tex_coords * mask_params.scale) + mask_params.offset;
+    let mask_coords = input.tex_coords;
 
-    let mask_alpha = textureSample(t_mask, s_sampler, mask_coords).r;
+    let mask_alpha = textureSample(alpha_texture, sampler_alpha, mask_coords).r;
 
     let final_rgb = color_sample.rgb * input.color.rgb;
     let final_alpha = mask_alpha * input.color.a;
@@ -785,23 +807,125 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
     "
 }
 
+#[must_use]
+pub const fn masked_texture_tinted_vertex_source() -> &'static str {
+    "
+// Bind Group 0: Uniforms (view-projection matrix)
+struct Uniforms {
+    view_proj: mat4x4<f32>,
+};
+
+@group(0) @binding(0)
+var<uniform> camera_uniforms: Uniforms;
+
+// Bind Group 1: Texture and Sampler (Unused in Vertex Shader but needed for consistency?)
+@group(1) @binding(0)
+var diffuse_texture: texture_2d<f32>;
+@group(1) @binding(1)
+var sampler_diffuse: sampler;
+
+// Bind Group 2: Texture and Sampler (Unused in Vertex Shader but needed for consistency?)
+@group(2) @binding(0)
+var alpha_texture: texture_2d<f32>;
+@group(2) @binding(1)
+var sampler_alpha: sampler;
+
+// Vertex input structure
+struct VertexInput {
+    @location(0) position: vec3<f32>,
+    @location(1) tex_coords: vec2<f32>,
+    @builtin(instance_index) instance_idx: u32,
+};
+
+// Vertex output structure to fragment shader
+// Must be exactly the same as the fragment shader
+struct VertexOutput {
+    @builtin(position) position: vec4<f32>,
+    @location(0) tex_coords: vec2<f32>,
+    @location(1) color: vec4<f32>,
+};
+
+// Vertex shader entry point
+@vertex
+fn vs_main(
+    input: VertexInput,
+    // Instance attributes
+    @location(2) model_matrix0: vec4<f32>,
+    @location(3) model_matrix1: vec4<f32>,
+    @location(4) model_matrix2: vec4<f32>,
+    @location(5) model_matrix3: vec4<f32>,
+    @location(6) tex_multiplier: vec4<f32>,
+    @location(7) rotation_step: u32,
+    @location(8) color: vec4<f32>,
+) -> VertexOutput {
+
+    var output: VertexOutput;
+
+    // Reconstruct the model matrix from the instance data
+    let model_matrix = mat4x4<f32>(
+        model_matrix0,
+        model_matrix1,
+        model_matrix2,
+        model_matrix3,
+    );
+
+    // Compute world position
+    let world_position = model_matrix * vec4<f32>(input.position, 1.0);
+
+    // Apply view-projection matrix
+    output.position = camera_uniforms.view_proj * world_position;
+
+    // Decode rotation_step
+    let rotation_val = rotation_step & 3u; // Bits 0-1
+    let flip_x = (rotation_step & 4u) != 0u; // Bit 2
+    let flip_y = (rotation_step & 8u) != 0u; // Bit 3
+
+    // Rotate texture coordinates based on rotation_val
+    var rotated_tex_coords = input.tex_coords;
+    if (rotation_val == 1) {
+        // 90 degrees rotation
+        rotated_tex_coords = vec2<f32>(1.0 - input.tex_coords.y, input.tex_coords.x);
+    } else if (rotation_val == 2) {
+        // 180 degrees rotation
+        rotated_tex_coords = vec2<f32>(1.0 - input.tex_coords.x, 1.0 - input.tex_coords.y);
+    } else if (rotation_val == 3) {
+        // 270 degrees rotation
+        rotated_tex_coords = vec2<f32>(input.tex_coords.y, 1.0 - input.tex_coords.x);
+    }
+    // else rotation_val == Degrees0, no rotation
+
+    // Apply flipping
+    if (flip_x) {
+        rotated_tex_coords.x = 1.0 - rotated_tex_coords.x;
+    }
+    if (flip_y) {
+        rotated_tex_coords.y = 1.0 - rotated_tex_coords.y;
+    }
+
+    // Modify texture coordinates
+    output.tex_coords = rotated_tex_coords * tex_multiplier.xy + tex_multiplier.zw;
+    output.color = color;
+    //output.color = vec4<f32>(input.tex_coords.x, input.tex_coords.y, 0.0, 1.0);
+    //output.color = vec4<f32>(tex_multiplier.x, tex_multiplier.y, 0.0, 1.0);
+
+    return output;
+}"
+}
+
 const fn quad_shaders() -> (&'static str, &'static str) {
     let vertex_shader_source = "
 // Bind Group 0: Uniforms (view-projection matrix)
 struct Uniforms {
     view_proj: mat4x4<f32>,
 };
-
 // Camera (view projection matrix) is always first
 @group(0) @binding(0)
 var<uniform> camera_uniforms: Uniforms;
 
+
 // Vertex input structure
-// This is probably fixed since it is from the instanced vertex buffer.
 struct VertexInput {
     @location(0) position: vec3<f32>,
-    @location(1) tex_coords: vec2<f32>,
-    @builtin(instance_index) instance_idx: u32,
 };
 
 // Vertex output structure to fragment shader

@@ -6,8 +6,8 @@ pub mod plugin;
 pub mod prelude;
 
 use int_math::{URect, UVec2, Vec2, Vec3};
-use limnus_assets::prelude::{Asset, Id, WeakId};
 use limnus_assets::Assets;
+use limnus_assets::prelude::{Asset, Id, WeakId};
 use limnus_resource::prelude::Resource;
 use limnus_wgpu_math::{Matrix4, OrthoInfo, Vec4};
 use mireforge_font::Font;
@@ -21,6 +21,7 @@ use std::fmt::{Debug, Display, Formatter};
 use std::mem::swap;
 use std::sync::Arc;
 use tracing::trace;
+use tracing::warn;
 use wgpu::{BindGroup, BindGroupLayout, Buffer, RenderPass, RenderPipeline};
 
 pub type MaterialRef = Arc<Material>;
@@ -98,6 +99,13 @@ pub trait Gfx {
     fn draw_sprite(&mut self, position: Vec3, material_ref: &MaterialRef);
     fn draw_sprite_ex(&mut self, position: Vec3, material_ref: &MaterialRef, params: &SpriteParams);
     fn quad(&mut self, position: Vec3, size: UVec2, color: Color);
+    fn draw_with_mask(
+        &mut self,
+        position: Vec3,
+        size: UVec2,
+        color: Color,
+        alpha_masked: &MaterialRef,
+    );
 
     fn nine_slice(
         &mut self,
@@ -169,6 +177,7 @@ enum Renderable {
     NineSlice(NineSlice),
     TileMap(TileMap),
     Text(Text),
+    Mask(UVec2, Color),
 }
 
 #[derive(Resource)]
@@ -178,6 +187,7 @@ pub struct Render {
     sampler: wgpu::Sampler,
     pub normal_sprite_pipeline: ShaderInfo,
     pub quad_shader_info: ShaderInfo,
+    pub mask_shader_info: ShaderInfo,
     physical_surface_size: UVec2,
     viewport_strategy: ViewportStrategy,
     // Group 0
@@ -206,6 +216,8 @@ pub struct Render {
     last_render_at: Millis,
     scale: f32,
 }
+
+impl Render {}
 
 impl Debug for Render {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -237,6 +249,16 @@ impl Gfx for Render {
 
     fn quad(&mut self, position: Vec3, size: UVec2, color: Color) {
         self.draw_quad(position, size, color);
+    }
+
+    fn draw_with_mask(
+        &mut self,
+        position: Vec3,
+        size: UVec2,
+        color: Color,
+        alpha_masked: &MaterialRef,
+    ) {
+        self.push_mask(position, size, color, alpha_masked);
     }
 
     fn nine_slice(
@@ -348,6 +370,7 @@ impl Render {
             sampler: sprite_info.sampler,
             normal_sprite_pipeline: sprite_info.sprite_shader_info,
             quad_shader_info: sprite_info.quad_shader_info,
+            mask_shader_info: sprite_info.mask_shader_info,
             texture_sampler_bind_group_layout: sprite_info.sprite_texture_sampler_bind_group_layout,
             index_buffer: sprite_info.index_buffer,
             vertex_buffer: sprite_info.vertex_buffer,
@@ -391,6 +414,20 @@ impl Render {
             position,
             material_ref: material.clone(),
             renderable: Renderable::Sprite(sprite),
+        });
+    }
+
+    pub fn push_mask(
+        &mut self,
+        position: Vec3,
+        size: UVec2,
+        color: Color,
+        alpha_masked: &MaterialRef,
+    ) {
+        self.items.push(RenderItem {
+            position,
+            material_ref: alpha_masked.clone(),
+            renderable: Renderable::Mask(size, color),
         });
     }
 
@@ -760,6 +797,68 @@ impl Render {
                             }
                             _ => {}
                         }
+
+                        let model_matrix = Matrix4::from_translation(
+                            render_item.position.x as f32,
+                            render_item.position.y as f32,
+                            0.0,
+                        ) * Matrix4::from_scale(
+                            (size.x * params.scale as u16) as f32,
+                            (size.y * params.scale as u16) as f32,
+                            1.0,
+                        );
+
+                        let tex_coords_mul_add = Self::calculate_texture_coords_mul_add(
+                            render_atlas,
+                            current_texture_size,
+                        );
+
+                        let mut rotation_value = match params.rotation {
+                            Rotation::Degrees0 => 0,
+                            Rotation::Degrees90 => 1,
+                            Rotation::Degrees180 => 2,
+                            Rotation::Degrees270 => 3,
+                        };
+
+                        if params.flip_x {
+                            rotation_value |= FLIP_X_MASK;
+                        }
+                        if params.flip_y {
+                            rotation_value |= FLIP_Y_MASK;
+                        }
+
+                        let quad_instance = SpriteInstanceUniform::new(
+                            model_matrix,
+                            tex_coords_mul_add,
+                            rotation_value,
+                            Vec4(params.color.to_f32_slice()),
+                        );
+                        quad_matrix_and_uv.push(quad_instance);
+                    }
+
+                    Renderable::Mask(size, color) => {
+                        let current_texture_size = maybe_texture.unwrap().texture_size;
+                        let params = SpriteParams {
+                            texture_size: current_texture_size,
+                            texture_pos: UVec2 { x: 0, y: 0 },
+                            scale: 1,
+                            rotation: Rotation::default(),
+                            flip_x: false,
+                            flip_y: false,
+                            pivot: Vec2 { x: 0, y: 0 },
+                            color: *color,
+                        };
+                        let current_texture_size = maybe_texture.unwrap().texture_size;
+
+                        let mut size = params.texture_size;
+                        if size.x == 0 && size.y == 0 {
+                            size = current_texture_size;
+                        }
+
+                        let render_atlas = URect {
+                            position: params.texture_pos,
+                            size,
+                        };
 
                         let model_matrix = Matrix4::from_translation(
                             render_item.position.x as f32,
@@ -1277,7 +1376,7 @@ impl Render {
                 let pipeline = match pipeline_kind {
                     MaterialKind::NormalSprite { .. } => &self.normal_sprite_pipeline.pipeline,
                     MaterialKind::Quad => &self.quad_shader_info.pipeline,
-                    MaterialKind::AlphaMasker { .. } => &self.normal_sprite_pipeline.pipeline,
+                    MaterialKind::AlphaMasker { .. } => &self.mask_shader_info.pipeline,
                 };
                 //trace!(%pipeline_kind, ?pipeline, "setting pipeline");
                 render_pass.set_pipeline(pipeline);
@@ -1290,15 +1389,27 @@ impl Render {
             match &wgpu_material.kind {
                 MaterialKind::NormalSprite { primary_texture } => {
                     let texture = textures.get(primary_texture).unwrap();
-                    trace!(%texture, "set normal sprite material");
+                    warn!(%texture, "set normal sprite material");
                     // Bind the texture and sampler bind group (Bind Group 1)
                     render_pass.set_bind_group(1, &texture.texture_and_sampler_bind_group, &[]);
                 }
                 MaterialKind::AlphaMasker {
-                    primary_texture: _,
-                    alpha_texture: _,
+                    primary_texture,
+                    alpha_texture,
                 } => {
-                    todo!()
+                    let real_diffuse_texture = textures.get(primary_texture).unwrap();
+                    let alpha_texture = textures.get(alpha_texture).unwrap();
+                    warn!(%alpha_texture, "set normal AlphaMasker material");
+                    render_pass.set_bind_group(
+                        1,
+                        &real_diffuse_texture.texture_and_sampler_bind_group,
+                        &[],
+                    );
+                    render_pass.set_bind_group(
+                        2,
+                        &alpha_texture.texture_and_sampler_bind_group,
+                        &[],
+                    );
                 }
                 MaterialKind::Quad => {
                     trace!("set quad material");
@@ -1459,11 +1570,7 @@ impl Material {
 
     #[inline]
     pub fn is_complete(&self, textures: &Assets<Texture>) -> bool {
-        if let Some(found_primary_texture) = self.primary_texture() {
-            textures.contains(&found_primary_texture)
-        } else {
-            true
-        }
+        self.kind.is_complete(textures)
     }
 }
 
@@ -1485,6 +1592,8 @@ pub enum MaterialKind {
     Quad,
 }
 
+impl MaterialKind {}
+
 impl MaterialKind {
     pub fn primary_texture(&self) -> Option<Id<Texture>> {
         match &self {
@@ -1495,6 +1604,17 @@ impl MaterialKind {
                 primary_texture, ..
             } => Some(primary_texture.clone()),
             MaterialKind::Quad => None,
+        }
+    }
+
+    pub(crate) fn is_complete(&self, textures: &Assets<Texture>) -> bool {
+        match &self {
+            MaterialKind::NormalSprite { primary_texture } => textures.contains(primary_texture),
+            MaterialKind::AlphaMasker {
+                primary_texture,
+                alpha_texture,
+            } => textures.contains(primary_texture) && textures.contains(alpha_texture),
+            MaterialKind::Quad => true,
         }
     }
 }
