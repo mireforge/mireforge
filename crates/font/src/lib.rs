@@ -12,6 +12,7 @@ use limnus_assets_loader::{
     AssetLoader, ConversionError, ResourceStorage, WrappedAssetLoaderRegistry,
 };
 use limnus_local_resource::LocalResourceStorage;
+use std::str::FromStr;
 use tracing::debug;
 
 pub type FontRef = Id<Font>;
@@ -66,7 +67,13 @@ impl AssetLoader for FontConverter {
         }
 
         debug!("convert from fnt {name}");
-        let font = BMFont::from_octets(octets)?;
+
+        let font = if name.value().ends_with(".txt.fnt") {
+            let str = String::from_utf8(octets.to_vec()).unwrap();
+            BMFont::from_str(&str)?
+        } else {
+            BMFont::from_octets(octets)?
+        };
 
         debug!("font complete {name}");
         let font_assets = resources.fetch_mut::<Assets<Font>>();

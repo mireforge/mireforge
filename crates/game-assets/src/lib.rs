@@ -44,6 +44,9 @@ pub trait Assets {
     fn bm_font(&mut self, name: impl Into<AssetName>) -> FontAndMaterial;
 
     #[must_use]
+    fn bm_font_txt(&mut self, name: impl Into<AssetName>) -> FontAndMaterial;
+
+    #[must_use]
     fn text_glyphs(&self, text: &str, font_and_mat: &FontAndMaterial) -> Option<Vec<Glyph>>;
 
     #[must_use]
@@ -132,6 +135,30 @@ impl Assets for GameAssets<'_> {
             .get_mut::<AssetRegistry>()
             .expect("should exist registry");
         let font_ref = asset_loader.load::<Font>(asset_name.clone().with_extension("fnt"));
+        let texture_id = asset_loader.load::<Texture>(asset_name.clone().with_extension("png"));
+
+        let material = Material {
+            base: MaterialBase {
+                pipeline: self.renderer().normal_sprite_pipeline.clone(),
+            },
+            kind: MaterialKind::NormalSprite {
+                primary_texture: texture_id,
+            },
+        };
+
+        FontAndMaterial {
+            font_ref,
+            material_ref: Arc::new(material),
+        }
+    }
+
+    fn bm_font_txt(&mut self, name: impl Into<AssetName>) -> FontAndMaterial {
+        let asset_name = name.into();
+        let asset_loader = self
+            .resource_storage
+            .get_mut::<AssetRegistry>()
+            .expect("should exist registry");
+        let font_ref = asset_loader.load::<Font>(asset_name.clone().with_extension("txt.fnt"));
         let texture_id = asset_loader.load::<Texture>(asset_name.clone().with_extension("png"));
 
         let material = Material {
