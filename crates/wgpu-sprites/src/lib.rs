@@ -193,7 +193,8 @@ pub const INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
 
 #[derive(Debug)]
 pub struct SpriteInfo {
-    pub sprite_pipeline: RenderPipeline,
+    //pub sprite_pipeline: RenderPipeline,
+    pub sprite_shader_info: ShaderInfo,
 
     pub sampler: Sampler,
     pub vertex_buffer: Buffer,
@@ -214,20 +215,56 @@ pub struct SpriteInfo {
 
 const MAX_RENDER_SPRITE_COUNT: usize = 10_000;
 
+#[derive(Debug)]
+pub struct ShaderInfo {
+    pub vertex_shader: ShaderModule,
+    pub fragment_shader: ShaderModule,
+    pub pipeline: RenderPipeline,
+}
+
+pub fn create_shader_info(
+    device: &Device,
+    surface_texture_format: TextureFormat,
+    camera_bind_group_layout: &BindGroupLayout,
+    specific_layout: &BindGroupLayout,
+    vertex_source: &str,
+    fragment_source: &str,
+    name: &str,
+) -> ShaderInfo {
+    let vertex_shader =
+        mireforge_wgpu::create_shader_module(device, &format!("{name} vertex"), vertex_source);
+    let fragment_shader =
+        mireforge_wgpu::create_shader_module(device, &format!("{name} fragment"), fragment_source);
+
+    let sprite_pipeline_layout = create_pipeline_layout_with_camera_first(
+        device,
+        &camera_bind_group_layout,
+        &specific_layout,
+        &format!("{} pipeline layout (with camera first)", name),
+    );
+
+    let pipeline = create_sprite_pipeline(
+        device,
+        surface_texture_format,
+        &sprite_pipeline_layout,
+        &vertex_shader,
+        &fragment_shader,
+    );
+
+    ShaderInfo {
+        vertex_shader,
+        fragment_shader,
+        pipeline,
+    }
+}
+
 impl SpriteInfo {
     #[must_use]
     pub fn new(
         device: &Device,
         surface_texture_format: TextureFormat,
-        vertex_shader_source: &str,
-        fragment_shader_source: &str,
         view_proj_matrix: Matrix4,
     ) -> Self {
-        let vertex_shader =
-            mireforge_wgpu::create_shader_module(device, "sprite vertex", vertex_shader_source);
-        let fragment_shader =
-            mireforge_wgpu::create_shader_module(device, "sprite fragment", fragment_shader_source);
-
         let index_buffer = create_sprite_index_buffer(device, "identity quad index buffer");
         let vertex_buffer = create_sprite_vertex_buffer(device, "identity quad vertex buffer");
 
@@ -248,11 +285,24 @@ impl SpriteInfo {
             "camera matrix",
         );
 
-        // -------------------------- Texture and Sampler in Group 1 -----------------------------------------------
-        let sprite_texture_sampler_bind_group_layout = create_sprite_texture_sampler_group_layout(
+        // Create normal sprite shader
+
+        let (vertex_shader_source, fragment_shader_source) = normal_sprite_sources();
+
+        let sprite_texture_sampler_bind_group_layout =
+            create_texture_and_sampler_group_layout(device, "sprite texture and sampler layout");
+
+        let sprite_shader_info = create_shader_info(
             device,
-            "texture and sampler bind group layout",
+            surface_texture_format,
+            &camera_bind_group_layout,
+            &sprite_texture_sampler_bind_group_layout,
+            vertex_shader_source,
+            fragment_shader_source,
+            "Sprite",
         );
+
+        // -------------------------- Texture and Sampler in Group 1 -----------------------------------------------
 
         // -------------------------- Sprite Instance in Group 2 -----------------------------------------------
         let quad_matrix_and_uv_instance_buffer = create_quad_matrix_and_uv_instance_buffer(
@@ -261,25 +311,10 @@ impl SpriteInfo {
             "sprite_instance buffer",
         );
 
-        let sprite_pipeline_layout = create_sprite_pipeline_layout(
-            device,
-            &camera_bind_group_layout,
-            &sprite_texture_sampler_bind_group_layout,
-            "sprite pipeline layout",
-        );
-
-        let sprite_pipeline = create_sprite_pipeline(
-            device,
-            surface_texture_format,
-            &sprite_pipeline_layout,
-            &vertex_shader,
-            &fragment_shader,
-        );
-
         let sampler = mireforge_wgpu::create_nearest_sampler(device, "sprite nearest sampler");
 
         Self {
-            sprite_pipeline,
+            sprite_shader_info,
             sampler,
             vertex_buffer,
             index_buffer,
@@ -447,7 +482,7 @@ pub fn create_sprite_index_buffer(device: &Device, label: &str) -> Buffer {
 /// Binding0: Texture
 /// Binding1: Sampler
 #[must_use]
-pub fn create_sprite_texture_sampler_group_layout(device: &Device, label: &str) -> BindGroupLayout {
+pub fn create_texture_and_sampler_group_layout(device: &Device, label: &str) -> BindGroupLayout {
     device.create_bind_group_layout(&BindGroupLayoutDescriptor {
         label: Some(label),
         entries: &[
@@ -512,7 +547,7 @@ pub fn create_quad_matrix_and_uv_instance_buffer(
     })
 }
 
-fn create_sprite_pipeline_layout(
+fn create_pipeline_layout_with_camera_first(
     device: &Device,
     camera_bind_group_layout: &BindGroupLayout,
     texture_sampler_group_layout: &BindGroupLayout,
@@ -566,4 +601,254 @@ fn create_sprite_pipeline(
         multiview: None,
         cache: None,
     })
+}
+
+pub const fn normal_sprite_sources() -> (&'static str, &'static str) {
+    let vertex_shader_source = "
+// Bind Group 0: Uniforms (view-projection matrix)
+struct Uniforms {
+    view_proj: mat4x4<f32>,
+};
+
+@group(0) @binding(0)
+var<uniform> camera_uniforms: Uniforms;
+
+// Bind Group 1: Texture and Sampler (Unused in Vertex Shader but needed for consistency)
+@group(1) @binding(0)
+var diffuse_texture: texture_2d<f32>;
+
+@group(1) @binding(1)
+var sampler_diffuse: sampler;
+
+// Vertex input structure
+struct VertexInput {
+    @location(0) position: vec3<f32>,
+    @location(1) tex_coords: vec2<f32>,
+    @builtin(instance_index) instance_idx: u32,
+};
+
+// Vertex output structure to fragment shader
+struct VertexOutput {
+    @builtin(position) position: vec4<f32>,
+    @location(0) tex_coords: vec2<f32>,
+    @location(1) color: vec4<f32>,
+    @location(2) use_texture: u32,
+};
+
+// Vertex shader entry point
+@vertex
+fn vs_main(
+    input: VertexInput,
+    // Instance attributes
+    @location(2) model_matrix0: vec4<f32>,
+    @location(3) model_matrix1: vec4<f32>,
+    @location(4) model_matrix2: vec4<f32>,
+    @location(5) model_matrix3: vec4<f32>,
+    @location(6) tex_multiplier: vec4<f32>,
+    @location(7) rotation_step: u32,
+    @location(8) color: vec4<f32>,
+    @location(9) use_texture: u32,
+) -> VertexOutput {
+    var output: VertexOutput;
+
+    // Reconstruct the model matrix from the instance data
+    let model_matrix = mat4x4<f32>(
+        model_matrix0,
+        model_matrix1,
+        model_matrix2,
+        model_matrix3,
+    );
+
+    // Compute world position
+    let world_position = model_matrix * vec4<f32>(input.position, 1.0);
+
+    // Apply view-projection matrix
+    output.position = camera_uniforms.view_proj * world_position;
+
+    // Decode rotation_step
+    let rotation_val = rotation_step & 3u; // Bits 0-1
+    let flip_x = (rotation_step & 4u) != 0u; // Bit 2
+    let flip_y = (rotation_step & 8u) != 0u; // Bit 3
+
+    // Rotate texture coordinates based on rotation_val
+    var rotated_tex_coords = input.tex_coords;
+    if (rotation_val == 1) {
+        // 90 degrees rotation
+        rotated_tex_coords = vec2<f32>(1.0 - input.tex_coords.y, input.tex_coords.x);
+    } else if (rotation_val == 2) {
+        // 180 degrees rotation
+        rotated_tex_coords = vec2<f32>(1.0 - input.tex_coords.x, 1.0 - input.tex_coords.y);
+    } else if (rotation_val == 3) {
+        // 270 degrees rotation
+        rotated_tex_coords = vec2<f32>(input.tex_coords.y, 1.0 - input.tex_coords.x);
+    }
+    // else rotation_val == Degrees0, no rotation
+
+    // Apply flipping
+    if (flip_x) {
+        rotated_tex_coords.x = 1.0 - rotated_tex_coords.x;
+    }
+    if (flip_y) {
+        rotated_tex_coords.y = 1.0 - rotated_tex_coords.y;
+    }
+
+    // Modify texture coordinates
+    output.tex_coords = rotated_tex_coords * tex_multiplier.xy + tex_multiplier.zw;
+    output.color = color;
+    output.use_texture = use_texture;
+
+    return output;
+}
+        ";
+    //
+
+    let fragment_shader_source = "
+
+// Bind Group 1: Texture and Sampler
+@group(1) @binding(0)
+var diffuse_texture: texture_2d<f32>;
+
+@group(1) @binding(1)
+var sampler_diffuse: sampler;
+
+// Fragment input structure from vertex shader
+struct VertexOutput {
+    @builtin(position) position: vec4<f32>,
+    @location(0) tex_coords: vec2<f32>,
+    @location(1) color: vec4<f32>,
+    @location(2) use_texture: u32,
+};
+
+// Fragment shader entry point
+@fragment
+fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
+    var final_color: vec4<f32>;
+
+    // Sample the texture using the texture coordinates
+    let texture_color = textureSample(diffuse_texture, sampler_diffuse, input.tex_coords);
+    if (input.use_texture == 1u) { // Check if use_texture is true (1)
+        // Apply color modulation and opacity
+        final_color = texture_color * input.color;
+    } else {
+        final_color = input.color;
+    }
+
+    return final_color;
+}
+
+";
+    (vertex_shader_source, fragment_shader_source)
+}
+
+#[allow(unused)]
+const fn masked_texture_tinted() -> &'static str {
+    r"
+// Masked Texture and tinted shader
+
+
+@group(1) @binding(0) var t_color: texture_2d<f32>;
+@group(1) @binding(1) var t_mask: texture_2d<f32>;
+@group(1) @binding(2) var s_sampler: sampler;
+// New uniform binding for mask parameters
+@group(1) @binding(3) var<uniform> mask_params: MaskParams;
+
+struct VertexOutput {
+    @builtin(position) position: vec4<f32>,
+    @location(0) tex_coords: vec2<f32>, // Original UVs from vertex
+    @location(1) color: vec4<f32>,
+};
+
+@fragment
+fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
+    let color_sample = textureSample(t_color, s_sampler, input.tex_coords);
+
+    let mask_coords = input.tex_coords + mask_params.offset;
+
+    // TODO: Scale rot and other // let mask_coords = (input.tex_coords * mask_params.scale) + mask_params.offset;
+
+    let mask_alpha = textureSample(t_mask, s_sampler, mask_coords).r;
+
+    let final_rgb = color_sample.rgb * input.color.rgb;
+    let final_alpha = mask_alpha * input.color.a;
+
+    return vec4<f32>(final_rgb, final_alpha);
+}
+    "
+}
+
+const fn quad_shaders() -> (&'static str, &'static str) {
+    let vertex_shader_source = "
+// Bind Group 0: Uniforms (view-projection matrix)
+struct Uniforms {
+    view_proj: mat4x4<f32>,
+};
+
+// Camera (view projection matrix) is always first
+@group(0) @binding(0)
+var<uniform> camera_uniforms: Uniforms;
+
+// Vertex input structure
+// This is probably fixed since it is from the instanced vertex buffer.
+struct VertexInput {
+    @location(0) position: vec3<f32>,
+    @location(1) tex_coords: vec2<f32>,
+    @builtin(instance_index) instance_idx: u32,
+};
+
+// Vertex output structure to fragment shader
+struct VertexOutput {
+    @location(1) color: vec4<f32>,
+};
+
+// Vertex shader entry point
+@vertex
+fn vs_main(
+    input: VertexInput,
+    // Instance attributes
+    @location(2) model_matrix0: vec4<f32>, // Always fixed
+    @location(3) model_matrix1: vec4<f32>, // Always fixed
+    @location(4) model_matrix2: vec4<f32>, // Always fixed
+    @location(5) model_matrix3: vec4<f32>, // Always fixed
+    @location(6) color: vec4<f32>,
+) -> VertexOutput {
+    var output: VertexOutput;
+
+    // Reconstruct the model matrix from the instance data
+    let model_matrix = mat4x4<f32>(
+        model_matrix0,
+        model_matrix1,
+        model_matrix2,
+        model_matrix3,
+    );
+
+    // Compute world position
+    let world_position = model_matrix * vec4<f32>(input.position, 1.0);
+
+    // Apply view-projection matrix
+    output.position = camera_uniforms.view_proj * world_position;
+
+    output.color = color;
+
+    return output;
+}
+        ";
+    //
+
+    let fragment_shader_source = "
+
+// Fragment input structure from vertex shader
+struct VertexOutput {
+    //@builtin(position) position: vec4<f32>,
+    @location(0) color: vec4<f32>,
+};
+
+// Fragment shader entry point
+@fragment
+fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
+    // It is a quad, so we only use the color
+    return input.color;
+}
+
+";
+    (vertex_shader_source, fragment_shader_source)
 }

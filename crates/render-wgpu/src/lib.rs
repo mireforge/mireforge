@@ -14,7 +14,7 @@ use mireforge_font::Font;
 use mireforge_font::FontRef;
 use mireforge_font::WeakFontRef;
 use mireforge_render::prelude::*;
-use mireforge_wgpu_sprites::{SpriteInfo, SpriteInstanceUniform};
+use mireforge_wgpu_sprites::{ShaderInfo, SpriteInfo, SpriteInstanceUniform};
 use monotonic_time_rs::Millis;
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
@@ -174,7 +174,7 @@ pub struct Render {
     index_buffer: Buffer,  // Only indices for a single identity quad
     vertex_buffer: Buffer, // Only one identity quad (0,0,1,1)
     sampler: wgpu::Sampler,
-    pub normal_sprite_pipeline: Arc<Pipeline>,
+    pub normal_sprite_pipeline: ShaderInfo,
     physical_surface_size: UVec2,
     viewport_strategy: ViewportStrategy,
     // Group 0
@@ -327,20 +327,11 @@ impl Render {
         virtual_surface_size: UVec2,
         now: Millis,
     ) -> Self {
-        let (vertex_shader_source, fragment_shader_source) = sources();
-
         let sprite_info = SpriteInfo::new(
             &device,
             surface_texture_format,
-            vertex_shader_source,
-            fragment_shader_source,
             create_view_uniform_view_projection_matrix(physical_size),
         );
-
-        let pipeline = Pipeline {
-            name: "NormalSprite".to_string(),
-            render_pipeline: sprite_info.sprite_pipeline,
-        };
 
         Self {
             device,
@@ -348,7 +339,7 @@ impl Render {
             items: Vec::new(),
             //   fonts: Vec::new(),
             sampler: sprite_info.sampler,
-            normal_sprite_pipeline: Arc::new(pipeline),
+            normal_sprite_pipeline: sprite_info.sprite_shader_info,
             texture_sampler_bind_group_layout: sprite_info.sprite_texture_sampler_bind_group_layout,
             index_buffer: sprite_info.index_buffer,
             vertex_buffer: sprite_info.vertex_buffer,
@@ -1335,13 +1326,9 @@ impl Render {
             if current_pipeline != Some(pipeline_kind) {
                 trace!(%pipeline_kind, "setting pipeline");
                 let pipeline = match pipeline_kind {
-                    MaterialKind::NormalSprite { .. } => {
-                        &self.normal_sprite_pipeline.render_pipeline
-                    }
-                    MaterialKind::Quad { .. } => &self.normal_sprite_pipeline.render_pipeline,
-                    MaterialKind::AlphaMasker { .. } => {
-                        &self.normal_sprite_pipeline.render_pipeline
-                    }
+                    MaterialKind::NormalSprite { .. } => &self.normal_sprite_pipeline.pipeline,
+                    MaterialKind::Quad { .. } => &self.normal_sprite_pipeline.pipeline,
+                    MaterialKind::AlphaMasker { .. } => &self.normal_sprite_pipeline.pipeline,
                 };
                 render_pass.set_pipeline(&pipeline);
                 current_pipeline = Some(pipeline_kind);
@@ -1631,176 +1618,3 @@ impl Display for Pipeline {
 }
 
 pub type PipelineRef = Arc<Pipeline>;
-
-const fn sources() -> (&'static str, &'static str) {
-    let vertex_shader_source = "
-// Bind Group 0: Uniforms (view-projection matrix)
-struct Uniforms {
-    view_proj: mat4x4<f32>,
-};
-
-@group(0) @binding(0)
-var<uniform> camera_uniforms: Uniforms;
-
-// Bind Group 1: Texture and Sampler (Unused in Vertex Shader but needed for consistency)
-@group(1) @binding(0)
-var diffuse_texture: texture_2d<f32>;
-
-@group(1) @binding(1)
-var sampler_diffuse: sampler;
-
-// Vertex input structure
-struct VertexInput {
-    @location(0) position: vec3<f32>,
-    @location(1) tex_coords: vec2<f32>,
-    @builtin(instance_index) instance_idx: u32,
-};
-
-// Vertex output structure to fragment shader
-struct VertexOutput {
-    @builtin(position) position: vec4<f32>,
-    @location(0) tex_coords: vec2<f32>,
-    @location(1) color: vec4<f32>,
-    @location(2) use_texture: u32,
-};
-
-// Vertex shader entry point
-@vertex
-fn vs_main(
-    input: VertexInput,
-    // Instance attributes
-    @location(2) model_matrix0: vec4<f32>,
-    @location(3) model_matrix1: vec4<f32>,
-    @location(4) model_matrix2: vec4<f32>,
-    @location(5) model_matrix3: vec4<f32>,
-    @location(6) tex_multiplier: vec4<f32>,
-    @location(7) rotation_step: u32,
-    @location(8) color: vec4<f32>,
-    @location(9) use_texture: u32,
-) -> VertexOutput {
-    var output: VertexOutput;
-
-    // Reconstruct the model matrix from the instance data
-    let model_matrix = mat4x4<f32>(
-        model_matrix0,
-        model_matrix1,
-        model_matrix2,
-        model_matrix3,
-    );
-
-    // Compute world position
-    let world_position = model_matrix * vec4<f32>(input.position, 1.0);
-
-    // Apply view-projection matrix
-    output.position = camera_uniforms.view_proj * world_position;
-
-    // Decode rotation_step
-    let rotation_val = rotation_step & 3u; // Bits 0-1
-    let flip_x = (rotation_step & 4u) != 0u; // Bit 2
-    let flip_y = (rotation_step & 8u) != 0u; // Bit 3
-
-    // Rotate texture coordinates based on rotation_val
-    var rotated_tex_coords = input.tex_coords;
-    if (rotation_val == 1) {
-        // 90 degrees rotation
-        rotated_tex_coords = vec2<f32>(1.0 - input.tex_coords.y, input.tex_coords.x);
-    } else if (rotation_val == 2) {
-        // 180 degrees rotation
-        rotated_tex_coords = vec2<f32>(1.0 - input.tex_coords.x, 1.0 - input.tex_coords.y);
-    } else if (rotation_val == 3) {
-        // 270 degrees rotation
-        rotated_tex_coords = vec2<f32>(input.tex_coords.y, 1.0 - input.tex_coords.x);
-    }
-    // else rotation_val == Degrees0, no rotation
-
-    // Apply flipping
-    if (flip_x) {
-        rotated_tex_coords.x = 1.0 - rotated_tex_coords.x;
-    }
-    if (flip_y) {
-        rotated_tex_coords.y = 1.0 - rotated_tex_coords.y;
-    }
-
-    // Modify texture coordinates
-    output.tex_coords = rotated_tex_coords * tex_multiplier.xy + tex_multiplier.zw;
-    output.color = color;
-    output.use_texture = use_texture;
-
-    return output;
-}
-        ";
-    //
-
-    let fragment_shader_source = "
-
-// Bind Group 1: Texture and Sampler
-@group(1) @binding(0)
-var diffuse_texture: texture_2d<f32>;
-
-@group(1) @binding(1)
-var sampler_diffuse: sampler;
-
-// Fragment input structure from vertex shader
-struct VertexOutput {
-    @builtin(position) position: vec4<f32>,
-    @location(0) tex_coords: vec2<f32>,
-    @location(1) color: vec4<f32>,
-    @location(2) use_texture: u32,
-};
-
-// Fragment shader entry point
-@fragment
-fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
-    var final_color: vec4<f32>;
-
-    // Sample the texture using the texture coordinates
-    let texture_color = textureSample(diffuse_texture, sampler_diffuse, input.tex_coords);
-    if (input.use_texture == 1u) { // Check if use_texture is true (1)
-        // Apply color modulation and opacity
-        final_color = texture_color * input.color;
-    } else {
-        final_color = input.color;
-    }
-
-    return final_color;
-}
-
-";
-    (vertex_shader_source, fragment_shader_source)
-}
-
-#[allow(unused)]
-const fn masked_texture_tinted() -> &'static str {
-    r"
-// Masked Texture and tinted shader
-
-
-@group(1) @binding(0) var t_color: texture_2d<f32>;
-@group(1) @binding(1) var t_mask: texture_2d<f32>;
-@group(1) @binding(2) var s_sampler: sampler;
-// New uniform binding for mask parameters
-@group(1) @binding(3) var<uniform> mask_params: MaskParams;
-
-struct VertexOutput {
-    @builtin(position) position: vec4<f32>,
-    @location(0) tex_coords: vec2<f32>, // Original UVs from vertex
-    @location(1) color: vec4<f32>,
-};
-
-@fragment
-fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
-    let color_sample = textureSample(t_color, s_sampler, input.tex_coords);
-
-    let mask_coords = input.tex_coords + mask_params.offset;
-
-    // TODO: Scale rot and other // let mask_coords = (input.tex_coords * mask_params.scale) + mask_params.offset;
-
-    let mask_alpha = textureSample(t_mask, s_sampler, mask_coords).r;
-
-    let final_rgb = color_sample.rgb * input.color.rgb;
-    let final_alpha = mask_alpha * input.color.a;
-
-    return vec4<f32>(final_rgb, final_alpha);
-}
-    "
-}
