@@ -94,7 +94,7 @@ impl Assets for GameAssets<'_> {
 
         let material = Material {
             base: MaterialBase {
-                pipeline: self.renderer().normal_sprite_pipeline.clone(),
+                //pipeline: self.renderer().normal_sprite_pipeline.clone(),
             },
             kind: MaterialKind::NormalSprite {
                 primary_texture: texture_ref,
@@ -139,7 +139,7 @@ impl Assets for GameAssets<'_> {
 
         let material = Material {
             base: MaterialBase {
-                pipeline: self.renderer().normal_sprite_pipeline.clone(),
+                //pipeline: self.renderer().normal_sprite_pipeline.clone(),
             },
             kind: MaterialKind::NormalSprite {
                 primary_texture: texture_id,
@@ -163,7 +163,7 @@ impl Assets for GameAssets<'_> {
 
         let material = Material {
             base: MaterialBase {
-                pipeline: self.renderer().normal_sprite_pipeline.clone(),
+                //pipeline: self.renderer().normal_sprite_pipeline.clone(),
             },
             kind: MaterialKind::NormalSprite {
                 primary_texture: texture_id,

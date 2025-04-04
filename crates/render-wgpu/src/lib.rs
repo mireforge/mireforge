@@ -569,7 +569,7 @@ impl Render {
     pub fn draw_quad(&mut self, position: Vec3, size: UVec2, color: Color) {
         let material = Material {
             base: MaterialBase {
-                pipeline: self.normal_sprite_pipeline.clone(),
+                //pipeline: self.normal_sprite_pipeline.clone(),
             },
             kind: MaterialKind::Quad,
         };
@@ -1325,17 +1325,26 @@ impl Render {
 
         let num_indices = mireforge_wgpu_sprites::INDICES.len() as u32;
 
-        let mut current_pipeline: Option<&PipelineRef> = None;
+        let mut current_pipeline: Option<&MaterialKind> = None;
 
         for &(ref weak_material_ref, start, count) in &self.batch_offsets {
             let wgpu_material = weak_material_ref;
 
-            let pipeline = &wgpu_material.base.pipeline;
+            let pipeline_kind = &wgpu_material.kind;
 
-            if current_pipeline != Some(pipeline) {
-                trace!(%pipeline, "setting pipeline");
-                render_pass.set_pipeline(&pipeline.render_pipeline);
-                current_pipeline = Some(pipeline);
+            if current_pipeline != Some(pipeline_kind) {
+                trace!(%pipeline_kind, "setting pipeline");
+                let pipeline = match pipeline_kind {
+                    MaterialKind::NormalSprite { .. } => {
+                        &self.normal_sprite_pipeline.render_pipeline
+                    }
+                    MaterialKind::Quad { .. } => &self.normal_sprite_pipeline.render_pipeline,
+                    MaterialKind::AlphaMasker { .. } => {
+                        &self.normal_sprite_pipeline.render_pipeline
+                    }
+                };
+                render_pass.set_pipeline(&pipeline);
+                current_pipeline = Some(pipeline_kind);
             }
 
             match &wgpu_material.kind {
@@ -1357,7 +1366,7 @@ impl Render {
                     // Bind the texture and sampler bind group (Bind Group 1)
                     //render_pass.set_bind_group(1, None, &[]);
                     // Intentionally do nothing
-                    todo!()
+                    continue;
                 }
             }
 
@@ -1497,7 +1506,7 @@ impl Ord for Texture {
 
 #[derive(Debug, Ord, PartialOrd, PartialEq, Eq)]
 pub struct MaterialBase {
-    pub pipeline: PipelineRef,
+    //pub pipeline: PipelineRef,
 }
 
 #[derive(Debug, Ord, PartialOrd, PartialEq, Eq)]
@@ -1524,7 +1533,7 @@ impl Material {
 
 impl Display for Material {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} ({})", self.kind, self.base.pipeline)
+        write!(f, "{}", self.kind)
     }
 }
 
