@@ -24,11 +24,16 @@ pub trait Assets {
 
     #[must_use]
     fn material_png(&mut self, name: impl Into<AssetName>) -> MaterialRef;
+
+    #[must_use]
     fn material_alpha_mask(
         &mut self,
         name: impl Into<AssetName>,
         mask: impl Into<AssetName>,
     ) -> MaterialRef;
+
+    #[must_use]
+    fn light_material_png(&mut self, name: impl Into<AssetName>) -> MaterialRef;
 
     #[must_use]
     fn frame_fixed_grid_material_png(
@@ -121,6 +126,26 @@ impl Assets for GameAssets<'_> {
             kind: MaterialKind::AlphaMasker {
                 primary_texture: diffuse_texture_id,
                 alpha_texture: alpha_mask_texture_id,
+            },
+        };
+
+        Arc::new(material)
+    }
+
+    fn light_material_png(&mut self, name: impl Into<AssetName>) -> MaterialRef {
+        let asset_loader = self
+            .resource_storage
+            .get_mut::<AssetRegistry>()
+            .expect("should exist registry");
+
+        let texture_ref = asset_loader.load::<Texture>(name.into().with_extension("png"));
+
+        let material = Material {
+            base: MaterialBase {
+                //pipeline: self.renderer().normal_sprite_pipeline.clone(),
+            },
+            kind: MaterialKind::LightAdd {
+                primary_texture: texture_ref,
             },
         };
 

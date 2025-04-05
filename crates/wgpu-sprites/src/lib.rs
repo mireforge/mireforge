@@ -186,6 +186,7 @@ pub struct SpriteInfo {
     pub sprite_shader_info: ShaderInfo,
     pub quad_shader_info: ShaderInfo,
     pub mask_shader_info: ShaderInfo,
+    pub light_shader_info: ShaderInfo,
 
     pub sampler: Sampler,
     pub vertex_buffer: Buffer,
@@ -221,6 +222,7 @@ pub fn create_shader_info(
     specific_layout: &[&BindGroupLayout],
     vertex_source: &str,
     fragment_source: &str,
+    blend_state: BlendState,
     name: &str,
 ) -> ShaderInfo {
     let vertex_shader =
@@ -241,6 +243,7 @@ pub fn create_shader_info(
         &custom_layout,
         &vertex_shader,
         &fragment_shader,
+        blend_state,
         name,
     );
 
@@ -252,6 +255,7 @@ pub fn create_shader_info(
 }
 
 impl SpriteInfo {
+    #[allow(clippy::too_many_lines)]
     #[must_use]
     pub fn new(
         device: &Device,
@@ -279,18 +283,21 @@ impl SpriteInfo {
         );
 
         // Create normal sprite shader
-        let (vertex_shader_source, fragment_shader_source) = normal_sprite_sources();
+        let (sprite_vertex_shader_source, sprite_fragment_shader_source) = normal_sprite_sources();
 
         let sprite_texture_sampler_bind_group_layout =
             create_texture_and_sampler_group_layout(device, "sprite texture and sampler layout");
+
+        let alpha_blending = BlendState::ALPHA_BLENDING;
 
         let sprite_shader_info = create_shader_info(
             device,
             surface_texture_format,
             &camera_bind_group_layout,
             &[&sprite_texture_sampler_bind_group_layout],
-            vertex_shader_source,
-            fragment_shader_source,
+            sprite_vertex_shader_source,
+            sprite_fragment_shader_source,
+            alpha_blending,
             "Sprite",
         );
 
@@ -305,6 +312,7 @@ impl SpriteInfo {
                 &[],
                 vertex_shader_source,
                 fragment_shader_source,
+                alpha_blending,
                 "Quad",
             )
         };
@@ -326,7 +334,40 @@ impl SpriteInfo {
                 &[&diffuse_texture_group, &alpha_texture_group],
                 vertex_shader_source,
                 fragment_shader_source,
+                alpha_blending,
                 "AlphaMask",
+            )
+        };
+
+        let light_shader_info = {
+            let vertex_shader_source = sprite_vertex_shader_source;
+            let fragment_shader_source = sprite_fragment_shader_source;
+
+            let light_texture_group =
+                create_texture_and_sampler_group_layout(device, "light texture group");
+
+            let additive_blend = wgpu::BlendState {
+                color: wgpu::BlendComponent {
+                    src_factor: wgpu::BlendFactor::SrcAlpha,
+                    dst_factor: wgpu::BlendFactor::One,
+                    operation: wgpu::BlendOperation::Add,
+                },
+                alpha: wgpu::BlendComponent {
+                    src_factor: wgpu::BlendFactor::Zero,
+                    dst_factor: wgpu::BlendFactor::One,
+                    operation: wgpu::BlendOperation::Add,
+                },
+            };
+
+            create_shader_info(
+                device,
+                surface_texture_format,
+                &camera_bind_group_layout,
+                &[&light_texture_group],
+                vertex_shader_source,
+                fragment_shader_source,
+                additive_blend,
+                "Light (Additive)",
             )
         };
 
@@ -343,6 +384,7 @@ impl SpriteInfo {
             sprite_shader_info,
             quad_shader_info,
             mask_shader_info,
+            light_shader_info,
             sampler,
             vertex_buffer,
             index_buffer,
@@ -598,6 +640,7 @@ fn create_pipeline(
     pipeline_layout: &PipelineLayout,
     vertex_shader: &ShaderModule,
     fragment_shader: &ShaderModule,
+    blend_state: BlendState,
     label: &str,
 ) -> RenderPipeline {
     device.create_render_pipeline(&RenderPipelineDescriptor {
@@ -615,7 +658,7 @@ fn create_pipeline(
             compilation_options: PipelineCompilationOptions::default(),
             targets: &[Some(ColorTargetState {
                 format,
-                blend: Some(BlendState::ALPHA_BLENDING),
+                blend: Some(blend_state),
                 write_mask: ColorWrites::ALL,
             })],
         }),

@@ -188,6 +188,7 @@ pub struct Render {
     pub normal_sprite_pipeline: ShaderInfo,
     pub quad_shader_info: ShaderInfo,
     pub mask_shader_info: ShaderInfo,
+    pub light_shader_info: ShaderInfo,
     physical_surface_size: UVec2,
     viewport_strategy: ViewportStrategy,
     // Group 0
@@ -371,6 +372,7 @@ impl Render {
             normal_sprite_pipeline: sprite_info.sprite_shader_info,
             quad_shader_info: sprite_info.quad_shader_info,
             mask_shader_info: sprite_info.mask_shader_info,
+            light_shader_info: sprite_info.light_shader_info,
             texture_sampler_bind_group_layout: sprite_info.sprite_texture_sampler_bind_group_layout,
             index_buffer: sprite_info.index_buffer,
             vertex_buffer: sprite_info.vertex_buffer,
@@ -848,7 +850,6 @@ impl Render {
                             pivot: Vec2 { x: 0, y: 0 },
                             color: *color,
                         };
-                        let current_texture_size = maybe_texture.unwrap().texture_size;
 
                         let mut size = params.texture_size;
                         if size.x == 0 && size.y == 0 {
@@ -1377,6 +1378,7 @@ impl Render {
                     MaterialKind::NormalSprite { .. } => &self.normal_sprite_pipeline.pipeline,
                     MaterialKind::Quad => &self.quad_shader_info.pipeline,
                     MaterialKind::AlphaMasker { .. } => &self.mask_shader_info.pipeline,
+                    MaterialKind::LightAdd { .. } => &self.light_shader_info.pipeline,
                 };
                 //trace!(%pipeline_kind, ?pipeline, "setting pipeline");
                 render_pass.set_pipeline(pipeline);
@@ -1387,9 +1389,9 @@ impl Render {
             }
 
             match &wgpu_material.kind {
-                MaterialKind::NormalSprite { primary_texture } => {
+                MaterialKind::NormalSprite { primary_texture }
+                | MaterialKind::LightAdd { primary_texture } => {
                     let texture = textures.get(primary_texture).unwrap();
-                    warn!(%texture, "set normal sprite material");
                     // Bind the texture and sampler bind group (Bind Group 1)
                     render_pass.set_bind_group(1, &texture.texture_and_sampler_bind_group, &[]);
                 }
@@ -1399,7 +1401,6 @@ impl Render {
                 } => {
                     let real_diffuse_texture = textures.get(primary_texture).unwrap();
                     let alpha_texture = textures.get(alpha_texture).unwrap();
-                    warn!(%alpha_texture, "set normal AlphaMasker material");
                     render_pass.set_bind_group(
                         1,
                         &real_diffuse_texture.texture_and_sampler_bind_group,
@@ -1590,6 +1591,9 @@ pub enum MaterialKind {
         alpha_texture: Id<Texture>,
     },
     Quad,
+    LightAdd {
+        primary_texture: Id<Texture>,
+    },
 }
 
 impl MaterialKind {}
@@ -1599,7 +1603,8 @@ impl MaterialKind {
         match &self {
             MaterialKind::NormalSprite {
                 primary_texture, ..
-            } => Some(primary_texture.clone()),
+            }
+            | MaterialKind::LightAdd { primary_texture } => Some(primary_texture.clone()),
             MaterialKind::AlphaMasker {
                 primary_texture, ..
             } => Some(primary_texture.clone()),
@@ -1609,7 +1614,8 @@ impl MaterialKind {
 
     pub(crate) fn is_complete(&self, textures: &Assets<Texture>) -> bool {
         match &self {
-            MaterialKind::NormalSprite { primary_texture } => textures.contains(primary_texture),
+            MaterialKind::NormalSprite { primary_texture }
+            | MaterialKind::LightAdd { primary_texture } => textures.contains(primary_texture),
             MaterialKind::AlphaMasker {
                 primary_texture,
                 alpha_texture,
@@ -1627,6 +1633,7 @@ impl Display for MaterialKind {
 
         let kind_name = match self {
             Self::NormalSprite { .. } => "NormalSprite",
+            Self::LightAdd { .. } => "Light (Add)",
             Self::Quad => "Quad",
             Self::AlphaMasker { .. } => "AlphaMasker",
         };
