@@ -9,32 +9,29 @@ description = "common mireforge game types"
 
 
 [dependencies]
-tracing = "0.1.40"
-int_math = "0.0.2"
-
 mireforge-render = { path = "../render", version = "0.0.19" }
 mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.19" }
-
-monotonic-time-rs = "0.0.9"
-
 mireforge-game-assets = { path = "../game-assets", version = "0.0.19" }
 mireforge-game-audio = { path = "../game-audio", version = "0.0.19" }
 
-
 # Limnus
-limnus-assets = "0.0.17"
-limnus-app = "0.0.17"
-limnus-resource = "0.0.17"
-limnus-local-resource = "0.0.17"
-limnus-system-params =  "0.0.17"
-limnus-screen = "0.0.17"
-limnus-audio-mixer = "0.0.17"
-limnus-basic-input = "0.0.17"
-limnus-message = "0.0.17"
-limnus-gamepad = "0.0.17"
-limnus-default-stages = "0.0.17"
+limnus-assets = "0.0.18"
+limnus-app = "0.0.18"
+limnus-resource = "0.0.18"
+limnus-local-resource = "0.0.18"
+limnus-system-params =  "0.0.18"
+limnus-screen = "0.0.18"
+limnus-audio-mixer = "0.0.18"
+limnus-basic-input = "0.0.18"
+limnus-message = "0.0.18"
+limnus-gamepad = "0.0.18"
+limnus-default-stages = "0.0.18"
 
 fixed32 = "0.0.17"
+tracing = "0.1.40"
+int_math = "0.0.2"
+monotonic-time-rs = "0.0.9"
+
 
 [dev-dependencies]
 test-log = "0.2.16"

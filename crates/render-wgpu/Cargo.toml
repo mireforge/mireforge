@@ -9,23 +9,25 @@ categories = ["game-development"]
 keywords = ["game", "render"]
 
 [dependencies]
-tracing = "0.1.40"
-wgpu = "23.0.0"
-bytemuck = "1.19.0"
-monotonic-time-rs = "0.0.9"
-int_math = "0.0.2"
+# Mireforge
 mireforge-font = { path = "../font", version = "0.0.19" }
 mireforge-wgpu-sprites = { path = "../wgpu-sprites", version = "0.0.19" }
 mireforge-render = { path = "../render", version = "0.0.19" }
 mireforge-wgpu = { path = "../wgpu", version = "0.0.19" }
 
 # Limnus
-limnus-assets = "0.0.17"
-limnus-app = "0.0.17"
-limnus-resource = "0.0.17"
-limnus-wgpu-math = "0.0.17"
-limnus-system-params = "0.0.17"
-limnus-screen = "0.0.17"
-limnus-wgpu-window = "0.0.17"
-limnus-clock ="0.0.17"
-limnus-default-stages = "0.0.17"
+limnus-assets = "0.0.18"
+limnus-app = "0.0.18"
+limnus-resource = "0.0.18"
+limnus-wgpu-math = "0.0.18"
+limnus-system-params = "0.0.18"
+limnus-screen = "0.0.18"
+limnus-wgpu-window = "0.0.18"
+limnus-clock ="0.0.18"
+limnus-default-stages = "0.0.18"
+
+tracing = "0.1.40"
+wgpu = "23.0.0"
+bytemuck = "1.19.0"
+monotonic-time-rs = "0.0.9"
+int_math = "0.0.2"

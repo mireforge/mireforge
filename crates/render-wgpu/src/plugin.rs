@@ -37,8 +37,8 @@ pub fn flush_render_tick(
     let now = script.clock.now();
 
     wgpu_window
-        .render(wgpu_render.clear_color(), |render_pass| {
-            wgpu_render.render(render_pass, &textures, &fonts, now);
+        .render(|encoder, texture_view| {
+            wgpu_render.render(encoder, texture_view, &textures, &fonts, now);
         })
         .unwrap();
 }

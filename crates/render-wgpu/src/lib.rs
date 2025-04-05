@@ -22,7 +22,9 @@ use std::mem::swap;
 use std::sync::Arc;
 use tracing::trace;
 use tracing::warn;
-use wgpu::{BindGroup, BindGroupLayout, Buffer, RenderPass, RenderPipeline};
+use wgpu::{
+    BindGroup, BindGroupLayout, Buffer, CommandEncoder, RenderPass, RenderPipeline, TextureView,
+};
 
 pub type MaterialRef = Arc<Material>;
 
@@ -182,6 +184,7 @@ enum Renderable {
 
 #[derive(Resource)]
 pub struct Render {
+    virtual_surface_texture_view: TextureView,
     index_buffer: Buffer,  // Only indices for a single identity quad
     vertex_buffer: Buffer, // Only one identity quad (0,0,1,1)
     sampler: wgpu::Sampler,
@@ -363,11 +366,31 @@ impl Render {
             create_view_uniform_view_projection_matrix(physical_size),
         );
 
+        // Create a texture at your virtual resolution (e.g., 320x240)
+        let render_texture = device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("Render Texture"),
+            size: wgpu::Extent3d {
+                width: virtual_surface_size.x as u32,
+                height: virtual_surface_size.y as u32,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: surface_texture_format, // TODO: Check: Should probably always be same as swap chain format?
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+            view_formats: &[],
+        });
+
+        let virtual_surface_texture_view =
+            render_texture.create_view(&wgpu::TextureViewDescriptor::default());
+
         Self {
             device,
             queue,
             items: Vec::new(),
             //   fonts: Vec::new(),
+            virtual_surface_texture_view,
             sampler: sprite_info.sampler,
             normal_sprite_pipeline: sprite_info.sprite_shader_info,
             quad_shader_info: sprite_info.quad_shader_info,
@@ -1294,9 +1317,11 @@ impl Render {
 
     /// # Panics
     ///
+    #[allow(clippy::too_many_lines)]
     pub fn render(
         &mut self,
-        render_pass: &mut RenderPass,
+        mut command_encoder: &mut CommandEncoder,
+        texture_view: &TextureView,
         //        materials: &Assets<Material>,
         textures: &Assets<Texture>,
         fonts: &Assets<Font>,
@@ -1348,79 +1373,99 @@ impl Render {
 
         self.prepare_render(textures, fonts);
 
-        render_pass.set_viewport(
-            self.viewport.position.x as f32,
-            self.viewport.position.y as f32,
-            self.viewport.size.x as f32,
-            self.viewport.size.y as f32,
-            0.0,
-            1.0,
-        );
+        {
+            let mut render_pass = command_encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Render Pass"),
+                color_attachments: &[
+                    // This is what @location(0) in the fragment shader targets
+                    Some(wgpu::RenderPassColorAttachment {
+                        view: texture_view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(self.clear_color),
+                            store: wgpu::StoreOp::Store,
+                        },
+                    }),
+                ],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
 
-        // Index and vertex buffers never change
-        render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-        render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.set_viewport(
+                self.viewport.position.x as f32,
+                self.viewport.position.y as f32,
+                self.viewport.size.x as f32,
+                self.viewport.size.y as f32,
+                0.0,
+                1.0,
+            );
 
-        // Vertex buffer is reused
-        render_pass.set_vertex_buffer(1, self.quad_matrix_and_uv_instance_buffer.slice(..));
+            // Index and vertex buffers never change
+            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
 
-        let num_indices = mireforge_wgpu_sprites::INDICES.len() as u32;
+            // Vertex buffer is reused
+            render_pass.set_vertex_buffer(1, self.quad_matrix_and_uv_instance_buffer.slice(..));
 
-        let mut current_pipeline: Option<&MaterialKind> = None;
+            let num_indices = mireforge_wgpu_sprites::INDICES.len() as u32;
 
-        for &(ref weak_material_ref, start, count) in &self.batch_offsets {
-            let wgpu_material = weak_material_ref;
+            let mut current_pipeline: Option<&MaterialKind> = None;
 
-            let pipeline_kind = &wgpu_material.kind;
+            for &(ref weak_material_ref, start, count) in &self.batch_offsets {
+                let wgpu_material = weak_material_ref;
 
-            if current_pipeline != Some(pipeline_kind) {
-                let pipeline = match pipeline_kind {
-                    MaterialKind::NormalSprite { .. } => &self.normal_sprite_pipeline.pipeline,
-                    MaterialKind::Quad => &self.quad_shader_info.pipeline,
-                    MaterialKind::AlphaMasker { .. } => &self.mask_shader_info.pipeline,
-                    MaterialKind::LightAdd { .. } => &self.light_shader_info.pipeline,
-                };
-                //trace!(%pipeline_kind, ?pipeline, "setting pipeline");
-                render_pass.set_pipeline(pipeline);
-                // Apparently after setting pipeline,
-                // you must set all bind groups again
-                current_pipeline = Some(pipeline_kind);
-                render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
+                let pipeline_kind = &wgpu_material.kind;
+
+                if current_pipeline != Some(pipeline_kind) {
+                    let pipeline = match pipeline_kind {
+                        MaterialKind::NormalSprite { .. } => &self.normal_sprite_pipeline.pipeline,
+                        MaterialKind::Quad => &self.quad_shader_info.pipeline,
+                        MaterialKind::AlphaMasker { .. } => &self.mask_shader_info.pipeline,
+                        MaterialKind::LightAdd { .. } => &self.light_shader_info.pipeline,
+                    };
+                    //trace!(%pipeline_kind, ?pipeline, "setting pipeline");
+                    render_pass.set_pipeline(pipeline);
+                    // Apparently after setting pipeline,
+                    // you must set all bind groups again
+                    current_pipeline = Some(pipeline_kind);
+                    render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
+                }
+
+                match &wgpu_material.kind {
+                    MaterialKind::NormalSprite { primary_texture }
+                    | MaterialKind::LightAdd { primary_texture } => {
+                        let texture = textures.get(primary_texture).unwrap();
+                        // Bind the texture and sampler bind group (Bind Group 1)
+                        render_pass.set_bind_group(1, &texture.texture_and_sampler_bind_group, &[]);
+                    }
+                    MaterialKind::AlphaMasker {
+                        primary_texture,
+                        alpha_texture,
+                    } => {
+                        let real_diffuse_texture = textures.get(primary_texture).unwrap();
+                        let alpha_texture = textures.get(alpha_texture).unwrap();
+                        render_pass.set_bind_group(
+                            1,
+                            &real_diffuse_texture.texture_and_sampler_bind_group,
+                            &[],
+                        );
+                        render_pass.set_bind_group(
+                            2,
+                            &alpha_texture.texture_and_sampler_bind_group,
+                            &[],
+                        );
+                    }
+                    MaterialKind::Quad => {
+                        trace!("set quad material");
+                        // Intentionally do nothing
+                    }
+                }
+
+                // Issue the instanced draw call for the batch
+                trace!(material=%weak_material_ref, start=%start, count=%count, "draw instanced");
+                render_pass.draw_indexed(0..num_indices, 0, start..(start + count));
             }
-
-            match &wgpu_material.kind {
-                MaterialKind::NormalSprite { primary_texture }
-                | MaterialKind::LightAdd { primary_texture } => {
-                    let texture = textures.get(primary_texture).unwrap();
-                    // Bind the texture and sampler bind group (Bind Group 1)
-                    render_pass.set_bind_group(1, &texture.texture_and_sampler_bind_group, &[]);
-                }
-                MaterialKind::AlphaMasker {
-                    primary_texture,
-                    alpha_texture,
-                } => {
-                    let real_diffuse_texture = textures.get(primary_texture).unwrap();
-                    let alpha_texture = textures.get(alpha_texture).unwrap();
-                    render_pass.set_bind_group(
-                        1,
-                        &real_diffuse_texture.texture_and_sampler_bind_group,
-                        &[],
-                    );
-                    render_pass.set_bind_group(
-                        2,
-                        &alpha_texture.texture_and_sampler_bind_group,
-                        &[],
-                    );
-                }
-                MaterialKind::Quad => {
-                    trace!("set quad material");
-                    // Intentionally do nothing
-                }
-            }
-
-            // Issue the instanced draw call for the batch
-            trace!(material=%weak_material_ref, start=%start, count=%count, "draw instanced");
-            render_pass.draw_indexed(0..num_indices, 0, start..(start + count));
         }
 
         self.items.clear();
