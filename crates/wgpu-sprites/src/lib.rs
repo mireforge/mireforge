@@ -7,7 +7,6 @@ use image::DynamicImage;
 use image::GenericImageView;
 use limnus_wgpu_math::{Matrix4, Vec4};
 use tracing::{debug, warn};
-use wgpu::BufferBindingType;
 use wgpu::util::DeviceExt;
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor,
@@ -23,6 +22,7 @@ use wgpu::{
     BlendState, ColorTargetState, ColorWrites, Face, FrontFace, MultisampleState, PolygonMode,
     PrimitiveState, PrimitiveTopology, util,
 };
+use wgpu::{BufferBindingType, TextureView};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
@@ -187,6 +187,7 @@ pub struct SpriteInfo {
     pub quad_shader_info: ShaderInfo,
     pub mask_shader_info: ShaderInfo,
     pub light_shader_info: ShaderInfo,
+    pub virtual_to_screen_shader_info: ShaderInfo,
 
     pub sampler: Sampler,
     pub vertex_buffer: Buffer,
@@ -339,6 +340,21 @@ impl SpriteInfo {
             )
         };
 
+        let virtual_to_screen_shader_info = {
+            let virtual_texture_group_layout =
+                create_texture_and_sampler_group_layout(device, "virtual texture group");
+            create_shader_info(
+                device,
+                surface_texture_format,
+                &camera_bind_group_layout,
+                &[&virtual_texture_group_layout],
+                SCREEN_QUAD_VERTEX_SHADER,
+                SCREEN_QUAD_FRAGMENT_SHADER,
+                alpha_blending,
+                "VirtualToScreen",
+            )
+        };
+
         let light_shader_info = {
             let vertex_shader_source = sprite_vertex_shader_source;
             let fragment_shader_source = sprite_fragment_shader_source;
@@ -385,6 +401,7 @@ impl SpriteInfo {
             quad_shader_info,
             mask_shader_info,
             light_shader_info,
+            virtual_to_screen_shader_info,
             sampler,
             vertex_buffer,
             index_buffer,
@@ -585,12 +602,28 @@ pub fn create_sprite_texture_and_sampler_bind_group(
     label: &str,
 ) -> BindGroup {
     let texture_view = texture.create_view(&TextureViewDescriptor::default());
+    create_texture_and_sampler_bind_group_ex(
+        device,
+        bind_group_layout,
+        &texture_view,
+        sampler,
+        label,
+    )
+}
+
+pub fn create_texture_and_sampler_bind_group_ex(
+    device: &Device,
+    bind_group_layout: &BindGroupLayout,
+    texture_view: &TextureView,
+    sampler: &Sampler,
+    label: &str,
+) -> BindGroup {
     device.create_bind_group(&BindGroupDescriptor {
         layout: bind_group_layout,
         entries: &[
             BindGroupEntry {
                 binding: 0,
-                resource: BindingResource::TextureView(&texture_view),
+                resource: BindingResource::TextureView(texture_view),
             },
             BindGroupEntry {
                 binding: 1,
@@ -1030,3 +1063,64 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
 ";
     (vertex_shader_source, fragment_shader_source)
 }
+
+pub const SCREEN_QUAD_VERTEX_SHADER: &str = "
+// Bind Group 0: Uniforms (view-projection matrix)
+struct Uniforms {
+    view_proj: mat4x4<f32>,
+};
+// Camera (view projection matrix) is always first
+@group(0) @binding(0)
+var<uniform> camera_uniforms: Uniforms;
+
+// Define the output structure
+struct VertexOutput {
+    @builtin(position) position: vec4<f32>,
+    @location(0) texcoord: vec2<f32>,
+};
+
+@vertex
+fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
+    var positions = array<vec2<f32>, 6>(
+        vec2<f32>(-1.0, -1.0),
+        vec2<f32>(1.0, -1.0),
+        vec2<f32>(-1.0, 1.0),
+        vec2<f32>(-1.0, 1.0),
+        vec2<f32>(1.0, -1.0),
+        vec2<f32>(1.0, 1.0),
+    );
+
+    var texcoords = array<vec2<f32>, 6>(
+        vec2<f32>(0.0, 1.0),
+        vec2<f32>(1.0, 1.0),
+        vec2<f32>(0.0, 0.0),
+        vec2<f32>(0.0, 0.0),
+        vec2<f32>(1.0, 1.0),
+        vec2<f32>(1.0, 0.0),
+    );
+
+    var output: VertexOutput;
+    output.position = vec4<f32>(positions[vertex_index], 0.0, 1.0);
+    output.texcoord = texcoords[vertex_index];
+    return output;
+}
+";
+
+// Fragment shader for the screen quad
+pub const SCREEN_QUAD_FRAGMENT_SHADER: &str = "
+// Bind Group 0: Uniforms (view-projection matrix)
+struct Uniforms {
+    view_proj: mat4x4<f32>,
+};
+// Camera (view projection matrix) is always first
+@group(0) @binding(0)
+var<uniform> camera_uniforms: Uniforms;
+
+@group(1) @binding(0) var game_texture: texture_2d<f32>;
+@group(1) @binding(1) var game_sampler: sampler;
+
+@fragment
+fn fs_main(@location(0) texcoord: vec2<f32>) -> @location(0) vec4<f32> {
+    return textureSample(game_texture, game_sampler, texcoord);
+}
+";

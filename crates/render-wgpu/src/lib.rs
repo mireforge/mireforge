@@ -14,17 +14,18 @@ use mireforge_font::Font;
 use mireforge_font::FontRef;
 use mireforge_font::WeakFontRef;
 use mireforge_render::prelude::*;
-use mireforge_wgpu_sprites::{ShaderInfo, SpriteInfo, SpriteInstanceUniform};
+use mireforge_wgpu::create_nearest_sampler;
+use mireforge_wgpu_sprites::{
+    ShaderInfo, SpriteInfo, SpriteInstanceUniform, create_sprite_texture_and_sampler_bind_group,
+    create_texture_and_sampler_bind_group_ex, create_texture_and_sampler_group_layout,
+};
 use monotonic_time_rs::Millis;
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
 use std::mem::swap;
 use std::sync::Arc;
 use tracing::trace;
-use tracing::warn;
-use wgpu::{
-    BindGroup, BindGroupLayout, Buffer, CommandEncoder, RenderPass, RenderPipeline, TextureView,
-};
+use wgpu::{BindGroup, BindGroupLayout, Buffer, CommandEncoder, RenderPipeline, TextureView};
 
 pub type MaterialRef = Arc<Material>;
 
@@ -185,6 +186,7 @@ enum Renderable {
 #[derive(Resource)]
 pub struct Render {
     virtual_surface_texture_view: TextureView,
+    virtual_to_surface_bind_group: BindGroup,
     index_buffer: Buffer,  // Only indices for a single identity quad
     vertex_buffer: Buffer, // Only one identity quad (0,0,1,1)
     sampler: wgpu::Sampler,
@@ -385,12 +387,25 @@ impl Render {
         let virtual_surface_texture_view =
             render_texture.create_view(&wgpu::TextureViewDescriptor::default());
 
+        let virtual_to_screen_sampler =
+            create_nearest_sampler(&*device, "nearest sampler for virtual to screen");
+        let virtual_to_screen_layout =
+            create_texture_and_sampler_group_layout(&device, "virtual to screen layout");
+        let virtual_to_surface_bind_group = create_texture_and_sampler_bind_group_ex(
+            &device,
+            &virtual_to_screen_layout,
+            &virtual_surface_texture_view,
+            &virtual_to_screen_sampler,
+            "virtual to screen bind group",
+        );
+
         Self {
             device,
             queue,
             items: Vec::new(),
             //   fonts: Vec::new(),
             virtual_surface_texture_view,
+            virtual_to_surface_bind_group,
             sampler: sprite_info.sampler,
             normal_sprite_pipeline: sprite_info.sprite_shader_info,
             quad_shader_info: sprite_info.quad_shader_info,
@@ -1321,7 +1336,7 @@ impl Render {
     pub fn render(
         &mut self,
         mut command_encoder: &mut CommandEncoder,
-        texture_view: &TextureView,
+        display_surface_texture_view: &TextureView,
         //        materials: &Assets<Material>,
         textures: &Assets<Texture>,
         fonts: &Assets<Font>,
@@ -1374,6 +1389,7 @@ impl Render {
         self.prepare_render(textures, fonts);
 
         {
+            /*
             let mut render_pass = command_encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[
@@ -1392,11 +1408,28 @@ impl Render {
                 occlusion_query_set: None,
             });
 
+             */
+
+            let mut render_pass = command_encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Game Render Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &self.virtual_surface_texture_view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
+
             render_pass.set_viewport(
-                self.viewport.position.x as f32,
-                self.viewport.position.y as f32,
-                self.viewport.size.x as f32,
-                self.viewport.size.y as f32,
+                0.0,
+                0.0,
+                self.virtual_surface_size().x as f32,
+                self.virtual_surface_size().y as f32,
                 0.0,
                 1.0,
             );
@@ -1463,12 +1496,63 @@ impl Render {
                 }
 
                 // Issue the instanced draw call for the batch
-                trace!(material=%weak_material_ref, start=%start, count=%count, "draw instanced");
+                trace!(material=%weak_material_ref, start=%start, count=%count, %num_indices, "draw instanced");
                 render_pass.draw_indexed(0..num_indices, 0, start..(start + count));
             }
         }
 
         self.items.clear();
+
+        // Second pass: Render the texture to the screen surface
+        {
+            let mut render_pass = command_encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Screen Render Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: display_surface_texture_view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
+
+            /*
+            let scale_x = window_width as f32 / VIRTUAL_WIDTH as f32;
+            let scale_y = window_height as f32 / VIRTUAL_HEIGHT as f32;
+            let scale = scale_x.min(scale_y).floor(); // Use integer scaling
+
+            let viewport_width = VIRTUAL_WIDTH as f32 * scale;
+            let viewport_height = VIRTUAL_HEIGHT as f32 * scale;
+            let viewport_x = (window_width as f32 - viewport_width) / 2.0;
+            let viewport_y = (window_height as f32 - viewport_height) / 2.0;
+             */
+
+            render_pass.set_viewport(
+                self.viewport.position.x as f32,
+                self.viewport.position.y as f32,
+                self.viewport.size.x as f32,
+                self.viewport.size.y as f32,
+                0.0,
+                1.0,
+            );
+
+            // Draw the render texture to the screen
+            render_pass.set_pipeline(&self.normal_sprite_pipeline.pipeline);
+            render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
+            render_pass.set_bind_group(1, &self.virtual_to_surface_bind_group, &[]);
+
+            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+
+            // Vertex buffer is reused
+            render_pass.set_vertex_buffer(1, self.quad_matrix_and_uv_instance_buffer.slice(..));
+
+            render_pass.draw_indexed(0..6, 0, 0..1);
+        }
     }
 
     pub fn texture_resource_from_texture(&self, texture: wgpu::Texture, label: &str) -> Texture {
