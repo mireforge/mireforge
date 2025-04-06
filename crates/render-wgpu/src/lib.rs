@@ -16,8 +16,8 @@ use mireforge_font::WeakFontRef;
 use mireforge_render::prelude::*;
 use mireforge_wgpu::create_nearest_sampler;
 use mireforge_wgpu_sprites::{
-    ShaderInfo, SpriteInfo, SpriteInstanceUniform, create_sprite_texture_and_sampler_bind_group,
-    create_texture_and_sampler_bind_group_ex, create_texture_and_sampler_group_layout,
+    ShaderInfo, SpriteInfo, SpriteInstanceUniform, create_texture_and_sampler_bind_group_ex,
+    create_texture_and_sampler_group_layout,
 };
 use monotonic_time_rs::Millis;
 use std::cmp::Ordering;
@@ -186,6 +186,7 @@ enum Renderable {
 #[derive(Resource)]
 pub struct Render {
     virtual_surface_texture_view: TextureView,
+    virtual_surface_texture: wgpu::Texture,
     virtual_to_surface_bind_group: BindGroup,
     index_buffer: Buffer,  // Only indices for a single identity quad
     vertex_buffer: Buffer, // Only one identity quad (0,0,1,1)
@@ -221,6 +222,8 @@ pub struct Render {
     clear_color: wgpu::Color,
     last_render_at: Millis,
     scale: f32,
+
+    debug_tick: u64,
 }
 
 impl Render {}
@@ -369,7 +372,7 @@ impl Render {
         );
 
         // Create a texture at your virtual resolution (e.g., 320x240)
-        let render_texture = device.create_texture(&wgpu::TextureDescriptor {
+        let virtual_surface_texture = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("Render Texture"),
             size: wgpu::Extent3d {
                 width: virtual_surface_size.x as u32,
@@ -380,12 +383,12 @@ impl Render {
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: surface_texture_format, // TODO: Check: Should probably always be same as swap chain format?
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING, // COPY_DST needed to be able to clear the texture unfortunately.
             view_formats: &[],
         });
 
         let virtual_surface_texture_view =
-            render_texture.create_view(&wgpu::TextureViewDescriptor::default());
+            virtual_surface_texture.create_view(&wgpu::TextureViewDescriptor::default());
 
         let virtual_to_screen_sampler =
             create_nearest_sampler(&*device, "nearest sampler for virtual to screen");
@@ -404,6 +407,7 @@ impl Render {
             queue,
             items: Vec::new(),
             //   fonts: Vec::new(),
+            virtual_surface_texture,
             virtual_surface_texture_view,
             virtual_to_surface_bind_group,
             sampler: sprite_info.sampler,
@@ -425,6 +429,7 @@ impl Render {
             physical_surface_size: physical_size,
             viewport_strategy: ViewportStrategy::FitIntegerScaling(virtual_surface_size),
             scale: 1.0,
+            debug_tick: 0,
         }
     }
 
@@ -876,7 +881,7 @@ impl Render {
                         quad_matrix_and_uv.push(quad_instance);
                     }
 
-                    Renderable::Mask(size, color) => {
+                    Renderable::Mask(_size, color) => {
                         let current_texture_size = maybe_texture.unwrap().texture_size;
                         let params = SpriteParams {
                             texture_size: current_texture_size,
@@ -1335,13 +1340,14 @@ impl Render {
     #[allow(clippy::too_many_lines)]
     pub fn render(
         &mut self,
-        mut command_encoder: &mut CommandEncoder,
+        command_encoder: &mut CommandEncoder,
         display_surface_texture_view: &TextureView,
         //        materials: &Assets<Material>,
         textures: &Assets<Texture>,
         fonts: &Assets<Font>,
         now: Millis,
     ) {
+        self.debug_tick += 1;
         trace!("start render()");
         self.last_render_at = now;
 
@@ -1389,34 +1395,13 @@ impl Render {
         self.prepare_render(textures, fonts);
 
         {
-            /*
-            let mut render_pass = command_encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[
-                    // This is what @location(0) in the fragment shader targets
-                    Some(wgpu::RenderPassColorAttachment {
-                        view: texture_view,
-                        resolve_target: None,
-                        ops: wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(self.clear_color),
-                            store: wgpu::StoreOp::Store,
-                        },
-                    }),
-                ],
-                depth_stencil_attachment: None,
-                timestamp_writes: None,
-                occlusion_query_set: None,
-            });
-
-             */
-
             let mut render_pass = command_encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Game Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &self.virtual_surface_texture_view,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                        load: wgpu::LoadOp::Clear(wgpu::Color::RED),
                         store: wgpu::StoreOp::Store,
                     },
                 })],
@@ -1503,56 +1488,106 @@ impl Render {
 
         self.items.clear();
 
-        // Second pass: Render the texture to the screen surface
-        {
-            let mut render_pass = command_encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Screen Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: display_surface_texture_view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                timestamp_writes: None,
-                occlusion_query_set: None,
-            });
+        self.render_virtual_texture_to_display(command_encoder, display_surface_texture_view);
+    }
 
-            /*
-            let scale_x = window_width as f32 / VIRTUAL_WIDTH as f32;
-            let scale_y = window_height as f32 / VIRTUAL_HEIGHT as f32;
-            let scale = scale_x.min(scale_y).floor(); // Use integer scaling
+    pub fn render_virtual_texture_to_display(
+        &mut self,
+        command_encoder: &mut CommandEncoder,
+        display_surface_texture_view: &TextureView,
+    ) {
+        let mut render_pass = command_encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: Some("Screen Render Pass"),
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                view: display_surface_texture_view,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
+                    store: wgpu::StoreOp::Store,
+                },
+            })],
+            depth_stencil_attachment: None,
+            timestamp_writes: None,
+            occlusion_query_set: None,
+        });
 
-            let viewport_width = VIRTUAL_WIDTH as f32 * scale;
-            let viewport_height = VIRTUAL_HEIGHT as f32 * scale;
-            let viewport_x = (window_width as f32 - viewport_width) / 2.0;
-            let viewport_y = (window_height as f32 - viewport_height) / 2.0;
-             */
+        /*
+        let scale_x = window_width as f32 / VIRTUAL_WIDTH as f32;
+        let scale_y = window_height as f32 / VIRTUAL_HEIGHT as f32;
+        let scale = scale_x.min(scale_y).floor(); // Use integer scaling
 
-            render_pass.set_viewport(
-                self.viewport.position.x as f32,
-                self.viewport.position.y as f32,
-                self.viewport.size.x as f32,
-                self.viewport.size.y as f32,
-                0.0,
-                1.0,
-            );
+        let viewport_width = VIRTUAL_WIDTH as f32 * scale;
+        let viewport_height = VIRTUAL_HEIGHT as f32 * scale;
+        let viewport_x = (window_width as f32 - viewport_width) / 2.0;
+        let viewport_y = (window_height as f32 - viewport_height) / 2.0;
+         */
 
-            // Draw the render texture to the screen
-            render_pass.set_pipeline(&self.normal_sprite_pipeline.pipeline);
-            render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
-            render_pass.set_bind_group(1, &self.virtual_to_surface_bind_group, &[]);
+        render_pass.set_viewport(
+            0f32,
+            0f32,
+            self.viewport.size.x as f32,
+            self.viewport.size.y as f32,
+            0.0,
+            1.0,
+        );
 
-            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+        let view_proj_matrix =
+            create_view_projection_matrix_from_virtual(self.viewport.size.x, self.viewport.size.y);
+        let scale_matrix = Matrix4::from_scale(1.0, 1.0, 0.0);
+        let origin_translation_matrix = Matrix4::from_translation(0f32, 0f32, 0.0);
 
-            // Vertex buffer is reused
-            render_pass.set_vertex_buffer(1, self.quad_matrix_and_uv_instance_buffer.slice(..));
+        let total_matrix = scale_matrix * view_proj_matrix * origin_translation_matrix;
 
-            render_pass.draw_indexed(0..6, 0, 0..1);
-        }
+        // write all model_matrix and uv_coords to instance buffer once, before the render pass
+        self.queue.write_buffer(
+            &self.camera_buffer,
+            0,
+            bytemuck::cast_slice(&[total_matrix]),
+        );
+
+        let virtual_width = self.virtual_surface_texture.size().width;
+        let virtual_height = self.virtual_surface_texture.size().height;
+        let model_matrix =
+            Matrix4::from_translation((virtual_width / 2) as f32, (virtual_height / 2) as f32, 0.0)
+                * Matrix4::from_scale(virtual_width as f32, virtual_height as f32, 1.0);
+
+        let render_atlas = URect {
+            position: UVec2::new(0, 0),
+            size: self.virtual_surface_size(),
+        };
+
+        let tex_coords_mul_add =
+            Self::calculate_texture_coords_mul_add(render_atlas, self.virtual_surface_size());
+
+        let rotation_value = 0;
+        let mut quad_matrix_and_uv = Vec::new();
+        let color = Color::from_octet(255, 255, 255, 255);
+        let quad_instance = SpriteInstanceUniform::new(
+            model_matrix,
+            tex_coords_mul_add,
+            rotation_value,
+            Vec4(color.to_f32_slice()),
+        );
+        quad_matrix_and_uv.push(quad_instance);
+
+        self.queue.write_buffer(
+            &self.quad_matrix_and_uv_instance_buffer,
+            0,
+            bytemuck::cast_slice(&quad_matrix_and_uv),
+        );
+
+        // Draw the render texture to the screen
+        render_pass.set_pipeline(&self.normal_sprite_pipeline.pipeline);
+        render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
+        render_pass.set_bind_group(1, &self.virtual_to_surface_bind_group, &[]);
+
+        render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+
+        // Vertex buffer is reused
+        render_pass.set_vertex_buffer(1, self.quad_matrix_and_uv_instance_buffer.slice(..));
+
+        render_pass.draw_indexed(0..6, 0, 0..1);
     }
 
     pub fn texture_resource_from_texture(&self, texture: wgpu::Texture, label: &str) -> Texture {
@@ -1585,8 +1620,8 @@ fn create_view_projection_matrix_from_virtual(virtual_width: u16, virtual_height
         right: virtual_width as f32,
         bottom: 0.0,
         top: virtual_height as f32,
-        near: 1.0,
-        far: -1.0,
+        near: 1.0, // Maybe flipped? -1.0
+        far: -1.0, // maybe flipped? 1.0 or 0.0
     }
     .into()
 }
