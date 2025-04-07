@@ -98,7 +98,7 @@ impl Application for AnimationExample {
         self.sleep_anim.update(now);
         self.bat_anim.update(now);
 
-        if self.tick_count > 240 {
+        if self.tick_count > 1024 {
             gfx.set_virtual_size(UVec2::new(
                 VIRTUAL_SCREEN_SIZE.x / 2,
                 VIRTUAL_SCREEN_SIZE.y / 4,

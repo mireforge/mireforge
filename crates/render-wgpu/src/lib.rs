@@ -354,40 +354,28 @@ impl Render {
 
     #[must_use]
     pub fn viewport_from_integer_scale(physical_size: UVec2, virtual_size: UVec2) -> URect {
-        let window_aspect = physical_size.x as f32 / physical_size.y as f32;
-        let virtual_aspect = virtual_size.x as f32 / virtual_size.y as f32;
+        let scale_factor = (physical_size.x / virtual_size.x)
+            .min(physical_size.y / virtual_size.y)
+            .max(1);
 
-        /*
-        if physical_size.x < virtual_size.x || physical_size.y < virtual_size.y {
-            return URect::new(0, 0, physical_size.x, physical_size.y);
-        }
+        let ideal_viewport_size = virtual_size * scale_factor;
 
-         */
+        let final_viewport_size =
+            if physical_size.x < ideal_viewport_size.x || physical_size.y < ideal_viewport_size.y {
+                physical_size
+            } else {
+                ideal_viewport_size
+            };
 
-        let mut integer_scale = if window_aspect > virtual_aspect {
-            physical_size.y / virtual_size.y
-        } else {
-            physical_size.x / virtual_size.x
-        };
-
-        if integer_scale < 1 {
-            integer_scale = 1;
-        }
-
-        let viewport_actual_size = UVec2::new(
-            virtual_size.x * integer_scale,
-            virtual_size.y * integer_scale,
-        );
-
-        let border_size = physical_size - viewport_actual_size;
+        let border_size = physical_size - final_viewport_size;
 
         let offset = border_size / 2;
 
         URect::new(
             offset.x,
             offset.y,
-            viewport_actual_size.x,
-            viewport_actual_size.y,
+            final_viewport_size.x,
+            final_viewport_size.y,
         )
     }
 
