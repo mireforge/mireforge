@@ -1,6 +1,6 @@
 [package]
 name = "mireforge-examples"
-version = "0.0.19"
+version = "0.0.20"
 edition = "2024"
 repository = "https://github.com/mireforge/mireforge"
 license = "MIT"
@@ -9,4 +9,4 @@ keywords = ["examples"]
 description = "Examples for the mireforge 2D game engine"
 
 [dependencies]
-mireforge = { path = "../mireforge", version = "0.0.19", features = ["audio"] }
+mireforge = { path = "../mireforge", version = "0.0.20", features = ["audio"] }

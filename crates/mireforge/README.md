@@ -16,5 +16,5 @@ To use mireforge in your project, include it in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-mireforge = "0.0.19"
+mireforge = "0.0.20"
 ```
