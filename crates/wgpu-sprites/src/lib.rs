@@ -77,6 +77,15 @@ unsafe impl Pod for CameraUniform {}
 unsafe impl Zeroable for CameraUniform {}
 
 #[repr(C)]
+#[derive(Debug, Copy, Clone)]
+struct AlphaMaskParams {
+    offset: [f32; 2],
+}
+
+unsafe impl Pod for AlphaMaskParams {}
+unsafe impl Zeroable for AlphaMaskParams {}
+
+#[repr(C)]
 #[derive(Copy, Clone)]
 pub struct SpriteInstanceUniform {
     //     transformed_pos = transformed_pos * vec2<f32>(instance.scale) + vec2<f32>(instance.position);
@@ -204,6 +213,8 @@ pub struct SpriteInfo {
 
     // Vertex Instances - Group 1
     pub quad_matrix_and_uv_instance_buffer: Buffer,
+
+    pub alpha_mask_params_instance_buffer: Buffer,
 }
 
 const MAX_RENDER_SPRITE_COUNT: usize = 10_000;
@@ -411,7 +422,6 @@ impl SpriteInfo {
             )
         };
 
-        // -------------------------- Sprite Instance in Group 2 -----------------------------------------------
         let quad_matrix_and_uv_instance_buffer = create_quad_matrix_and_uv_instance_buffer(
             device,
             MAX_RENDER_SPRITE_COUNT,
@@ -419,6 +429,9 @@ impl SpriteInfo {
         );
 
         let sampler = mireforge_wgpu::create_nearest_sampler(device, "sprite nearest sampler");
+
+        let alpha_mask_params_instance_buffer =
+            create_alpha_mask_params_instance_buffer(device, 128, "alpha_mask instance buffer");
 
         Self {
             sprite_shader_info,
@@ -434,6 +447,7 @@ impl SpriteInfo {
             camera_bind_group,
             sprite_texture_sampler_bind_group_layout,
             quad_matrix_and_uv_instance_buffer,
+            alpha_mask_params_instance_buffer,
         }
     }
 }
@@ -675,6 +689,22 @@ pub fn create_quad_matrix_and_uv_instance_buffer(
     })
 }
 
+#[must_use]
+pub fn create_alpha_mask_params_instance_buffer(
+    device: &Device,
+    max_instances: usize,
+    label: &str,
+) -> Buffer {
+    let buffer_size = (size_of::<AlphaMaskParams>() * max_instances) as BufferAddress;
+
+    device.create_buffer(&BufferDescriptor {
+        label: Some(label),
+        size: buffer_size,
+        usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
+        mapped_at_creation: false,
+    })
+}
+
 fn create_pipeline_layout(
     device: &Device,
     layouts: &[&BindGroupLayout],
@@ -882,19 +912,15 @@ var sampler_alpha: sampler;
 // Must be the same as vertex shader
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
-    @location(0) tex_coords: vec2<f32>, // Original UVs from vertex
+    @location(0) modified_tex_coords: vec2<f32>,
     @location(1) color: vec4<f32>,
+    @location(2) original_tex_coords: vec2<f32>, 
 };
 
 @fragment
 fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
-    let color_sample = textureSample(diffuse_texture, sampler_diffuse, input.tex_coords);
-
-    //let mask_coords = input.tex_coords + mask_params.offset;
-    // TODO: Scale rot and other // let mask_coords = (input.tex_coords * mask_params.scale) + mask_params.offset;
-    let mask_coords = input.tex_coords;
-
-    let mask_alpha = textureSample(alpha_texture, sampler_alpha, mask_coords).r;
+    let color_sample = textureSample(diffuse_texture, sampler_diffuse, input.modified_tex_coords);
+    let mask_alpha = textureSample(alpha_texture, sampler_alpha, input.original_tex_coords).r;
 
     let final_rgb = color_sample.rgb * input.color.rgb;
     let final_alpha = mask_alpha * input.color.a;
@@ -938,8 +964,9 @@ struct VertexInput {
 // Must be exactly the same as the fragment shader
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
-    @location(0) tex_coords: vec2<f32>,
+    @location(0) modified_tex_coords: vec2<f32>,
     @location(1) color: vec4<f32>,
+    @location(2) original_tex_coords: vec2<f32>, 
 };
 
 // Vertex shader entry point
@@ -1000,10 +1027,10 @@ fn vs_main(
     }
 
     // Modify texture coordinates
-    output.tex_coords = rotated_tex_coords * tex_multiplier.xy + tex_multiplier.zw;
+    output.modified_tex_coords = rotated_tex_coords * tex_multiplier.xy + tex_multiplier.zw;
+    output.original_tex_coords = input.tex_coords;
+  
     output.color = color;
-    //output.color = vec4<f32>(input.tex_coords.x, input.tex_coords.y, 0.0, 1.0);
-    //output.color = vec4<f32>(tex_multiplier.x, tex_multiplier.y, 0.0, 1.0);
 
     return output;
 }"

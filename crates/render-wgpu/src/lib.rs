@@ -337,6 +337,7 @@ impl Render {
         position: Vec3,
         primary_texture: TextureRef,
         alpha_texture: TextureRef,
+        texture_offset: UVec2,
         color: Color,
     ) {
         let masked_material = Material {
@@ -352,7 +353,7 @@ impl Render {
         self.items.push(RenderItem {
             position,
             material_ref: masked_material_ref.clone(),
-            renderable: Renderable::Mask(UVec2::new(0, 0), color),
+            renderable: Renderable::Mask(texture_offset, color),
         });
     }
 
@@ -727,11 +728,11 @@ impl Render {
                         quad_matrix_and_uv.push(quad_instance);
                     }
 
-                    Renderable::Mask(_size, color) => {
+                    Renderable::Mask(texture_offset, color) => {
                         let current_texture_size = maybe_texture.unwrap().texture_size;
                         let params = SpriteParams {
                             texture_size: current_texture_size,
-                            texture_pos: UVec2 { x: 0, y: 0 },
+                            texture_pos: *texture_offset,
                             scale: 1,
                             rotation: Rotation::default(),
                             flip_x: false,
