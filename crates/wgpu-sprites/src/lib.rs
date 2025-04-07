@@ -9,6 +9,10 @@ use limnus_wgpu_math::{Matrix4, Vec4};
 use tracing::{debug, warn};
 use wgpu::util::DeviceExt;
 use wgpu::{
+    util, BlendState, ColorTargetState, ColorWrites, Face, FrontFace, MultisampleState,
+    PolygonMode, PrimitiveState, PrimitiveTopology,
+};
+use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferAddress, BufferDescriptor, BufferUsages,
     Device, Extent3d, PipelineLayout, PipelineLayoutDescriptor, Queue, RenderPipeline,
@@ -18,10 +22,6 @@ use wgpu::{
     VertexStepMode,
 };
 use wgpu::{BindingResource, PipelineCompilationOptions};
-use wgpu::{
-    BlendState, ColorTargetState, ColorWrites, Face, FrontFace, MultisampleState, PolygonMode,
-    PrimitiveState, PrimitiveTopology, util,
-};
 use wgpu::{BufferBindingType, TextureView};
 
 #[repr(C)]
@@ -75,15 +75,6 @@ pub struct CameraUniform {
 
 unsafe impl Pod for CameraUniform {}
 unsafe impl Zeroable for CameraUniform {}
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-struct AlphaMaskParams {
-    offset: [f32; 2],
-}
-
-unsafe impl Pod for AlphaMaskParams {}
-unsafe impl Zeroable for AlphaMaskParams {}
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -213,8 +204,6 @@ pub struct SpriteInfo {
 
     // Vertex Instances - Group 1
     pub quad_matrix_and_uv_instance_buffer: Buffer,
-
-    pub alpha_mask_params_instance_buffer: Buffer,
 }
 
 const MAX_RENDER_SPRITE_COUNT: usize = 10_000;
@@ -430,9 +419,6 @@ impl SpriteInfo {
 
         let sampler = mireforge_wgpu::create_nearest_sampler(device, "sprite nearest sampler");
 
-        let alpha_mask_params_instance_buffer =
-            create_alpha_mask_params_instance_buffer(device, 128, "alpha_mask instance buffer");
-
         Self {
             sprite_shader_info,
             quad_shader_info,
@@ -447,7 +433,6 @@ impl SpriteInfo {
             camera_bind_group,
             sprite_texture_sampler_bind_group_layout,
             quad_matrix_and_uv_instance_buffer,
-            alpha_mask_params_instance_buffer,
         }
     }
 }
@@ -689,22 +674,6 @@ pub fn create_quad_matrix_and_uv_instance_buffer(
     })
 }
 
-#[must_use]
-pub fn create_alpha_mask_params_instance_buffer(
-    device: &Device,
-    max_instances: usize,
-    label: &str,
-) -> Buffer {
-    let buffer_size = (size_of::<AlphaMaskParams>() * max_instances) as BufferAddress;
-
-    device.create_buffer(&BufferDescriptor {
-        label: Some(label),
-        size: buffer_size,
-        usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
-        mapped_at_creation: false,
-    })
-}
-
 fn create_pipeline_layout(
     device: &Device,
     layouts: &[&BindGroupLayout],
@@ -914,7 +883,7 @@ struct VertexOutput {
     @builtin(position) position: vec4<f32>,
     @location(0) modified_tex_coords: vec2<f32>,
     @location(1) color: vec4<f32>,
-    @location(2) original_tex_coords: vec2<f32>, 
+    @location(2) original_tex_coords: vec2<f32>,
 };
 
 @fragment
@@ -966,7 +935,7 @@ struct VertexOutput {
     @builtin(position) position: vec4<f32>,
     @location(0) modified_tex_coords: vec2<f32>,
     @location(1) color: vec4<f32>,
-    @location(2) original_tex_coords: vec2<f32>, 
+    @location(2) original_tex_coords: vec2<f32>,
 };
 
 // Vertex shader entry point
@@ -1029,7 +998,7 @@ fn vs_main(
     // Modify texture coordinates
     output.modified_tex_coords = rotated_tex_coords * tex_multiplier.xy + tex_multiplier.zw;
     output.original_tex_coords = input.tex_coords;
-  
+
     output.color = color;
 
     return output;
