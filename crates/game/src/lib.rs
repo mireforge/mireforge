@@ -23,7 +23,7 @@ use limnus_screen::WindowMessage;
 use limnus_system_params::{LoReM, Msg, Re, ReAll, ReM};
 use mireforge_game_assets::{Assets, GameAssets};
 use mireforge_game_audio::{Audio, GameAudio};
-use mireforge_render_wgpu::{Gfx, Render};
+use mireforge_render_wgpu::prelude::{Gfx, Render};
 use monotonic_time_rs::{InstantMonotonicClock, Millis, MonotonicClock};
 use std::cmp::{max, min};
 use std::fmt::{Debug, Formatter};
@@ -154,7 +154,7 @@ impl<G: Application> Game<G> {
                 WindowMessage::CursorMoved(position) => self.cursor_moved(
                     *position,
                     wgpu_render.viewport(),
-                    wgpu_render.virtual_surface_size(),
+                    wgpu_render.virtual_surface_size_with_scaling(),
                 ),
                 WindowMessage::WindowCreated() => {}
                 WindowMessage::Resized(_) => {}

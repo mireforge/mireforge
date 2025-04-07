@@ -14,7 +14,7 @@ use limnus_basic_input::prelude::{ButtonState, KeyCode, MouseButton};
 use limnus_gamepad::{Axis, Button, GamePadId, Gamepad};
 use mireforge_game_assets::Assets;
 use mireforge_game_audio::Audio;
-use mireforge_render_wgpu::Gfx;
+use mireforge_render_wgpu::prelude::Gfx;
 
 pub trait ApplicationLogic: Sized + 'static {
     fn new() -> Self;

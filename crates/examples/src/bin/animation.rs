@@ -98,9 +98,17 @@ impl Application for AnimationExample {
         self.sleep_anim.update(now);
         self.bat_anim.update(now);
 
-        gfx.set_clear_color(Color::from_octet(0, 0, 0, 0));
+        if self.tick_count > 240 {
+            gfx.set_virtual_size(UVec2::new(
+                VIRTUAL_SCREEN_SIZE.x / 2,
+                VIRTUAL_SCREEN_SIZE.y / 4,
+            ));
+            gfx.set_origin((60, (VIRTUAL_SCREEN_SIZE.y / 4) as i16 + 20).into());
+        } else {
+            gfx.set_origin((0, (VIRTUAL_SCREEN_SIZE.y / 2 - CHARACTER_HEIGHT) as i16).into());
+        }
 
-        gfx.set_origin((0, (VIRTUAL_SCREEN_SIZE.y / 2 - CHARACTER_HEIGHT) as i16).into());
+        gfx.set_clear_color(Color::from_octet(0, 0, 0, 0));
 
         if let Some(bat_atlas) = &self.bat_atlas {
             gfx.sprite_atlas_frame(

@@ -2,6 +2,8 @@
  * Copyright (c) Peter Bjorklund. All rights reserved. https://github.com/mireforge/mireforge
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
+mod gfx;
+mod gfx_impl;
 pub mod plugin;
 pub mod prelude;
 
@@ -24,8 +26,11 @@ use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
 use std::mem::swap;
 use std::sync::Arc;
-use tracing::trace;
-use wgpu::{BindGroup, BindGroupLayout, Buffer, CommandEncoder, RenderPipeline, TextureView};
+use tracing::{debug, trace};
+use wgpu::{
+    BindGroup, BindGroupLayout, Buffer, CommandEncoder, Device, RenderPipeline, TextureFormat,
+    TextureView,
+};
 
 pub type MaterialRef = Arc<Material>;
 
@@ -96,58 +101,6 @@ pub struct FontAndMaterial {
     pub material_ref: MaterialRef,
 }
 
-pub trait Gfx {
-    fn sprite_atlas_frame(&mut self, position: Vec3, frame: u16, atlas: &impl FrameLookup);
-    fn sprite_atlas(&mut self, position: Vec3, atlas_rect: URect, material_ref: &MaterialRef);
-    fn draw_sprite(&mut self, position: Vec3, material_ref: &MaterialRef);
-    fn draw_sprite_ex(&mut self, position: Vec3, material_ref: &MaterialRef, params: &SpriteParams);
-    fn quad(&mut self, position: Vec3, size: UVec2, color: Color);
-    fn draw_with_mask(
-        &mut self,
-        position: Vec3,
-        size: UVec2,
-        color: Color,
-        alpha_masked: &MaterialRef,
-    );
-
-    fn nine_slice(
-        &mut self,
-        position: Vec3,
-        size: UVec2,
-        color: Color,
-        nine_slice: &NineSliceAndMaterial,
-    );
-    fn set_origin(&mut self, position: Vec2);
-    fn set_clear_color(&mut self, color: Color);
-
-    fn tilemap_params(
-        &mut self,
-        position: Vec3,
-        tiles: &[u16],
-        width: u16,
-        atlas_ref: &FixedAtlas,
-        scale: u8,
-    );
-
-    fn text_draw(&mut self, position: Vec3, text: &str, font_ref: &FontAndMaterial, color: &Color);
-
-    #[must_use]
-    fn now(&self) -> Millis;
-
-    #[must_use]
-    fn physical_aspect_ratio(&self) -> AspectRatio;
-
-    #[must_use]
-    fn physical_size(&self) -> UVec2;
-
-    fn set_viewport(&mut self, viewport_strategy: ViewportStrategy);
-
-    #[must_use]
-    fn viewport(&self) -> &ViewportStrategy;
-
-    fn set_scale(&mut self, scale_factor: VirtualScale);
-}
-
 fn to_wgpu_color(c: Color) -> wgpu::Color {
     let f = c.to_f64();
     wgpu::Color {
@@ -198,6 +151,7 @@ pub struct Render {
     pub light_shader_info: ShaderInfo,
     physical_surface_size: UVec2,
     viewport_strategy: ViewportStrategy,
+    virtual_surface_size: UVec2,
     // Group 0
     camera_bind_group: BindGroup,
     #[allow(unused)]
@@ -223,6 +177,7 @@ pub struct Render {
     clear_color: wgpu::Color,
     last_render_at: Millis,
     scale: f32,
+    surface_texture_format: TextureFormat,
 
     debug_tick: u64,
 }
@@ -232,127 +187,6 @@ impl Render {}
 impl Debug for Render {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Render")
-    }
-}
-
-impl Gfx for Render {
-    fn sprite_atlas_frame(&mut self, position: Vec3, frame: u16, atlas: &impl FrameLookup) {
-        self.sprite_atlas_frame(position, frame, atlas);
-    }
-
-    fn sprite_atlas(&mut self, position: Vec3, atlas_rect: URect, material_ref: &MaterialRef) {
-        self.sprite_atlas(position, atlas_rect, material_ref);
-    }
-
-    fn draw_sprite(&mut self, position: Vec3, material_ref: &MaterialRef) {
-        self.draw_sprite(position, material_ref);
-    }
-
-    fn draw_sprite_ex(
-        &mut self,
-        position: Vec3,
-        material_ref: &MaterialRef,
-        params: &SpriteParams,
-    ) {
-        self.draw_sprite_ex(position, material_ref, *params);
-    }
-
-    fn quad(&mut self, position: Vec3, size: UVec2, color: Color) {
-        self.draw_quad(position, size, color);
-    }
-
-    fn draw_with_mask(
-        &mut self,
-        position: Vec3,
-        size: UVec2,
-        color: Color,
-        alpha_masked: &MaterialRef,
-    ) {
-        self.push_mask(position, size, color, alpha_masked);
-    }
-
-    fn nine_slice(
-        &mut self,
-        position: Vec3,
-        size: UVec2,
-        color: Color,
-        nine_slice: &NineSliceAndMaterial,
-    ) {
-        self.nine_slice(position, size, color, nine_slice);
-    }
-
-    fn set_origin(&mut self, position: Vec2) {
-        self.origin = position;
-    }
-
-    fn set_clear_color(&mut self, color: Color) {
-        self.clear_color = to_wgpu_color(color);
-    }
-
-    fn tilemap_params(
-        &mut self,
-        position: Vec3,
-        tiles: &[u16],
-        width: u16,
-        atlas_ref: &FixedAtlas,
-        scale: u8,
-    ) {
-        self.items.push(RenderItem {
-            position,
-            material_ref: atlas_ref.material.clone(),
-            renderable: Renderable::TileMap(TileMap {
-                tiles_data_grid_size: UVec2::new(width, tiles.len() as u16 / width),
-                cell_count_size: atlas_ref.cell_count_size,
-                one_cell_size: atlas_ref.one_cell_size,
-                tiles: Vec::from(tiles),
-                scale,
-            }),
-        });
-    }
-
-    fn text_draw(
-        &mut self,
-        position: Vec3,
-        text: &str,
-        font_and_mat: &FontAndMaterial,
-        color: &Color,
-    ) {
-        self.items.push(RenderItem {
-            position,
-            material_ref: font_and_mat.material_ref.clone(),
-            renderable: Renderable::Text(Text {
-                text: text.to_string(),
-                font_ref: (&font_and_mat.font_ref).into(),
-                color: *color,
-            }),
-        });
-    }
-
-    fn now(&self) -> Millis {
-        self.last_render_at
-    }
-
-    fn physical_aspect_ratio(&self) -> AspectRatio {
-        self.physical_surface_size.into()
-    }
-
-    fn physical_size(&self) -> UVec2 {
-        self.physical_surface_size
-    }
-
-    fn set_viewport(&mut self, viewport_strategy: ViewportStrategy) {
-        self.viewport_strategy = viewport_strategy;
-    }
-
-    fn viewport(&self) -> &ViewportStrategy {
-        &self.viewport_strategy
-    }
-
-    fn set_scale(&mut self, scale_factor: VirtualScale) {
-        match scale_factor {
-            VirtualScale::IntScale(scale) => self.scale = scale as f32,
-            VirtualScale::FloatScale(scale) => self.scale = scale,
-        }
     }
 }
 
@@ -372,6 +206,48 @@ impl Render {
             create_view_uniform_view_projection_matrix(physical_size),
         );
 
+        let (virtual_surface_texture, virtual_surface_texture_view, virtual_to_surface_bind_group) =
+            Self::create_virtual_texture(&device, surface_texture_format, virtual_surface_size);
+
+        Self {
+            device,
+            queue,
+            surface_texture_format,
+            items: Vec::new(),
+            //   fonts: Vec::new(),
+            virtual_to_screen_shader_info: sprite_info.virtual_to_screen_shader_info,
+            virtual_surface_texture,
+            virtual_surface_texture_view,
+            virtual_to_surface_bind_group,
+            sampler: sprite_info.sampler,
+            normal_sprite_pipeline: sprite_info.sprite_shader_info,
+            quad_shader_info: sprite_info.quad_shader_info,
+            mask_shader_info: sprite_info.mask_shader_info,
+            light_shader_info: sprite_info.light_shader_info,
+            texture_sampler_bind_group_layout: sprite_info.sprite_texture_sampler_bind_group_layout,
+            index_buffer: sprite_info.index_buffer,
+            vertex_buffer: sprite_info.vertex_buffer,
+            quad_matrix_and_uv_instance_buffer: sprite_info.quad_matrix_and_uv_instance_buffer,
+            camera_bind_group: sprite_info.camera_bind_group,
+            batch_offsets: Vec::new(),
+            camera_buffer: sprite_info.camera_uniform_buffer,
+            viewport: Self::viewport_from_integer_scale(physical_size, virtual_surface_size),
+            clear_color: to_wgpu_color(Color::from_f32(0.008, 0.015, 0.008, 1.0)),
+            origin: Vec2::new(0, 0),
+            last_render_at: now,
+            physical_surface_size: physical_size,
+            viewport_strategy: ViewportStrategy::FitIntegerScaling,
+            virtual_surface_size,
+            scale: 1.0,
+            debug_tick: 0,
+        }
+    }
+
+    pub fn create_virtual_texture(
+        device: &Device,
+        surface_texture_format: TextureFormat,
+        virtual_surface_size: UVec2,
+    ) -> (wgpu::Texture, TextureView, BindGroup) {
         // Create a texture at your virtual resolution (e.g., 320x240)
         let virtual_surface_texture = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("Render Texture"),
@@ -403,46 +279,22 @@ impl Render {
             "virtual to screen bind group",
         );
 
-        Self {
-            device,
-            queue,
-            items: Vec::new(),
-            //   fonts: Vec::new(),
-            virtual_to_screen_shader_info: sprite_info.virtual_to_screen_shader_info,
+        (
             virtual_surface_texture,
             virtual_surface_texture_view,
             virtual_to_surface_bind_group,
-            sampler: sprite_info.sampler,
-            normal_sprite_pipeline: sprite_info.sprite_shader_info,
-            quad_shader_info: sprite_info.quad_shader_info,
-            mask_shader_info: sprite_info.mask_shader_info,
-            light_shader_info: sprite_info.light_shader_info,
-            texture_sampler_bind_group_layout: sprite_info.sprite_texture_sampler_bind_group_layout,
-            index_buffer: sprite_info.index_buffer,
-            vertex_buffer: sprite_info.vertex_buffer,
-            quad_matrix_and_uv_instance_buffer: sprite_info.quad_matrix_and_uv_instance_buffer,
-            camera_bind_group: sprite_info.camera_bind_group,
-            batch_offsets: Vec::new(),
-            camera_buffer: sprite_info.camera_uniform_buffer,
-            viewport: Self::viewport_from_integer_scale(physical_size, virtual_surface_size),
-            clear_color: to_wgpu_color(Color::from_f32(0.008, 0.015, 0.008, 1.0)),
-            origin: Vec2::new(0, 0),
-            last_render_at: now,
-            physical_surface_size: physical_size,
-            viewport_strategy: ViewportStrategy::FitIntegerScaling(virtual_surface_size),
-            scale: 1.0,
-            debug_tick: 0,
-        }
+        )
     }
 
     pub const fn set_now(&mut self, now: Millis) {
         self.last_render_at = now;
     }
 
-    pub const fn virtual_surface_size(&self) -> UVec2 {
+    pub const fn virtual_surface_size_with_scaling(&self) -> UVec2 {
         match self.viewport_strategy {
-            ViewportStrategy::FitIntegerScaling(virtual_size)
-            | ViewportStrategy::FitFloatScaling(virtual_size) => virtual_size,
+            ViewportStrategy::FitIntegerScaling | ViewportStrategy::FitFloatScaling => {
+                self.virtual_surface_size
+            }
             ViewportStrategy::MatchPhysicalSize => self.physical_surface_size,
         }
     }
@@ -505,9 +357,12 @@ impl Render {
         let window_aspect = physical_size.x as f32 / physical_size.y as f32;
         let virtual_aspect = virtual_size.x as f32 / virtual_size.y as f32;
 
+        /*
         if physical_size.x < virtual_size.x || physical_size.y < virtual_size.y {
             return URect::new(0, 0, physical_size.x, physical_size.y);
         }
+
+         */
 
         let mut integer_scale = if window_aspect > virtual_aspect {
             physical_size.y / virtual_size.y
@@ -574,6 +429,23 @@ impl Render {
 
     pub fn resize(&mut self, physical_size: UVec2) {
         self.physical_surface_size = physical_size;
+    }
+
+    pub fn resize_virtual(&mut self, virtual_surface_size: UVec2) {
+        if virtual_surface_size == self.virtual_surface_size {
+            return;
+        }
+        self.virtual_surface_size = virtual_surface_size;
+        debug!(?virtual_surface_size, "virtual surface changed");
+        let (virtual_surface_texture, virtual_surface_texture_view, virtual_to_surface_bind_group) =
+            Self::create_virtual_texture(
+                &self.device,
+                self.surface_texture_format,
+                virtual_surface_size,
+            );
+        self.virtual_surface_texture = virtual_surface_texture;
+        self.virtual_surface_texture_view = virtual_surface_texture_view;
+        self.virtual_to_surface_bind_group = virtual_to_surface_bind_group;
     }
 
     pub fn sprite_atlas(&mut self, position: Vec3, atlas_rect: URect, material_ref: &MaterialRef) {
@@ -644,13 +516,9 @@ impl Render {
 
     pub fn draw_quad(&mut self, position: Vec3, size: UVec2, color: Color) {
         let material = Material {
-            base: MaterialBase {
-                //pipeline: self.normal_sprite_pipeline.clone(),
-            },
+            base: MaterialBase {},
             kind: MaterialKind::Quad,
         };
-
-        //debug!(?position, ?size, ?color, "draw quad");
 
         self.items.push(RenderItem {
             position,
@@ -681,34 +549,6 @@ impl Render {
         });
     }
 
-    // TODO: Not done yet
-    /*
-    #[allow(clippy::too_many_arguments)]
-    pub fn draw_nine_slice_atlas(
-        &mut self,
-        position: Vec3,
-        size: UVec2,
-        corner_size: UVec2,
-        texture_window_size: UVec2,
-        material_ref: &MaterialRef,
-        atlas_offset: UVec2,
-        color: Color,
-    ) {
-        self.items.push(RenderItem {
-            position,
-            material_ref: material_ref.into(),
-            renderable: Renderable::NineSlice(NineSlice {
-                corner_size,
-                texture_window_size,
-                size,
-                atlas_offset,
-                color,
-            }),
-        });
-    }
-
-     */
-
     pub const fn clear_color(&self) -> wgpu::Color {
         self.clear_color
     }
@@ -722,7 +562,7 @@ impl Render {
         Vec4([width, height, x, y])
     }
 
-    fn order_render_items_in_batches(&self) -> Vec<Vec<&RenderItem>> {
+    fn order_render_items_in_batches(&mut self) -> Vec<Vec<&RenderItem>> {
         let mut material_batches: Vec<Vec<&RenderItem>> = Vec::new();
         let mut current_batch: Vec<&RenderItem> = Vec::new();
         let mut current_material: Option<MaterialRef> = None;
@@ -773,18 +613,20 @@ impl Render {
     /// # Panics
     ///
     #[allow(clippy::too_many_lines)]
-    pub fn prepare_render(&mut self, textures: &Assets<Texture>, fonts: &Assets<Font>) {
+    pub fn write_vertex_indices_and_uv_to_buffer(
+        &mut self,
+        textures: &Assets<Texture>,
+        fonts: &Assets<Font>,
+    ) {
         const FLIP_X_MASK: u32 = 0b0000_0100;
         const FLIP_Y_MASK: u32 = 0b0000_1000;
 
-        sort_render_items_by_z_and_material(&mut self.items);
-
-        let batches = self.order_render_items_in_batches();
+        let batches = self.sort_and_put_in_batches();
 
         let mut quad_matrix_and_uv: Vec<SpriteInstanceUniform> = Vec::new();
         let mut batch_vertex_ranges: Vec<(MaterialRef, u32, u32)> = Vec::new();
 
-        for render_items in &batches {
+        for render_items in batches {
             let quad_len_before = quad_matrix_and_uv.len() as u32;
 
             // Fix: Access material_ref through reference and copy it
@@ -1325,6 +1167,12 @@ impl Render {
         quad_matrix_and_uv.push(top_right_quad);
     }
 
+    fn sort_and_put_in_batches(&mut self) -> Vec<Vec<&RenderItem>> {
+        sort_render_items_by_z_and_material(&mut self.items);
+
+        self.order_render_items_in_batches()
+    }
+
     /// # Panics
     ///
     #[allow(clippy::too_many_lines)]
@@ -1341,33 +1189,20 @@ impl Render {
         trace!("start render()");
         self.last_render_at = now;
 
-        self.viewport = match self.viewport_strategy {
-            ViewportStrategy::FitIntegerScaling(virtual_surface_size) => {
-                Self::viewport_from_integer_scale(self.physical_surface_size, virtual_surface_size)
-            }
-            ViewportStrategy::FitFloatScaling(virtual_surface_size) => {
-                Self::viewport_from_float_scale(self.physical_surface_size, virtual_surface_size)
-            }
-            ViewportStrategy::MatchPhysicalSize => URect::new(
-                0,
-                0,
-                self.physical_surface_size.x,
-                self.physical_surface_size.y,
-            ),
-        };
+        self.set_viewport_and_view_projection_matrix();
 
-        let view_proj_matrix = match self.viewport_strategy {
-            ViewportStrategy::MatchPhysicalSize => {
-                create_view_uniform_view_projection_matrix(self.physical_surface_size)
-            }
-            ViewportStrategy::FitFloatScaling(virtual_surface_size)
-            | ViewportStrategy::FitIntegerScaling(virtual_surface_size) => {
-                create_view_projection_matrix_from_virtual(
-                    virtual_surface_size.x,
-                    virtual_surface_size.y,
-                )
-            }
-        };
+        self.write_vertex_indices_and_uv_to_buffer(textures, fonts);
+
+        self.render_batches_to_virtual_texture(command_encoder, textures, fonts);
+
+        self.render_virtual_texture_to_display(command_encoder, display_surface_texture_view);
+    }
+
+    pub fn set_viewport_and_view_projection_matrix(&mut self) {
+        let view_proj_matrix = create_view_projection_matrix_from_virtual(
+            self.virtual_surface_size.x,
+            self.virtual_surface_size.y,
+        );
 
         let scale_matrix = Matrix4::from_scale(self.scale, self.scale, 0.0);
         let origin_translation_matrix =
@@ -1381,104 +1216,104 @@ impl Render {
             0,
             bytemuck::cast_slice(&[total_matrix]),
         );
+    }
 
-        self.prepare_render(textures, fonts);
+    pub fn render_batches_to_virtual_texture(
+        &mut self,
+        command_encoder: &mut CommandEncoder,
+        textures: &Assets<Texture>,
+        fonts: &Assets<Font>,
+    ) {
+        let mut render_pass = command_encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: Some("Game Render Pass"),
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                view: &self.virtual_surface_texture_view,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(wgpu::Color::RED),
+                    store: wgpu::StoreOp::Store,
+                },
+            })],
+            depth_stencil_attachment: None,
+            timestamp_writes: None,
+            occlusion_query_set: None,
+        });
 
-        {
-            let mut render_pass = command_encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Game Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &self.virtual_surface_texture_view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::RED),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                timestamp_writes: None,
-                occlusion_query_set: None,
-            });
+        render_pass.set_viewport(
+            0.0,
+            0.0,
+            self.virtual_surface_size.x as f32,
+            self.virtual_surface_size.y as f32,
+            0.0,
+            1.0,
+        );
 
-            render_pass.set_viewport(
-                0.0,
-                0.0,
-                self.virtual_surface_size().x as f32,
-                self.virtual_surface_size().y as f32,
-                0.0,
-                1.0,
-            );
+        // Index and vertex buffers never change
+        render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
 
-            // Index and vertex buffers never change
-            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+        // Vertex buffer is reused
+        render_pass.set_vertex_buffer(1, self.quad_matrix_and_uv_instance_buffer.slice(..));
 
-            // Vertex buffer is reused
-            render_pass.set_vertex_buffer(1, self.quad_matrix_and_uv_instance_buffer.slice(..));
+        let num_indices = mireforge_wgpu_sprites::INDICES.len() as u32;
 
-            let num_indices = mireforge_wgpu_sprites::INDICES.len() as u32;
+        let mut current_pipeline: Option<&MaterialKind> = None;
 
-            let mut current_pipeline: Option<&MaterialKind> = None;
+        for &(ref weak_material_ref, start, count) in &self.batch_offsets {
+            let wgpu_material = weak_material_ref;
 
-            for &(ref weak_material_ref, start, count) in &self.batch_offsets {
-                let wgpu_material = weak_material_ref;
+            let pipeline_kind = &wgpu_material.kind;
 
-                let pipeline_kind = &wgpu_material.kind;
-
-                if current_pipeline != Some(pipeline_kind) {
-                    let pipeline = match pipeline_kind {
-                        MaterialKind::NormalSprite { .. } => &self.normal_sprite_pipeline.pipeline,
-                        MaterialKind::Quad => &self.quad_shader_info.pipeline,
-                        MaterialKind::AlphaMasker { .. } => &self.mask_shader_info.pipeline,
-                        MaterialKind::LightAdd { .. } => &self.light_shader_info.pipeline,
-                    };
-                    //trace!(%pipeline_kind, ?pipeline, "setting pipeline");
-                    render_pass.set_pipeline(pipeline);
-                    // Apparently after setting pipeline,
-                    // you must set all bind groups again
-                    current_pipeline = Some(pipeline_kind);
-                    render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
-                }
-
-                match &wgpu_material.kind {
-                    MaterialKind::NormalSprite { primary_texture }
-                    | MaterialKind::LightAdd { primary_texture } => {
-                        let texture = textures.get(primary_texture).unwrap();
-                        // Bind the texture and sampler bind group (Bind Group 1)
-                        render_pass.set_bind_group(1, &texture.texture_and_sampler_bind_group, &[]);
-                    }
-                    MaterialKind::AlphaMasker {
-                        primary_texture,
-                        alpha_texture,
-                    } => {
-                        let real_diffuse_texture = textures.get(primary_texture).unwrap();
-                        let alpha_texture = textures.get(alpha_texture).unwrap();
-                        render_pass.set_bind_group(
-                            1,
-                            &real_diffuse_texture.texture_and_sampler_bind_group,
-                            &[],
-                        );
-                        render_pass.set_bind_group(
-                            2,
-                            &alpha_texture.texture_and_sampler_bind_group,
-                            &[],
-                        );
-                    }
-                    MaterialKind::Quad => {
-                        trace!("set quad material");
-                        // Intentionally do nothing
-                    }
-                }
-
-                // Issue the instanced draw call for the batch
-                trace!(material=%weak_material_ref, start=%start, count=%count, %num_indices, "draw instanced");
-                render_pass.draw_indexed(0..num_indices, 0, start..(start + count));
+            if current_pipeline != Some(pipeline_kind) {
+                let pipeline = match pipeline_kind {
+                    MaterialKind::NormalSprite { .. } => &self.normal_sprite_pipeline.pipeline,
+                    MaterialKind::Quad => &self.quad_shader_info.pipeline,
+                    MaterialKind::AlphaMasker { .. } => &self.mask_shader_info.pipeline,
+                    MaterialKind::LightAdd { .. } => &self.light_shader_info.pipeline,
+                };
+                //trace!(%pipeline_kind, ?pipeline, "setting pipeline");
+                render_pass.set_pipeline(pipeline);
+                // Apparently after setting pipeline,
+                // you must set all bind groups again
+                current_pipeline = Some(pipeline_kind);
+                render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
             }
+
+            match &wgpu_material.kind {
+                MaterialKind::NormalSprite { primary_texture }
+                | MaterialKind::LightAdd { primary_texture } => {
+                    let texture = textures.get(primary_texture).unwrap();
+                    // Bind the texture and sampler bind group (Bind Group 1)
+                    render_pass.set_bind_group(1, &texture.texture_and_sampler_bind_group, &[]);
+                }
+                MaterialKind::AlphaMasker {
+                    primary_texture,
+                    alpha_texture,
+                } => {
+                    let real_diffuse_texture = textures.get(primary_texture).unwrap();
+                    let alpha_texture = textures.get(alpha_texture).unwrap();
+                    render_pass.set_bind_group(
+                        1,
+                        &real_diffuse_texture.texture_and_sampler_bind_group,
+                        &[],
+                    );
+                    render_pass.set_bind_group(
+                        2,
+                        &alpha_texture.texture_and_sampler_bind_group,
+                        &[],
+                    );
+                }
+                MaterialKind::Quad => {
+                    trace!("set quad material");
+                    // Intentionally do nothing
+                }
+            }
+
+            // Issue the instanced draw call for the batch
+            trace!(material=%weak_material_ref, start=%start, count=%count, %num_indices, "draw instanced");
+            render_pass.draw_indexed(0..num_indices, 0, start..(start + count));
         }
-
         self.items.clear();
-
-        self.render_virtual_texture_to_display(command_encoder, display_surface_texture_view);
     }
 
     pub fn render_virtual_texture_to_display(
@@ -1512,9 +1347,26 @@ impl Render {
         let viewport_y = (window_height as f32 - viewport_height) / 2.0;
          */
 
+        self.viewport = match self.viewport_strategy {
+            ViewportStrategy::FitIntegerScaling => Self::viewport_from_integer_scale(
+                self.physical_surface_size,
+                self.virtual_surface_size,
+            ),
+            ViewportStrategy::FitFloatScaling => Self::viewport_from_float_scale(
+                self.physical_surface_size,
+                self.virtual_surface_size,
+            ),
+            ViewportStrategy::MatchPhysicalSize => URect::new(
+                0,
+                0,
+                self.physical_surface_size.x,
+                self.physical_surface_size.y,
+            ),
+        };
+
         render_pass.set_viewport(
-            0f32,
-            0f32,
+            self.viewport.position.x as f32,
+            self.viewport.position.y as f32,
             self.viewport.size.x as f32,
             self.viewport.size.y as f32,
             0.0,
@@ -1545,13 +1397,10 @@ impl Render {
 
         Texture {
             texture_and_sampler_bind_group,
-            //pipeline: Arc::clone(&self.pipeline),
             texture_size,
         }
     }
 }
-
-//fn set_view_projection(&mut self) {}
 
 fn create_view_projection_matrix_from_virtual(virtual_width: u16, virtual_height: u16) -> Matrix4 {
     OrthoInfo {

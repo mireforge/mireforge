@@ -1092,6 +1092,7 @@ struct VertexOutput {
     @location(0) texcoord: vec2<f32>,
 };
 
+
 @vertex
 fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
     var positions = array<vec2<f32>, 6>(

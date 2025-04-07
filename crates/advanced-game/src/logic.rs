@@ -89,7 +89,7 @@ impl<L: ApplicationLogic> GameLogic<L> {
                 WindowMessage::CursorMoved(position) => self.cursor_moved(
                     *position,
                     wgpu_render.viewport(),
-                    wgpu_render.virtual_surface_size(),
+                    wgpu_render.virtual_surface_size_with_scaling(),
                 ),
                 WindowMessage::WindowCreated() => {}
                 WindowMessage::Resized(_) => {}

@@ -3,6 +3,6 @@
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
 pub use crate::{
-    FixedAtlas, FontAndMaterial, FrameLookup, Gfx, Material, MaterialRef, NineSliceAndMaterial,
-    Render, Rotation, Slices, SpriteParams, plugin::RenderWgpuPlugin,
+    FixedAtlas, FontAndMaterial, FrameLookup, Material, MaterialRef, NineSliceAndMaterial, Render,
+    Rotation, Slices, SpriteParams, gfx::Gfx, plugin::RenderWgpuPlugin,
 };

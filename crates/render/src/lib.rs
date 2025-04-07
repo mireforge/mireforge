@@ -129,12 +129,12 @@ pub enum ViewportStrategy {
     /// Tries to set the viewport to fit the virtual surface size within the physical surface size.
     /// Depending on resolution, it can cause black borders, both vertically and horizontally.
     /// Always keeps the aspect ratio, and is "pixel perfect"
-    FitIntegerScaling(UVec2),
+    FitIntegerScaling,
 
     /// Tries to set the viewport to fit the virtual surface size within the physical surface size.
     /// Depending on resolution, it can cause "black borders", *either* vertically and horizontally.
     /// Always keeps the aspect ratio, but might not be pixel perfect
-    FitFloatScaling(UVec2),
+    FitFloatScaling,
 
     /// The viewport will be the same as the physical size.
     MatchPhysicalSize,
