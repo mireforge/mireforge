@@ -1294,7 +1294,6 @@ impl Render {
                     );
                 }
                 MaterialKind::Quad => {
-                    trace!("set quad material");
                     // Intentionally do nothing
                 }
             }
