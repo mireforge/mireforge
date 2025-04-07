@@ -75,7 +75,7 @@ impl AssetLoader for MaterialWgpuProcessor {
         {
             let mireforge_render_wgpu = resources.fetch_mut::<Render>();
             let wgpu_material =
-                mireforge_render_wgpu.texture_resource_from_texture(wgpu_texture, name.value());
+                mireforge_render_wgpu.texture_resource_from_texture(&wgpu_texture, name.value());
 
             let image_assets = resources.fetch_mut::<Assets<Texture>>();
             image_assets.set_raw(id, wgpu_material);

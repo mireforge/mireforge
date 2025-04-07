@@ -191,6 +191,7 @@ pub struct Render {
     index_buffer: Buffer,  // Only indices for a single identity quad
     vertex_buffer: Buffer, // Only one identity quad (0,0,1,1)
     sampler: wgpu::Sampler,
+    virtual_to_screen_shader_info: ShaderInfo,
     pub normal_sprite_pipeline: ShaderInfo,
     pub quad_shader_info: ShaderInfo,
     pub mask_shader_info: ShaderInfo,
@@ -383,7 +384,7 @@ impl Render {
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: surface_texture_format, // TODO: Check: Should probably always be same as swap chain format?
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING, // COPY_DST needed to be able to clear the texture unfortunately.
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
         });
 
@@ -391,7 +392,7 @@ impl Render {
             virtual_surface_texture.create_view(&wgpu::TextureViewDescriptor::default());
 
         let virtual_to_screen_sampler =
-            create_nearest_sampler(&*device, "nearest sampler for virtual to screen");
+            create_nearest_sampler(&device, "nearest sampler for virtual to screen");
         let virtual_to_screen_layout =
             create_texture_and_sampler_group_layout(&device, "virtual to screen layout");
         let virtual_to_surface_bind_group = create_texture_and_sampler_bind_group_ex(
@@ -407,6 +408,7 @@ impl Render {
             queue,
             items: Vec::new(),
             //   fonts: Vec::new(),
+            virtual_to_screen_shader_info: sprite_info.virtual_to_screen_shader_info,
             virtual_surface_texture,
             virtual_surface_texture_view,
             virtual_to_surface_bind_group,
@@ -573,13 +575,6 @@ impl Render {
     pub fn resize(&mut self, physical_size: UVec2) {
         self.physical_surface_size = physical_size;
     }
-
-    /*
-    pub fn render_sprite(&mut self, position: Vec3, material: &MaterialRef, params: SpriteParams) {
-        let atlas_rect = URect::new(0, 0, material.texture_size().x, material.texture_size().y);
-
-        self.push_sprite(position, material, Sprite { atlas_rect, params });
-    }*/
 
     pub fn sprite_atlas(&mut self, position: Vec3, atlas_rect: URect, material_ref: &MaterialRef) {
         self.push_sprite(
@@ -778,12 +773,7 @@ impl Render {
     /// # Panics
     ///
     #[allow(clippy::too_many_lines)]
-    pub fn prepare_render(
-        &mut self,
-        //materials: &Assets<Material>,
-        textures: &Assets<Texture>,
-        fonts: &Assets<Font>,
-    ) {
+    pub fn prepare_render(&mut self, textures: &Assets<Texture>, fonts: &Assets<Font>) {
         const FLIP_X_MASK: u32 = 0b0000_0100;
         const FLIP_Y_MASK: u32 = 0b0000_1000;
 
@@ -1531,66 +1521,15 @@ impl Render {
             1.0,
         );
 
-        let view_proj_matrix =
-            create_view_projection_matrix_from_virtual(self.viewport.size.x, self.viewport.size.y);
-        let scale_matrix = Matrix4::from_scale(1.0, 1.0, 0.0);
-        let origin_translation_matrix = Matrix4::from_translation(0f32, 0f32, 0.0);
-
-        let total_matrix = scale_matrix * view_proj_matrix * origin_translation_matrix;
-
-        // write all model_matrix and uv_coords to instance buffer once, before the render pass
-        self.queue.write_buffer(
-            &self.camera_buffer,
-            0,
-            bytemuck::cast_slice(&[total_matrix]),
-        );
-
-        let virtual_width = self.virtual_surface_texture.size().width;
-        let virtual_height = self.virtual_surface_texture.size().height;
-        let model_matrix =
-            Matrix4::from_translation((virtual_width / 2) as f32, (virtual_height / 2) as f32, 0.0)
-                * Matrix4::from_scale(virtual_width as f32, virtual_height as f32, 1.0);
-
-        let render_atlas = URect {
-            position: UVec2::new(0, 0),
-            size: self.virtual_surface_size(),
-        };
-
-        let tex_coords_mul_add =
-            Self::calculate_texture_coords_mul_add(render_atlas, self.virtual_surface_size());
-
-        let rotation_value = 0;
-        let mut quad_matrix_and_uv = Vec::new();
-        let color = Color::from_octet(255, 255, 255, 255);
-        let quad_instance = SpriteInstanceUniform::new(
-            model_matrix,
-            tex_coords_mul_add,
-            rotation_value,
-            Vec4(color.to_f32_slice()),
-        );
-        quad_matrix_and_uv.push(quad_instance);
-
-        self.queue.write_buffer(
-            &self.quad_matrix_and_uv_instance_buffer,
-            0,
-            bytemuck::cast_slice(&quad_matrix_and_uv),
-        );
-
         // Draw the render texture to the screen
-        render_pass.set_pipeline(&self.normal_sprite_pipeline.pipeline);
-        render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
-        render_pass.set_bind_group(1, &self.virtual_to_surface_bind_group, &[]);
-
-        render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        render_pass.set_pipeline(&self.virtual_to_screen_shader_info.pipeline);
+        render_pass.set_bind_group(0, &self.virtual_to_surface_bind_group, &[]);
         render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
 
-        // Vertex buffer is reused
-        render_pass.set_vertex_buffer(1, self.quad_matrix_and_uv_instance_buffer.slice(..));
-
-        render_pass.draw_indexed(0..6, 0, 0..1);
+        render_pass.draw(0..6, 0..1);
     }
 
-    pub fn texture_resource_from_texture(&self, texture: wgpu::Texture, label: &str) -> Texture {
+    pub fn texture_resource_from_texture(&self, texture: &wgpu::Texture, label: &str) -> Texture {
         trace!("load texture from memory with name: '{label}'");
         let size = &texture.size();
         let texture_and_sampler_bind_group =
@@ -1729,11 +1668,13 @@ pub struct Material {
 
 impl Material {
     #[inline]
+    #[must_use]
     pub fn primary_texture(&self) -> Option<TextureRef> {
         self.kind.primary_texture()
     }
 
     #[inline]
+    #[must_use]
     pub fn is_complete(&self, textures: &Assets<Texture>) -> bool {
         self.kind.is_complete(textures)
     }
@@ -1765,26 +1706,27 @@ impl MaterialKind {}
 impl MaterialKind {
     pub fn primary_texture(&self) -> Option<Id<Texture>> {
         match &self {
-            MaterialKind::NormalSprite {
+            Self::NormalSprite {
                 primary_texture, ..
             }
-            | MaterialKind::LightAdd { primary_texture } => Some(primary_texture.clone()),
-            MaterialKind::AlphaMasker {
+            | Self::LightAdd { primary_texture }
+            | Self::AlphaMasker {
                 primary_texture, ..
             } => Some(primary_texture.clone()),
-            MaterialKind::Quad => None,
+            Self::Quad => None,
         }
     }
 
     pub(crate) fn is_complete(&self, textures: &Assets<Texture>) -> bool {
         match &self {
-            MaterialKind::NormalSprite { primary_texture }
-            | MaterialKind::LightAdd { primary_texture } => textures.contains(primary_texture),
-            MaterialKind::AlphaMasker {
+            Self::NormalSprite { primary_texture } | Self::LightAdd { primary_texture } => {
+                textures.contains(primary_texture)
+            }
+            Self::AlphaMasker {
                 primary_texture,
                 alpha_texture,
             } => textures.contains(primary_texture) && textures.contains(alpha_texture),
-            MaterialKind::Quad => true,
+            Self::Quad => true,
         }
     }
 }
@@ -1793,7 +1735,7 @@ impl Display for MaterialKind {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let texture_name = self
             .primary_texture()
-            .map_or_else(|| "".to_string(), |x| x.to_string());
+            .map_or_else(String::new, |x| x.to_string());
 
         let kind_name = match self {
             Self::NormalSprite { .. } => "NormalSprite",

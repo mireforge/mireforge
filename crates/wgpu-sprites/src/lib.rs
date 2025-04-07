@@ -220,9 +220,36 @@ pub fn create_shader_info(
     device: &Device,
     surface_texture_format: TextureFormat,
     camera_bind_group_layout: &BindGroupLayout,
-    specific_layout: &[&BindGroupLayout],
+    specific_layouts: &[&BindGroupLayout],
     vertex_source: &str,
     fragment_source: &str,
+    blend_state: BlendState,
+    name: &str,
+) -> ShaderInfo {
+    let mut layouts = Vec::new();
+    layouts.push(camera_bind_group_layout);
+    layouts.extend_from_slice(specific_layouts);
+
+    create_shader_info_ex(
+        device,
+        surface_texture_format,
+        &layouts,
+        vertex_source,
+        fragment_source,
+        &[Vertex::desc(), SpriteInstanceUniform::desc()],
+        blend_state,
+        name,
+    )
+}
+
+#[must_use]
+pub fn create_shader_info_ex(
+    device: &Device,
+    surface_texture_format: TextureFormat,
+    specific_layouts: &[&BindGroupLayout],
+    vertex_source: &str,
+    fragment_source: &str,
+    buffers: &[VertexBufferLayout],
     blend_state: BlendState,
     name: &str,
 ) -> ShaderInfo {
@@ -231,19 +258,16 @@ pub fn create_shader_info(
     let fragment_shader =
         mireforge_wgpu::create_shader_module(device, &format!("{name} fragment"), fragment_source);
 
-    let custom_layout = create_pipeline_layout_with_camera_first(
-        device,
-        camera_bind_group_layout,
-        specific_layout,
-        &format!("{name} pipeline layout (with camera first)"),
-    );
+    let custom_layout =
+        create_pipeline_layout(device, specific_layouts, &format!("{name} pipeline layout"));
 
-    let pipeline = create_pipeline(
+    let pipeline = create_pipeline_with_buffers(
         device,
         surface_texture_format,
         &custom_layout,
         &vertex_shader,
         &fragment_shader,
+        buffers,
         blend_state,
         name,
     );
@@ -343,13 +367,13 @@ impl SpriteInfo {
         let virtual_to_screen_shader_info = {
             let virtual_texture_group_layout =
                 create_texture_and_sampler_group_layout(device, "virtual texture group");
-            create_shader_info(
+            create_shader_info_ex(
                 device,
                 surface_texture_format,
-                &camera_bind_group_layout,
                 &[&virtual_texture_group_layout],
                 SCREEN_QUAD_VERTEX_SHADER,
                 SCREEN_QUAD_FRAGMENT_SHADER,
+                &[],
                 alpha_blending,
                 "VirtualToScreen",
             )
@@ -611,6 +635,7 @@ pub fn create_sprite_texture_and_sampler_bind_group(
     )
 }
 
+#[must_use]
 pub fn create_texture_and_sampler_bind_group_ex(
     device: &Device,
     bind_group_layout: &BindGroupLayout,
@@ -650,29 +675,25 @@ pub fn create_quad_matrix_and_uv_instance_buffer(
     })
 }
 
-fn create_pipeline_layout_with_camera_first(
+fn create_pipeline_layout(
     device: &Device,
-    camera_bind_group_layout: &BindGroupLayout,
-    specific_layout: &[&BindGroupLayout],
+    layouts: &[&BindGroupLayout],
     label: &str,
 ) -> PipelineLayout {
-    let mut layouts = Vec::new();
-    layouts.push(camera_bind_group_layout);
-    layouts.extend_from_slice(specific_layout);
-
     device.create_pipeline_layout(&PipelineLayoutDescriptor {
         label: Some(label),
-        bind_group_layouts: &layouts,
+        bind_group_layouts: layouts,
         push_constant_ranges: &[],
     })
 }
 
-fn create_pipeline(
+fn create_pipeline_with_buffers(
     device: &Device,
     format: TextureFormat,
     pipeline_layout: &PipelineLayout,
     vertex_shader: &ShaderModule,
     fragment_shader: &ShaderModule,
+    buffers: &[VertexBufferLayout],
     blend_state: BlendState,
     label: &str,
 ) -> RenderPipeline {
@@ -683,7 +704,7 @@ fn create_pipeline(
             module: vertex_shader,
             entry_point: Some("vs_main"),
             compilation_options: PipelineCompilationOptions::default(),
-            buffers: &[Vertex::desc(), SpriteInstanceUniform::desc()],
+            buffers,
         },
         fragment: Some(wgpu::FragmentState {
             module: fragment_shader,
@@ -1065,14 +1086,6 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
 }
 
 pub const SCREEN_QUAD_VERTEX_SHADER: &str = "
-// Bind Group 0: Uniforms (view-projection matrix)
-struct Uniforms {
-    view_proj: mat4x4<f32>,
-};
-// Camera (view projection matrix) is always first
-@group(0) @binding(0)
-var<uniform> camera_uniforms: Uniforms;
-
 // Define the output structure
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
@@ -1108,16 +1121,8 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
 
 // Fragment shader for the screen quad
 pub const SCREEN_QUAD_FRAGMENT_SHADER: &str = "
-// Bind Group 0: Uniforms (view-projection matrix)
-struct Uniforms {
-    view_proj: mat4x4<f32>,
-};
-// Camera (view projection matrix) is always first
-@group(0) @binding(0)
-var<uniform> camera_uniforms: Uniforms;
-
-@group(1) @binding(0) var game_texture: texture_2d<f32>;
-@group(1) @binding(1) var game_sampler: sampler;
+@group(0) @binding(0) var game_texture: texture_2d<f32>;
+@group(0) @binding(1) var game_sampler: sampler;
 
 @fragment
 fn fs_main(@location(0) texcoord: vec2<f32>) -> @location(0) vec4<f32> {
