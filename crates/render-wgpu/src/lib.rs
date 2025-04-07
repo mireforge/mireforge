@@ -175,6 +175,7 @@ pub struct Render {
     batch_offsets: Vec<(WeakMaterialRef, u32, u32)>,
     viewport: URect,
     clear_color: wgpu::Color,
+    screen_clear_color: wgpu::Color,
     last_render_at: Millis,
     scale: f32,
     surface_texture_format: TextureFormat,
@@ -233,6 +234,7 @@ impl Render {
             camera_buffer: sprite_info.camera_uniform_buffer,
             viewport: Self::viewport_from_integer_scale(physical_size, virtual_surface_size),
             clear_color: to_wgpu_color(Color::from_f32(0.008, 0.015, 0.008, 1.0)),
+            screen_clear_color: to_wgpu_color(Color::from_f32(0.018, 0.025, 0.018, 1.0)),
             origin: Vec2::new(0, 0),
             last_render_at: now,
             physical_surface_size: physical_size,
@@ -1218,7 +1220,7 @@ impl Render {
                 view: &self.virtual_surface_texture_view,
                 resolve_target: None,
                 ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color::RED),
+                    load: wgpu::LoadOp::Clear(self.clear_color),
                     store: wgpu::StoreOp::Store,
                 },
             })],
@@ -1315,7 +1317,7 @@ impl Render {
                 view: display_surface_texture_view,
                 resolve_target: None,
                 ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
+                    load: wgpu::LoadOp::Clear(self.screen_clear_color),
                     store: wgpu::StoreOp::Store,
                 },
             })],
