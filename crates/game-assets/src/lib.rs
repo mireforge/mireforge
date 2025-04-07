@@ -12,7 +12,7 @@ use mireforge_font::Font;
 use mireforge_font::Glyph;
 use mireforge_render_wgpu::{
     FixedAtlas, FontAndMaterial, Material, MaterialBase, MaterialKind, MaterialRef,
-    NineSliceAndMaterial, Slices, Texture,
+    NineSliceAndMaterial, Slices, Texture, TextureRef,
 };
 use monotonic_time_rs::Millis;
 use std::fmt::Debug;
@@ -21,6 +21,9 @@ use std::sync::Arc;
 pub trait Assets {
     #[must_use]
     fn now(&self) -> Millis;
+
+    #[must_use]
+    fn texture_png(&mut self, name: impl Into<AssetName>) -> TextureRef;
 
     #[must_use]
     fn material_png(&mut self, name: impl Into<AssetName>) -> MaterialRef;
@@ -88,6 +91,17 @@ impl<'a> GameAssets<'a> {
 impl Assets for GameAssets<'_> {
     fn now(&self) -> Millis {
         self.now
+    }
+
+    fn texture_png(&mut self, name: impl Into<AssetName>) -> TextureRef {
+        let asset_loader = self
+            .resource_storage
+            .get_mut::<AssetRegistry>()
+            .expect("should exist registry");
+
+        let texture_id = asset_loader.load::<Texture>(name.into().with_extension("png"));
+
+        TextureRef::from(texture_id)
     }
 
     fn material_png(&mut self, name: impl Into<AssetName>) -> MaterialRef {

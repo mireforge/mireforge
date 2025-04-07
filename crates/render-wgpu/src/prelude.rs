@@ -4,5 +4,5 @@
  */
 pub use crate::{
     FixedAtlas, FontAndMaterial, FrameLookup, Material, MaterialRef, NineSliceAndMaterial, Render,
-    Rotation, Slices, SpriteParams, gfx::Gfx, plugin::RenderWgpuPlugin,
+    Rotation, Slices, SpriteParams, TextureRef, gfx::Gfx, plugin::RenderWgpuPlugin,
 };

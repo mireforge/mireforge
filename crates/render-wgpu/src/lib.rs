@@ -332,6 +332,30 @@ impl Render {
         });
     }
 
+    pub fn push_mask_create_material(
+        &mut self,
+        position: Vec3,
+        primary_texture: TextureRef,
+        alpha_texture: TextureRef,
+        color: Color,
+    ) {
+        let masked_material = Material {
+            base: MaterialBase {},
+            kind: MaterialKind::AlphaMasker {
+                primary_texture,
+                alpha_texture,
+            },
+        };
+
+        let masked_material_ref = Arc::new(masked_material);
+
+        self.items.push(RenderItem {
+            position,
+            material_ref: masked_material_ref.clone(),
+            renderable: Renderable::Mask(UVec2::new(0, 0), color),
+        });
+    }
+
     pub fn push_nine_slice(
         &mut self,
         position: Vec3,
@@ -1183,7 +1207,7 @@ impl Render {
 
         self.write_vertex_indices_and_uv_to_buffer(textures, fonts);
 
-        self.render_batches_to_virtual_texture(command_encoder, textures, fonts);
+        self.render_batches_to_virtual_texture(command_encoder, textures);
 
         self.render_virtual_texture_to_display(command_encoder, display_surface_texture_view);
     }
@@ -1212,7 +1236,6 @@ impl Render {
         &mut self,
         command_encoder: &mut CommandEncoder,
         textures: &Assets<Texture>,
-        fonts: &Assets<Font>,
     ) {
         let mut render_pass = command_encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("Game Render Pass"),
