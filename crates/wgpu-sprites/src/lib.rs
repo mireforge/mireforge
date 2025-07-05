@@ -216,6 +216,7 @@ pub struct ShaderInfo {
 }
 
 #[must_use]
+#[allow(clippy::too_many_arguments)]
 pub fn create_shader_info(
     device: &Device,
     surface_texture_format: TextureFormat,
@@ -243,6 +244,7 @@ pub fn create_shader_info(
 }
 
 #[must_use]
+#[allow(clippy::too_many_arguments)]
 pub fn create_shader_info_ex(
     device: &Device,
     surface_texture_format: TextureFormat,
@@ -686,6 +688,7 @@ fn create_pipeline_layout(
     })
 }
 
+#[allow(clippy::too_many_arguments)]
 fn create_pipeline_with_buffers(
     device: &Device,
     format: TextureFormat,
