@@ -8,8 +8,8 @@ pub mod plugin;
 pub mod prelude;
 
 use int_math::{URect, UVec2, Vec2, Vec3};
-use limnus_assets::Assets;
 use limnus_assets::prelude::{Asset, Id, WeakId};
+use limnus_assets::Assets;
 use limnus_resource::prelude::Resource;
 use limnus_wgpu_math::{Matrix4, OrthoInfo, Vec4};
 use mireforge_font::Font;
@@ -18,8 +18,8 @@ use mireforge_font::WeakFontRef;
 use mireforge_render::prelude::*;
 use mireforge_wgpu::create_nearest_sampler;
 use mireforge_wgpu_sprites::{
-    ShaderInfo, SpriteInfo, SpriteInstanceUniform, create_texture_and_sampler_bind_group_ex,
-    create_texture_and_sampler_group_layout,
+    create_texture_and_sampler_bind_group_ex, create_texture_and_sampler_group_layout, ShaderInfo, SpriteInfo,
+    SpriteInstanceUniform,
 };
 use monotonic_time_rs::Millis;
 use std::cmp::Ordering;
@@ -135,6 +135,10 @@ enum Renderable {
     Text(Text),
     Mask(UVec2, Color),
 }
+
+const MAXIMUM_QUADS_FOR_RENDER_ITEM: usize = 1024;
+const MAXIMUM_QUADS_IN_A_BATCH: usize = 4096;
+const MAXIMUM_QUADS_IN_ONE_RENDER: usize = MAXIMUM_QUADS_IN_A_BATCH * 8;
 
 #[derive(Resource)]
 pub struct Render {
@@ -642,7 +646,7 @@ impl Render {
         let mut batch_vertex_ranges: Vec<(MaterialRef, u32, u32)> = Vec::new();
 
         for render_items in batches {
-            let quad_len_before = quad_matrix_and_uv.len() as u32;
+            let quad_len_before = quad_matrix_and_uv.len();
 
             // Fix: Access material_ref through reference and copy it
             let weak_material_ref = render_items
@@ -668,6 +672,8 @@ impl Render {
             });
 
             for render_item in render_items {
+                let quad_len_before_inner = quad_matrix_and_uv.len();
+
                 match &render_item.renderable {
                     Renderable::Sprite(sprite) => {
                         let current_texture_size = maybe_texture.unwrap().texture_size;
@@ -904,11 +910,35 @@ impl Render {
                         }
                     }
                 }
+
+                let quad_count_for_this_render_item =
+                    quad_matrix_and_uv.len() - quad_len_before_inner;
+                assert!(
+                    quad_count_for_this_render_item <= MAXIMUM_QUADS_FOR_RENDER_ITEM,
+                    "too many quads {quad_count_for_this_render_item} for render item {render_item:?}"
+                );
             }
 
-            let quad_count = quad_matrix_and_uv.len() as u32 - quad_len_before;
-            batch_vertex_ranges.push((weak_material_ref, quad_len_before, quad_count));
+            let quad_count_for_this_batch = quad_matrix_and_uv.len() - quad_len_before;
+            assert!(
+                quad_count_for_this_batch <= MAXIMUM_QUADS_IN_A_BATCH,
+                "too many quads {quad_count_for_this_batch} total to render in this batch"
+            );
+
+            assert!(
+                quad_matrix_and_uv.len() <= MAXIMUM_QUADS_IN_ONE_RENDER,
+                "too many quads for whole render {}",
+                quad_matrix_and_uv.len()
+            );
+
+            batch_vertex_ranges.push((
+                weak_material_ref,
+                quad_len_before as u32,
+                quad_count_for_this_batch as u32,
+            ));
         }
+
+        eprintln!("===== instanced draw {}", quad_matrix_and_uv.len());
 
         // write all model_matrix and uv_coords to instance buffer once, before the render pass
         self.queue.write_buffer(
@@ -928,9 +958,45 @@ impl Render {
         quad_matrix_and_uv: &mut Vec<SpriteInstanceUniform>,
         current_texture_size: UVec2,
     ) {
-        let color = nine_slice.color;
         let world_window_size = nine_slice.size;
         let slices = &nine_slice.slices;
+
+        // ------------------------------------------------------------
+        // Validate that our total window size is large enough to hold
+        // the left+right and top+bottom slices without underflowing.
+        // ------------------------------------------------------------
+        assert!(
+            world_window_size.x >= slices.left + slices.right,
+            "NineSlice.width ({}) < slices.left + slices.right ({})",
+            world_window_size.x,
+            slices.left + slices.right
+        );
+        assert!(
+            world_window_size.y >= slices.top + slices.bottom,
+            "NineSlice.height ({}) < slices.top + slices.bottom ({})",
+            world_window_size.y,
+            slices.top + slices.bottom
+        );
+
+        let texture_window_size = nine_slice.size_inside_atlas.unwrap_or(current_texture_size);
+
+        // check the texture region as well
+        assert!(
+            texture_window_size.x >= slices.left + slices.right,
+            "texture_window_size.width ({}) < slices.left + slices.right ({})",
+            texture_window_size.x,
+            slices.left + slices.right
+        );
+        assert!(
+            texture_window_size.y >= slices.top + slices.bottom,
+            "texture_window_size.height ({}) < slices.top + slices.bottom ({})",
+            texture_window_size.y,
+            slices.top + slices.bottom
+        );
+        // ------------------------------------------------------------
+
+        let color = nine_slice.color;
+
         let atlas_origin = nine_slice.origin_in_atlas;
         let texture_window_size = nine_slice.size_inside_atlas.unwrap_or(current_texture_size);
 
@@ -1321,6 +1387,10 @@ impl Render {
                     // Intentionally do nothing
                 }
             }
+            assert!(
+                count <= MAXIMUM_QUADS_IN_A_BATCH as u32,
+                "too many instanced draw in a batch {count}"
+            );
 
             // Issue the instanced draw call for the batch
             trace!(material=%weak_material_ref, start=%start, count=%count, %num_indices, "draw instanced");

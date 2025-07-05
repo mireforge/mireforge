@@ -9,10 +9,6 @@ use limnus_wgpu_math::{Matrix4, Vec4};
 use tracing::{debug, warn};
 use wgpu::util::DeviceExt;
 use wgpu::{
-    util, BlendState, ColorTargetState, ColorWrites, Face, FrontFace, MultisampleState,
-    PolygonMode, PrimitiveState, PrimitiveTopology,
-};
-use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferAddress, BufferDescriptor, BufferUsages,
     Device, Extent3d, PipelineLayout, PipelineLayoutDescriptor, Queue, RenderPipeline,
@@ -22,6 +18,10 @@ use wgpu::{
     VertexStepMode,
 };
 use wgpu::{BindingResource, PipelineCompilationOptions};
+use wgpu::{
+    BlendState, ColorTargetState, ColorWrites, Face, FrontFace, MultisampleState, PolygonMode,
+    PrimitiveState, PrimitiveTopology, util,
+};
 use wgpu::{BufferBindingType, TextureView};
 
 #[repr(C)]
