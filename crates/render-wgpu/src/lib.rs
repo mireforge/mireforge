@@ -274,11 +274,11 @@ impl Render {
             virtual_surface_texture.create_view(&wgpu::TextureViewDescriptor::default());
 
         let virtual_to_screen_sampler =
-            create_nearest_sampler(&device, "nearest sampler for virtual to screen");
+            create_nearest_sampler(device, "nearest sampler for virtual to screen");
         let virtual_to_screen_layout =
-            create_texture_and_sampler_group_layout(&device, "virtual to screen layout");
+            create_texture_and_sampler_group_layout(device, "virtual to screen layout");
         let virtual_to_surface_bind_group = create_texture_and_sampler_bind_group_ex(
-            &device,
+            device,
             &virtual_to_screen_layout,
             &virtual_surface_texture_view,
             &virtual_to_screen_sampler,
@@ -667,8 +667,8 @@ impl Render {
 
             let maybe_texture_ref = material.primary_texture();
             let maybe_texture = maybe_texture_ref.and_then(|found_primary_texture_ref| {
-                let found_primary_texture = textures.get(&found_primary_texture_ref);
-                found_primary_texture
+                
+                textures.get(&found_primary_texture_ref)
             });
 
             for render_item in render_items {
@@ -1471,7 +1471,7 @@ impl Render {
             mireforge_wgpu_sprites::create_sprite_texture_and_sampler_bind_group(
                 &self.device,
                 &self.texture_sampler_bind_group_layout,
-                &texture,
+                texture,
                 &self.sampler,
                 label,
             );

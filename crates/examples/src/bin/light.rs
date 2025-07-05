@@ -67,7 +67,7 @@ impl Application for LightExample {
             let x = self.fun_value(0.06, 0, 200, self.tick_count + i * 43 * 4);
             let y = self.fun_value(0.13, 0, 100, self.tick_count + i * 77 * 4) - 80;
 
-            let strength = 0 + self.fun_value(0.03, 10, 64, self.tick_count + i * 97) as u8;
+            let strength = self.fun_value(0.03, 10, 64, self.tick_count + i * 97) as u8;
             let color = Color::from_octet(strength, strength, strength, 255);
             let sprite_params = SpriteParams {
                 texture_size: UVec2 { x: 0, y: 0 },
