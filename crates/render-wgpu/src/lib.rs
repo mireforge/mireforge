@@ -667,7 +667,7 @@ impl Render {
 
             let maybe_texture_ref = material.primary_texture();
             let maybe_texture = maybe_texture_ref.and_then(|found_primary_texture_ref| {
-                
+
                 textures.get(&found_primary_texture_ref)
             });
 
@@ -937,8 +937,6 @@ impl Render {
                 quad_count_for_this_batch as u32,
             ));
         }
-
-        eprintln!("===== instanced draw {}", quad_matrix_and_uv.len());
 
         // write all model_matrix and uv_coords to instance buffer once, before the render pass
         self.queue.write_buffer(
