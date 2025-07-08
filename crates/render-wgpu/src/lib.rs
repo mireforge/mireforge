@@ -43,6 +43,18 @@ pub trait FrameLookup {
     fn lookup(&self, frame: u16) -> (&MaterialRef, URect);
 }
 
+#[derive(PartialOrd, PartialEq, Eq, Copy, Clone, Debug)]
+pub enum CoordinateSystemAndOrigin {
+    RightHanded,
+    OldSchoolOriginTopLeft,
+}
+
+impl CoordinateSystemAndOrigin {
+    pub fn is_origin_top_left(&self) -> bool {
+        *self == CoordinateSystemAndOrigin::OldSchoolOriginTopLeft
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FixedAtlas {
     pub material: MaterialRef,
@@ -183,6 +195,7 @@ pub struct Render {
     last_render_at: Millis,
     scale: f32,
     surface_texture_format: TextureFormat,
+    coordinate_system_and_origin: CoordinateSystemAndOrigin,
 
     debug_tick: u64,
 }
@@ -243,6 +256,7 @@ impl Render {
             last_render_at: now,
             physical_surface_size: physical_size,
             viewport_strategy: ViewportStrategy::FitIntegerScaling,
+            coordinate_system_and_origin: CoordinateSystemAndOrigin::RightHanded,
             virtual_surface_size,
             scale: 1.0,
             debug_tick: 0,
@@ -666,10 +680,8 @@ impl Render {
             let material = weak_material_ref.clone();
 
             let maybe_texture_ref = material.primary_texture();
-            let maybe_texture = maybe_texture_ref.and_then(|found_primary_texture_ref| {
-
-                textures.get(&found_primary_texture_ref)
-            });
+            let maybe_texture = maybe_texture_ref
+                .and_then(|found_primary_texture_ref| textures.get(&found_primary_texture_ref));
 
             for render_item in render_items {
                 let quad_len_before_inner = quad_matrix_and_uv.len();
@@ -1281,11 +1293,15 @@ impl Render {
         let view_proj_matrix = create_view_projection_matrix_from_virtual(
             self.virtual_surface_size.x,
             self.virtual_surface_size.y,
+            self.coordinate_system_and_origin,
         );
 
         let scale_matrix = Matrix4::from_scale(self.scale, self.scale, 0.0);
-        let origin_translation_matrix =
-            Matrix4::from_translation(-self.origin.x as f32, -self.origin.y as f32, 0.0);
+        let origin_translation_matrix = if self.coordinate_system_and_origin.is_origin_top_left() {
+            Matrix4::from_translation(0.0, self.virtual_surface_size.y as f32, 0.0)
+        } else {
+            Matrix4::from_translation(-self.origin.x as f32, -self.origin.y as f32, 0.0)
+        };
 
         let total_matrix = scale_matrix * view_proj_matrix * origin_translation_matrix;
 
@@ -1397,6 +1413,13 @@ impl Render {
         self.items.clear();
     }
 
+    pub fn set_coordinate_system(
+        &mut self,
+        coordinate_system_and_origin: CoordinateSystemAndOrigin,
+    ) {
+        self.coordinate_system_and_origin = coordinate_system_and_origin;
+    }
+
     pub fn render_virtual_texture_to_display(
         &mut self,
         command_encoder: &mut CommandEncoder,
@@ -1483,14 +1506,35 @@ impl Render {
     }
 }
 
-fn create_view_projection_matrix_from_virtual(virtual_width: u16, virtual_height: u16) -> Matrix4 {
+fn create_view_projection_matrix_from_virtual(
+    virtual_width: u16,
+    virtual_height: u16,
+    coordinate_system_and_origin: CoordinateSystemAndOrigin,
+) -> Matrix4 {
+    let (bottom, top) = if coordinate_system_and_origin.is_origin_top_left() {
+        // make NDC Y go down instead of up
+        (virtual_height as f32, 0.0)
+    } else {
+        (0.0, virtual_height as f32)
+    };
+
+    // flip Z by swapping near/far if you want the opposite handedness
+    // (e.g. for a left-handed vs right-handed depth axis)
+    let (near, far) = if coordinate_system_and_origin.is_origin_top_left() {
+        // swap to invert the Z axis
+        ( /* farPlaneDepth */ -1.0, /* nearPlaneDepth */ 1.0 )
+    } else {
+        // standard: near < far maps 0 → near, 1 → far
+        ( /* nearPlaneDepth */ -1.0, /* farPlaneDepth */ 1.0 )
+    };
+
     OrthoInfo {
         left: 0.0,
         right: virtual_width as f32,
-        bottom: 0.0,
-        top: virtual_height as f32,
-        near: 1.0, // Maybe flipped? -1.0
-        far: -1.0, // maybe flipped? 1.0 or 0.0
+        bottom,
+        top,
+        near, // Maybe flipped? -1.0
+        far, // maybe flipped? 1.0 or 0.0
     }
     .into()
 }
