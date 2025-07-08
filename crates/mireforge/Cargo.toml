@@ -34,7 +34,7 @@ limnus-gamepad = "0.0.18"
 limnus-default-stages = "0.0.18"
 
 monotonic-time-rs = "0.0.9"
-fixed32 = "0.0.17"
+fixed32 = "0.0.18"
 int_math = "0.0.2"
 tracing = "0.1.40"
 
