@@ -1,6 +1,6 @@
 [package]
 name = "mireforge-game"
-version = "0.0.20"
+version = "0.0.21"
 edition = "2024"
 repository = "https://github.com/mireforge/mireforge"
 license = "MIT"
@@ -9,10 +9,10 @@ description = "common mireforge game types"
 
 
 [dependencies]
-mireforge-render = { path = "../render", version = "0.0.20" }
-mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.20" }
-mireforge-game-assets = { path = "../game-assets", version = "0.0.20" }
-mireforge-game-audio = { path = "../game-audio", version = "0.0.20" }
+mireforge-render = { path = "../render", version = "0.0.21" }
+mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.21" }
+mireforge-game-assets = { path = "../game-assets", version = "0.0.21" }
+mireforge-game-audio = { path = "../game-audio", version = "0.0.21" }
 
 # Limnus
 limnus-assets = "0.0.18"

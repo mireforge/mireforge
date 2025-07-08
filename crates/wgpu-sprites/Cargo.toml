@@ -1,6 +1,6 @@
 [package]
 name = "mireforge-wgpu-sprites"
-version = "0.0.20"
+version = "0.0.21"
 edition = "2024"
 license = "MIT"
 description = "wgpu sprite utility functions"
@@ -9,7 +9,7 @@ categories = ["game-development"]
 keywords = ["game", "render", "sprites"]
 
 [dependencies]
-mireforge-wgpu = { path = "../wgpu", version = "0.0.20" }
+mireforge-wgpu = { path = "../wgpu", version = "0.0.21" }
 
 limnus-wgpu-math = "0.0.18"
 
