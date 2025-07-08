@@ -99,6 +99,10 @@ impl Font {
         Self { font }
     }
 
+		pub fn info(&self) -> &BMFont {
+			&self.font
+		}
+
     /// # Panics
     ///
     #[must_use]
