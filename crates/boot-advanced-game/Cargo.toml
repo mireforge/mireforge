@@ -1,6 +1,6 @@
 [package]
 name = "mireforge-boot-advanced-game"
-version = "0.0.21"
+version = "0.0.22"
 edition = "2024"
 license = "MIT"
 description = "boot up an advanced game (logic, render, audio)"
@@ -8,10 +8,10 @@ repository = "https://github.com/mireforge/mireforge"
 categories = ["game-development"]
 
 [dependencies]
-mireforge-advanced-game = { path = "../advanced-game", version = "0.0.21" }
-mireforge-material = { path = "../material", version = "0.0.21" }
-mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.21" }
-mireforge-font = { path = "../font", version = "0.0.21" }
+mireforge-advanced-game = { path = "../advanced-game", version = "0.0.22" }
+mireforge-material = { path = "../material", version = "0.0.22" }
+mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.22" }
+mireforge-font = { path = "../font", version = "0.0.22" }
 
 int_math = "0.0.2"
 

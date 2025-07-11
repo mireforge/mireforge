@@ -12,7 +12,7 @@ Add mireforge-render-wgpu to your project’s Cargo.toml:
 
 ```toml
 [dependencies]
-mireforge-render-wgpu = "0.0.21"
+mireforge-render-wgpu = "0.0.22"
 ```
 
 ## License

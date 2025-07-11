@@ -1,6 +1,6 @@
 [package]
 name = "mireforge"
-version = "0.0.21"
+version = "0.0.22"
 edition = "2024"
 license = "MIT"
 description = "2D Game Engine"
@@ -10,16 +10,16 @@ keywords = ["game", "engine"]
 
 [dependencies]
 # Mireforge
-mireforge-boot-game = { path = "../boot-game", version = "0.0.21" }
-mireforge-boot-advanced-game = { path = "../boot-advanced-game", version = "0.0.21" }
-mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.21" }
-mireforge-game-assets = { path = "../game-assets", version = "0.0.21" }
-mireforge-render = { path = "../render", version = "0.0.21" }
-mireforge-game-audio = { path = "../game-audio", version = "0.0.21" }
-mireforge-font = { path = "../font", version = "0.0.21" }
-mireforge-game = { path = "../game", version = "0.0.21" }
-mireforge-advanced-game = { path = "../advanced-game", version = "0.0.21" }
-mireforge-material = { path = "../material", version = "0.0.21" }
+mireforge-boot-game = { path = "../boot-game", version = "0.0.22" }
+mireforge-boot-advanced-game = { path = "../boot-advanced-game", version = "0.0.22" }
+mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.22" }
+mireforge-game-assets = { path = "../game-assets", version = "0.0.22" }
+mireforge-render = { path = "../render", version = "0.0.22" }
+mireforge-game-audio = { path = "../game-audio", version = "0.0.22" }
+mireforge-font = { path = "../font", version = "0.0.22" }
+mireforge-game = { path = "../game", version = "0.0.22" }
+mireforge-advanced-game = { path = "../advanced-game", version = "0.0.22" }
+mireforge-material = { path = "../material", version = "0.0.22" }
 
 # Limnus
 limnus = { version = "0.0.19", default-features = false } # // TODO: should have a more minimal dependency
