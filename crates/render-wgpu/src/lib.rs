@@ -1322,6 +1322,7 @@ impl Render {
             label: Some("Game Render Pass"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                 view: &self.virtual_surface_texture_view,
+                depth_slice: None,
                 resolve_target: None,
                 ops: wgpu::Operations {
                     load: wgpu::LoadOp::Clear(self.clear_color),
@@ -1429,6 +1430,7 @@ impl Render {
             label: Some("Screen Render Pass"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                 view: display_surface_texture_view,
+                depth_slice: None,
                 resolve_target: None,
                 ops: wgpu::Operations {
                     load: wgpu::LoadOp::Clear(self.screen_clear_color),

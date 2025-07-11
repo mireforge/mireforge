@@ -12,7 +12,7 @@ use fixed32::Fp;
 use limnus_app::prelude::{App, AppReturnValue, ApplicationExit, Plugin};
 use limnus_audio_mixer::{AudioMixer, StereoSample};
 use limnus_basic_input::InputMessage;
-use limnus_basic_input::prelude::{ButtonState, KeyCode, MouseButton, MouseScrollDelta};
+use limnus_basic_input::prelude::{ButtonState, KeyCode, MouseButton, MouseScrollDelta, TouchPhase};
 use limnus_default_stages::{FixedUpdate, RenderUpdate, Update};
 use limnus_gamepad::{Axis, Button, GamePadId, Gamepad, GamepadMessage, Gamepads};
 use limnus_local_resource::prelude::LocalResource;
@@ -51,6 +51,8 @@ pub trait Application: Sized + 'static {
     fn cursor_left(&mut self) {}
 
     fn cursor_moved(&mut self, _position: UVec2) {}
+
+    fn touch(&mut self, _position: UVec2, _touch_phase: &TouchPhase) {}
 
     fn mouse_input(&mut self, _state: ButtonState, _button: MouseButton) {}
 
@@ -114,12 +116,9 @@ impl<G: Application> Game<G> {
         }
     }
 
-    pub fn cursor_moved(
-        &mut self,
-        physical_position: UVec2,
-        viewport: URect,
-        virtual_surface_size: UVec2,
-    ) {
+    pub fn virtual_position_from_physical(      physical_position: UVec2,
+                                  viewport: URect,
+                                  virtual_surface_size: UVec2,) -> UVec2{
         let relative_x = max(
             0,
             min(
@@ -144,8 +143,28 @@ impl<G: Application> Game<G> {
         let virtual_position_y =
             (clamped_to_viewport.y as u64 * virtual_surface_size.y as u64) / viewport.size.y as u64;
 
-        let virtual_position = UVec2::new(virtual_position_x as u16, virtual_position_y as u16);
+        UVec2::new(virtual_position_x as u16, virtual_position_y as u16)
+    }
+
+    pub fn cursor_moved(
+        &mut self,
+        physical_position: UVec2,
+        viewport: URect,
+        virtual_surface_size: UVec2,
+    ) {
+        let virtual_position = Self::virtual_position_from_physical(physical_position, viewport, virtual_surface_size);
         self.game.cursor_moved(virtual_position);
+    }
+
+    pub fn touch(
+        &mut self,
+        physical_position: UVec2,
+        touch_phase: &TouchPhase,
+        viewport: URect,
+        virtual_surface_size: UVec2,
+    ) {
+        let virtual_position = Self::virtual_position_from_physical(physical_position, viewport, virtual_surface_size);
+        self.game.touch(virtual_position, touch_phase);
     }
 
     pub fn mouse_move(&mut self, iter: MessagesIterator<WindowMessage>, wgpu_render: &Render) {
@@ -156,6 +175,11 @@ impl<G: Application> Game<G> {
                     wgpu_render.viewport(),
                     wgpu_render.virtual_surface_size_with_scaling(),
                 ),
+                WindowMessage::Touch(position, touch_phase) => {
+                    self.touch(*position, touch_phase,
+                               wgpu_render.viewport(),
+                               wgpu_render.virtual_surface_size_with_scaling(),)
+                }
                 WindowMessage::WindowCreated() => {}
                 WindowMessage::Resized(_) => {}
             }

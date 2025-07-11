@@ -92,7 +92,8 @@ impl<L: ApplicationLogic> GameLogic<L> {
                     wgpu_render.virtual_surface_size_with_scaling(),
                 ),
                 WindowMessage::WindowCreated() => {}
-                WindowMessage::Resized(_) => {}
+                WindowMessage::Resized(_) => {},
+                &WindowMessage::Touch(_, _) => todo!()
             }
         }
     }

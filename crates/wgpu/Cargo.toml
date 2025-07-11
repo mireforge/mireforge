@@ -9,4 +9,4 @@ categories = ["game-development"]
 keywords = ["game", "render"]
 
 [dependencies]
-wgpu = "23.0.0"
+wgpu = "26.0.1"
