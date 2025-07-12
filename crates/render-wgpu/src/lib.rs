@@ -51,7 +51,7 @@ pub enum CoordinateSystemAndOrigin {
 
 impl CoordinateSystemAndOrigin {
     pub fn is_origin_top_left(&self) -> bool {
-        *self == CoordinateSystemAndOrigin::OldSchoolOriginTopLeft
+        *self == Self::OldSchoolOriginTopLeft
     }
 }
 
@@ -217,11 +217,13 @@ impl Render {
         physical_size: UVec2,
         virtual_surface_size: UVec2,
         now: Millis,
+        coordinate_system_and_origin: CoordinateSystemAndOrigin,
     ) -> Self {
         let sprite_info = SpriteInfo::new(
             &device,
             surface_texture_format,
-            create_view_uniform_view_projection_matrix(physical_size),
+            create_view_uniform_view_projection_matrix(physical_size, coordinate_system_and_origin),
+            coordinate_system_and_origin.is_origin_top_left(),
         );
 
         let (virtual_surface_texture, virtual_surface_texture_view, virtual_to_surface_bind_group) =
@@ -256,7 +258,7 @@ impl Render {
             last_render_at: now,
             physical_surface_size: physical_size,
             viewport_strategy: ViewportStrategy::FitIntegerScaling,
-            coordinate_system_and_origin: CoordinateSystemAndOrigin::RightHanded,
+            coordinate_system_and_origin,
             virtual_surface_size,
             scale: 1.0,
             debug_tick: 0,
@@ -707,8 +709,7 @@ impl Render {
                             }
                             _ => {}
                         }
-                        
-              
+
                         let model_matrix = Matrix4::from_translation(
                             render_item.position.x as f32,
                             render_item.position.y as f32,
@@ -1297,9 +1298,15 @@ impl Render {
             self.coordinate_system_and_origin,
         );
 
-        let scale_matrix = Matrix4::from_scale(self.scale, -self.scale, 0.0);
+        let y_scale = if self.coordinate_system_and_origin.is_origin_top_left() {
+            self.scale
+        } else {
+            self.scale
+        };
+
+        let scale_matrix = Matrix4::from_scale(self.scale, y_scale, 0.0);
         let origin_translation_matrix = if self.coordinate_system_and_origin.is_origin_top_left() {
-            Matrix4::from_translation(0.0, self.virtual_surface_size.y as f32, 0.0)
+            Matrix4::from_translation(0.0, 0.0, 0.0)
         } else {
             Matrix4::from_translation(-self.origin.x as f32, -self.origin.y as f32, 0.0)
         };
@@ -1516,7 +1523,8 @@ fn create_view_projection_matrix_from_virtual(
 ) -> Matrix4 {
     let (bottom, top) = if coordinate_system_and_origin.is_origin_top_left() {
         // make NDC Y go down instead of up
-        (virtual_height as f32, 0.0)
+        //((virtual_height as f32), 0.0)
+            (virtual_height as f32, 0.0, )
     } else {
         (0.0, virtual_height as f32)
     };
@@ -1525,10 +1533,10 @@ fn create_view_projection_matrix_from_virtual(
     // (e.g. for a left-handed vs right-handed depth axis)
     let (near, far) = if coordinate_system_and_origin.is_origin_top_left() {
         // swap to invert the Z axis
-        ( /* farPlaneDepth */ -1.0, /* nearPlaneDepth */ 1.0 )
+        (/* farPlaneDepth */ -1.0, /* nearPlaneDepth */ 1.0)
     } else {
         // standard: near < far maps 0 → near, 1 → far
-        ( /* nearPlaneDepth */ -1.0, /* farPlaneDepth */ 1.0 )
+        (/* nearPlaneDepth */ -1.0, /* farPlaneDepth */ 1.0)
     };
 
     OrthoInfo {
@@ -1537,19 +1545,23 @@ fn create_view_projection_matrix_from_virtual(
         bottom,
         top,
         near, // Maybe flipped? -1.0
-        far, // maybe flipped? 1.0 or 0.0
+        far,  // maybe flipped? 1.0 or 0.0
     }
     .into()
 }
 
-fn create_view_uniform_view_projection_matrix(viewport_size: UVec2) -> Matrix4 {
+fn create_view_uniform_view_projection_matrix(viewport_size: UVec2,     coordinate_system_and_origin: CoordinateSystemAndOrigin,) -> Matrix4 {
     let viewport_width = viewport_size.x as f32;
     let viewport_height = viewport_size.y as f32;
 
     let viewport_aspect_ratio = viewport_width / viewport_height;
 
     let scale_x = 1.0;
-    let scale_y = viewport_aspect_ratio; // scaling Y probably gives the best precision?
+    let scale_y = if coordinate_system_and_origin.is_origin_top_left() {
+        -viewport_aspect_ratio
+    } else {
+        viewport_aspect_ratio
+    };
 
     let view_projection_matrix = [
         [scale_x, 0.0, 0.0, 0.0],

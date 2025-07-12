@@ -25,6 +25,7 @@ limnus-screen = "0.0.19"
 limnus-wgpu-window = "0.0.19"
 limnus-clock ="0.0.19"
 limnus-default-stages = "0.0.19"
+limnus-local-resource = "0.0.19"
 
 tracing = "0.1.40"
 wgpu = "26.0.1"

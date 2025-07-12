@@ -9,6 +9,10 @@ use limnus_wgpu_math::{Matrix4, Vec4};
 use tracing::{debug, warn};
 use wgpu::util::DeviceExt;
 use wgpu::{
+    util, BlendState, ColorTargetState, ColorWrites, FrontFace, MultisampleState,
+    PolygonMode, PrimitiveState, PrimitiveTopology,
+};
+use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferAddress, BufferDescriptor, BufferUsages,
     Device, Extent3d, PipelineLayout, PipelineLayoutDescriptor, Queue, RenderPipeline,
@@ -18,10 +22,6 @@ use wgpu::{
     VertexStepMode,
 };
 use wgpu::{BindingResource, PipelineCompilationOptions};
-use wgpu::{
-    BlendState, ColorTargetState, ColorWrites, Face, FrontFace, MultisampleState, PolygonMode,
-    PrimitiveState, PrimitiveTopology, util,
-};
 use wgpu::{BufferBindingType, TextureView};
 
 #[repr(C)]
@@ -165,7 +165,7 @@ const UV_LEFT: f32 = 0.0;
 const IDENTITY_QUAD_VERTICES: &[Vertex] = &[
     Vertex {
         position: [0.0, 0.0],
-        tex_coords: [0.0, UV_DOWN],
+        tex_coords: [UV_LEFT, UV_DOWN],
     }, // Bottom left
     Vertex {
         position: [1.0, 0.0],
@@ -177,15 +177,14 @@ const IDENTITY_QUAD_VERTICES: &[Vertex] = &[
     }, // Top right
     Vertex {
         position: [0.0, 1.0],
-        tex_coords: [0.0, 0.0],
+        tex_coords: [UV_LEFT, 0.0],
     }, // Top left
 ];
-
 
 const IDENTITY_UPPER_LEFT_QUAD_VERTICES: &[Vertex] = &[
     Vertex {
         position: [0.0, 1.0],
-        tex_coords: [0.0, UV_DOWN],
+        tex_coords: [UV_LEFT, UV_DOWN],
     }, // Bottom left
     Vertex {
         position: [1.0, 1.0],
@@ -197,10 +196,9 @@ const IDENTITY_UPPER_LEFT_QUAD_VERTICES: &[Vertex] = &[
     }, // Top right
     Vertex {
         position: [0.0, 0.0],
-        tex_coords: [0.0, UV_UP],
+        tex_coords: [UV_LEFT, UV_UP],
     }, // Top left
 ];
-
 
 // u16 is the smallest index buffer supported by wgpu // IndexFormat
 pub const INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
@@ -312,9 +310,11 @@ impl SpriteInfo {
         device: &Device,
         surface_texture_format: TextureFormat,
         view_proj_matrix: Matrix4,
+        is_upper_left: bool,
     ) -> Self {
         let index_buffer = create_sprite_index_buffer(device, "identity quad index buffer");
-        let vertex_buffer = create_sprite_vertex_buffer(device, "identity quad vertex buffer", true);
+        let vertex_buffer =
+            create_sprite_vertex_buffer(device, "identity quad vertex buffer", is_upper_left);
 
         // ------------------------------- Camera View Projection Matrix in Group 0 --------------------------
         let camera_uniform_buffer = create_camera_uniform_buffer(
@@ -599,7 +599,11 @@ pub fn load_texture_from_memory(
 
 #[must_use]
 pub fn create_sprite_vertex_buffer(device: &Device, label: &str, is_upper_left: bool) -> Buffer {
-    let quad = if is_upper_left { IDENTITY_UPPER_LEFT_QUAD_VERTICES } else { IDENTITY_QUAD_VERTICES};
+    let quad = if is_upper_left {
+        IDENTITY_UPPER_LEFT_QUAD_VERTICES
+    } else {
+        IDENTITY_QUAD_VERTICES
+    };
     device.create_buffer_init(&util::BufferInitDescriptor {
         label: Some(label),
         contents: bytemuck::cast_slice(quad),
