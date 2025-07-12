@@ -156,27 +156,51 @@ impl SpriteInstanceUniform {
 }
 
 // wgpu has, for very unknown reasons, put coordinate texture origo at top-left(!)
-const RIGHT: f32 = 1.0;
-const DOWN: f32 = 1.0;
+const UV_RIGHT: f32 = 1.0;
+const UV_DOWN: f32 = 1.0;
+
+const UV_UP: f32 = 0.0;
+const UV_LEFT: f32 = 0.0;
 
 const IDENTITY_QUAD_VERTICES: &[Vertex] = &[
     Vertex {
         position: [0.0, 0.0],
-        tex_coords: [0.0, DOWN],
+        tex_coords: [0.0, UV_DOWN],
     }, // Bottom left
     Vertex {
         position: [1.0, 0.0],
-        tex_coords: [RIGHT, DOWN],
+        tex_coords: [UV_RIGHT, UV_DOWN],
     }, // Bottom right
     Vertex {
         position: [1.0, 1.0],
-        tex_coords: [RIGHT, 0.0],
+        tex_coords: [UV_RIGHT, 0.0],
     }, // Top right
     Vertex {
         position: [0.0, 1.0],
         tex_coords: [0.0, 0.0],
     }, // Top left
 ];
+
+
+const IDENTITY_UPPER_LEFT_QUAD_VERTICES: &[Vertex] = &[
+    Vertex {
+        position: [0.0, 1.0],
+        tex_coords: [0.0, UV_DOWN],
+    }, // Bottom left
+    Vertex {
+        position: [1.0, 1.0],
+        tex_coords: [UV_RIGHT, UV_DOWN],
+    }, // Bottom right
+    Vertex {
+        position: [1.0, 0.0],
+        tex_coords: [UV_RIGHT, UV_UP],
+    }, // Top right
+    Vertex {
+        position: [0.0, 0.0],
+        tex_coords: [0.0, UV_UP],
+    }, // Top left
+];
+
 
 // u16 is the smallest index buffer supported by wgpu // IndexFormat
 pub const INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
@@ -290,7 +314,7 @@ impl SpriteInfo {
         view_proj_matrix: Matrix4,
     ) -> Self {
         let index_buffer = create_sprite_index_buffer(device, "identity quad index buffer");
-        let vertex_buffer = create_sprite_vertex_buffer(device, "identity quad vertex buffer");
+        let vertex_buffer = create_sprite_vertex_buffer(device, "identity quad vertex buffer", true);
 
         // ------------------------------- Camera View Projection Matrix in Group 0 --------------------------
         let camera_uniform_buffer = create_camera_uniform_buffer(
@@ -574,10 +598,11 @@ pub fn load_texture_from_memory(
 }
 
 #[must_use]
-pub fn create_sprite_vertex_buffer(device: &Device, label: &str) -> Buffer {
+pub fn create_sprite_vertex_buffer(device: &Device, label: &str, is_upper_left: bool) -> Buffer {
+    let quad = if is_upper_left { IDENTITY_UPPER_LEFT_QUAD_VERTICES } else { IDENTITY_QUAD_VERTICES};
     device.create_buffer_init(&util::BufferInitDescriptor {
         label: Some(label),
-        contents: bytemuck::cast_slice(IDENTITY_QUAD_VERTICES),
+        contents: bytemuck::cast_slice(quad),
         usage: BufferUsages::VERTEX,
     })
 }
@@ -722,7 +747,7 @@ fn create_pipeline_with_buffers(
             topology: PrimitiveTopology::TriangleList,
             strip_index_format: None,
             front_face: FrontFace::Ccw,
-            cull_mode: Some(Face::Back),
+            cull_mode: None,
             unclipped_depth: false,
             polygon_mode: PolygonMode::Fill,
             conservative: false,

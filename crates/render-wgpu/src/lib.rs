@@ -707,7 +707,8 @@ impl Render {
                             }
                             _ => {}
                         }
-
+                        
+              
                         let model_matrix = Matrix4::from_translation(
                             render_item.position.x as f32,
                             render_item.position.y as f32,
@@ -1296,7 +1297,7 @@ impl Render {
             self.coordinate_system_and_origin,
         );
 
-        let scale_matrix = Matrix4::from_scale(self.scale, self.scale, 0.0);
+        let scale_matrix = Matrix4::from_scale(self.scale, -self.scale, 0.0);
         let origin_translation_matrix = if self.coordinate_system_and_origin.is_origin_top_left() {
             Matrix4::from_translation(0.0, self.virtual_surface_size.y as f32, 0.0)
         } else {
