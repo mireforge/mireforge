@@ -6,8 +6,8 @@ use bmf_parser::BMFont;
 use int_math::{URect, UVec2, Vec2};
 use limnus_app::prelude::{App, Plugin};
 use limnus_asset_registry::AssetRegistry;
-use limnus_assets::Assets;
 use limnus_assets::prelude::{Asset, AssetName, Id, RawWeakId, WeakId};
+use limnus_assets::Assets;
 use limnus_assets_loader::{
     AssetLoader, ConversionError, ResourceStorage, WrappedAssetLoaderRegistry,
 };
@@ -95,6 +95,7 @@ pub struct GlyphInfo {
 pub struct Glyph {
     pub relative_position: Vec2,
     pub texture_rectangle: URect,
+    pub cursor: Vec2,
     pub info: GlyphInfo,
 }
 
@@ -116,14 +117,17 @@ impl Font {
     #[must_use]
     pub fn draw(&self, text: &str) -> Vec<Glyph> {
         let mut x = 0;
-        let y = 0;
+        let mut y = 0;
         let common = self.font.common.as_ref().unwrap();
         let height = self.font.info.as_ref().unwrap().font_size;
         let mut glyphs = Vec::new();
         let factor = 1u16;
         let y_offset = -(common.line_height as i16 - common.base as i16);
         for ch in text.chars() {
-            if let Some(bm_char) = self.font.chars.get(&(ch as u32)) {
+            if ch == '\n' {
+                x = 0;
+                y -= common.line_height as i16;
+            } else if let Some(bm_char) = self.font.chars.get(&(ch as u32)) {
                 let cx = x + bm_char.x_offset * factor as i16;
                 let cy = y + y_offset + height - (bm_char.height as i16) - bm_char.y_offset;
 
@@ -139,6 +143,7 @@ impl Font {
                             y: bm_char.height,
                         },
                     },
+                    cursor: Vec2::new(x, y),
                     info: GlyphInfo {
                         x_offset: bm_char.x_offset,
                         y_offset: bm_char.y_offset,
