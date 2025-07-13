@@ -85,9 +85,17 @@ impl AssetLoader for FontConverter {
 }
 
 #[derive(Debug)]
+pub struct GlyphInfo {
+    pub x_advance: i16,
+    pub x_offset: i16,
+    pub y_offset: i16,
+}
+
+#[derive(Debug)]
 pub struct Glyph {
     pub relative_position: Vec2,
     pub texture_rectangle: URect,
+    pub info: GlyphInfo,
 }
 
 impl Font {
@@ -99,9 +107,9 @@ impl Font {
         Self { font }
     }
 
-		pub fn info(&self) -> &BMFont {
-			&self.font
-		}
+    pub fn info(&self) -> &BMFont {
+        &self.font
+    }
 
     /// # Panics
     ///
@@ -130,6 +138,11 @@ impl Font {
                             x: bm_char.width,
                             y: bm_char.height,
                         },
+                    },
+                    info: GlyphInfo {
+                        x_offset: bm_char.x_offset,
+                        y_offset: bm_char.y_offset,
+                        x_advance: bm_char.x_advance,
                     },
                 };
                 x += bm_char.x_advance * factor as i16;

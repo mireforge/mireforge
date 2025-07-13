@@ -99,6 +99,15 @@ impl Color {
     }
 
     #[must_use]
+    pub fn from_hex(value: u32) -> Self {
+        let r = ((value >> 24) & 0xFF) as u8;
+        let g = ((value >> 16) & 0xFF) as u8;
+        let b = ((value >> 8) & 0xFF) as u8;
+        let a = ((value) & 0xFF) as u8;
+        Self::from_octet(r, g, b, a)
+    }
+
+    #[must_use]
     pub fn to_f32_slice(&self) -> [f32; 4] {
         [
             self.r as f32 / 255.0,

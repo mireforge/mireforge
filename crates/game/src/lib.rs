@@ -12,7 +12,9 @@ use fixed32::Fp;
 use limnus_app::prelude::{App, AppReturnValue, ApplicationExit, Plugin};
 use limnus_audio_mixer::{AudioMixer, StereoSample};
 use limnus_basic_input::InputMessage;
-use limnus_basic_input::prelude::{ButtonState, KeyCode, MouseButton, MouseScrollDelta, TouchPhase};
+use limnus_basic_input::prelude::{
+    ButtonState, KeyCode, MouseButton, MouseScrollDelta, TouchPhase,
+};
 use limnus_default_stages::{FixedUpdate, RenderUpdate, Update};
 use limnus_gamepad::{Axis, Button, GamePadId, Gamepad, GamepadMessage, Gamepads};
 use limnus_local_resource::prelude::LocalResource;
@@ -116,9 +118,11 @@ impl<G: Application> Game<G> {
         }
     }
 
-    pub fn virtual_position_from_physical(      physical_position: UVec2,
-                                  viewport: URect,
-                                  virtual_surface_size: UVec2,) -> UVec2{
+    pub fn virtual_position_from_physical(
+        physical_position: UVec2,
+        viewport: URect,
+        virtual_surface_size: UVec2,
+    ) -> UVec2 {
         let relative_x = max(
             0,
             min(
@@ -152,7 +156,8 @@ impl<G: Application> Game<G> {
         viewport: URect,
         virtual_surface_size: UVec2,
     ) {
-        let virtual_position = Self::virtual_position_from_physical(physical_position, viewport, virtual_surface_size);
+        let virtual_position =
+            Self::virtual_position_from_physical(physical_position, viewport, virtual_surface_size);
         self.game.cursor_moved(virtual_position);
     }
 
@@ -163,7 +168,8 @@ impl<G: Application> Game<G> {
         viewport: URect,
         virtual_surface_size: UVec2,
     ) {
-        let virtual_position = Self::virtual_position_from_physical(physical_position, viewport, virtual_surface_size);
+        let virtual_position =
+            Self::virtual_position_from_physical(physical_position, viewport, virtual_surface_size);
         self.game.touch(virtual_position, touch_phase);
     }
 
@@ -175,11 +181,12 @@ impl<G: Application> Game<G> {
                     wgpu_render.viewport(),
                     wgpu_render.virtual_surface_size_with_scaling(),
                 ),
-                WindowMessage::Touch(position, touch_phase) => {
-                    self.touch(*position, touch_phase,
-                               wgpu_render.viewport(),
-                               wgpu_render.virtual_surface_size_with_scaling(),)
-                }
+                WindowMessage::Touch(position, touch_phase) => self.touch(
+                    *position,
+                    touch_phase,
+                    wgpu_render.viewport(),
+                    wgpu_render.virtual_surface_size_with_scaling(),
+                ),
                 WindowMessage::WindowCreated() => {}
                 WindowMessage::Resized(_) => {}
             }
