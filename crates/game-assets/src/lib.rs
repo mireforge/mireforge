@@ -8,8 +8,7 @@ use limnus_asset_id::{AssetName, Id};
 use limnus_asset_registry::AssetRegistry;
 use limnus_audio_mixer::{StereoSample, StereoSampleRef};
 use limnus_resource::ResourceStorage;
-use mireforge_font::Font;
-use mireforge_font::Glyph;
+use mireforge_font::{Font, GlyphDraw};
 use mireforge_render_wgpu::{
     FixedAtlas, FontAndMaterial, Material, MaterialBase, MaterialKind, MaterialRef,
     NineSliceAndMaterial, Slices, Texture, TextureRef,
@@ -60,7 +59,7 @@ pub trait Assets {
     fn bm_font_txt(&mut self, name: impl Into<AssetName>) -> FontAndMaterial;
 
     #[must_use]
-    fn text_glyphs(&self, text: &str, font_and_mat: &FontAndMaterial) -> Option<Vec<Glyph>>;
+    fn text_glyphs(&self, text: &str, font_and_mat: &FontAndMaterial) -> Option<GlyphDraw>;
 
     #[must_use]
     fn font(&self, font_ref: &Id<Font>) -> Option<&Font>;
@@ -238,7 +237,7 @@ impl Assets for GameAssets<'_> {
         }
     }
 
-    fn text_glyphs(&self, text: &str, font_and_mat: &FontAndMaterial) -> Option<Vec<Glyph>> {
+    fn text_glyphs(&self, text: &str, font_and_mat: &FontAndMaterial) -> Option<GlyphDraw> {
         match self.font(&font_and_mat.font_ref) {
             Some(font) => {
                 let glyphs = font.draw(text);

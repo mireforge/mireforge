@@ -834,8 +834,8 @@ impl Render {
                         }
                         let font = result.unwrap();
 
-                        let glyphs = font.draw(&text.text);
-                        for glyph in glyphs {
+                        let glyph_draw = font.draw(&text.text);
+                        for glyph in glyph_draw.glyphs {
                             let pos = render_item.position + Vec3::from(glyph.relative_position);
                             let texture_size = glyph.texture_rectangle.size;
                             let model_matrix =

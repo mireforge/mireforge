@@ -11,7 +11,7 @@ const START_WINDOW_SIZE: UVec2 = UVec2::new(VIRTUAL_SCREEN_SIZE.x * 2, VIRTUAL_S
 pub struct FontGlyphExample {
     font: FontAndMaterial,
     offset: u16,
-    glyphs: Option<Vec<Glyph>>,
+    glyphs: Option<GlyphDraw>,
 }
 const REALLY_LONG_STRING: &str = "\
 ... it will start soon...         Hello, can you see this text? If so, it seems to be working. \
@@ -39,9 +39,9 @@ impl Application for FontGlyphExample {
         const MAX_AMPLITUDE: i16 = 32;
         let time_angle = (self.offset as f32) * 0.02;
 
-        if let Some(glyphs) = &self.glyphs {
+        if let Some(glyph_draw) = &self.glyphs {
             let start_x = (VIRTUAL_SCREEN_SIZE.x as i16) - (self.offset as i16);
-            for glyph in glyphs {
+            for glyph in &glyph_draw.glyphs {
                 let local_angle = (glyph.relative_position.x as f32) * 0.002;
                 let amplitude = ((time_angle + local_angle).sin() * MAX_AMPLITUDE as f32) as i16;
                 gfx.sprite_atlas(

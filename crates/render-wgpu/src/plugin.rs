@@ -7,7 +7,6 @@ use limnus_app::prelude::{App, Plugin};
 use limnus_assets::prelude::Assets as LimnusAssets;
 use limnus_clock::Clock;
 use limnus_default_stages::{RenderFirst, RenderPostUpdate};
-use limnus_local_resource::prelude::LocalResource;
 use limnus_screen::{Window, WindowMessage};
 use limnus_system_params::{LoRe, Msg, Re, ReM};
 use limnus_wgpu_window::WgpuWindow;
