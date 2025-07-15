@@ -223,7 +223,7 @@ impl ApplicationAudio<ExampleLogic> for ExampleAudio {
 }
 
 fn main() {
-    run_advanced::<ExampleLogic, ExampleRender, ExampleAudio>(
+    let _ = run_advanced::<ExampleLogic, ExampleRender, ExampleAudio>(
         "Gamepad Example",
         VIRTUAL_SCREEN_SIZE,
         START_WINDOW_SIZE,

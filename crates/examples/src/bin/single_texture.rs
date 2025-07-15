@@ -102,7 +102,7 @@ impl Application for SingleTextureExample {
 }
 
 fn main() {
-    run::<SingleTextureExample>(
+    let _ = run::<SingleTextureExample>(
         "Single Texture Example",
         VIRTUAL_SCREEN_SIZE,
         START_WINDOW_SIZE,

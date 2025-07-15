@@ -47,5 +47,5 @@ impl Application for FontExample {
 }
 
 fn main() {
-    run::<FontExample>("Font Example", VIRTUAL_SCREEN_SIZE, START_WINDOW_SIZE);
+    let _ = run::<FontExample>("Font Example", VIRTUAL_SCREEN_SIZE, START_WINDOW_SIZE);
 }

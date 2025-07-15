@@ -157,5 +157,5 @@ impl Application for TileMapExample {
 }
 
 fn main() {
-    run::<TileMapExample>("TileMap Example", VIRTUAL_SCREEN_SIZE, START_WINDOW_SIZE);
+    let _ = run::<TileMapExample>("TileMap Example", VIRTUAL_SCREEN_SIZE, START_WINDOW_SIZE);
 }

@@ -61,5 +61,5 @@ impl Application for NineSliceExample {
 }
 
 fn main() {
-    run::<NineSliceExample>("Nine Slice Example", VIRTUAL_SCREEN_SIZE, START_WINDOW_SIZE);
+    let _ = run::<NineSliceExample>("Nine Slice Example", VIRTUAL_SCREEN_SIZE, START_WINDOW_SIZE);
 }

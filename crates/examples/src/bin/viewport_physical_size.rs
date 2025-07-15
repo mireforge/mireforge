@@ -159,7 +159,7 @@ impl Application for ViewportPhysicalSizeExample {
 }
 
 fn main() {
-    run::<ViewportPhysicalSizeExample>(
+    let _ = run::<ViewportPhysicalSizeExample>(
         "Viewport Physical Size Example",
         VIRTUAL_SCREEN_SIZE,
         START_WINDOW_SIZE,

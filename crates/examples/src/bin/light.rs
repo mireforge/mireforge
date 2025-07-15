@@ -87,5 +87,5 @@ impl Application for LightExample {
 }
 
 fn main() {
-    run::<LightExample>("Alpha Mask Example", VIRTUAL_SCREEN_SIZE, START_WINDOW_SIZE);
+    let _ = run::<LightExample>("Alpha Mask Example", VIRTUAL_SCREEN_SIZE, START_WINDOW_SIZE);
 }

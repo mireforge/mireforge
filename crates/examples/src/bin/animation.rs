@@ -150,5 +150,5 @@ impl Application for AnimationExample {
 }
 
 fn main() {
-    run::<AnimationExample>("Animation Example", VIRTUAL_SCREEN_SIZE, START_WINDOW_SIZE);
+    let _ = run::<AnimationExample>("Animation Example", VIRTUAL_SCREEN_SIZE, START_WINDOW_SIZE);
 }

@@ -86,5 +86,5 @@ fn hsv_to_rgb(h: f32, s: f32, v: f32, a: f32) -> Color {
 }
 
 fn main() {
-    run::<QuadExample>("Quad Example", VIRTUAL_SCREEN_SIZE, START_WINDOW_SIZE);
+    let _ = run::<QuadExample>("Quad Example", VIRTUAL_SCREEN_SIZE, START_WINDOW_SIZE);
 }
