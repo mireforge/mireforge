@@ -11,7 +11,7 @@ Add mireforge-wgpu-sprites to your project's `Cargo.toml`:
 
 ```toml
 [dependencies]
-mireforge-wgpu-sprites = "0.0.23"
+mireforge-wgpu-sprites = "0.0.24"
 ```
 
 ## License
