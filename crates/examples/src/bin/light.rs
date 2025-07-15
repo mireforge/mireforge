@@ -55,6 +55,7 @@ impl Application for LightExample {
             flip_y: false,
             pivot: Vec2 { y: 0, x: 0 },
             color: background_color,
+            anchor: Anchor::LowerLeft,
         };
 
         gfx.draw_sprite_ex(
@@ -78,6 +79,7 @@ impl Application for LightExample {
                 flip_y: false,
                 pivot: Vec2 { x: 0, y: 0 },
                 color,
+                anchor: Anchor::LowerLeft,
             };
             gfx.draw_sprite_ex((x, y, 0).into(), &self.light, &sprite_params);
         }

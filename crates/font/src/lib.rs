@@ -126,7 +126,6 @@ impl Font {
         let mut x = 0;
         let y = 0;
         let common = self.font.common.as_ref().unwrap();
-        let height = self.font.info.as_ref().unwrap().font_size;
         let mut glyphs = Vec::new();
         let factor = 1u16;
         let y_offset = (common.base as i16) + 1;

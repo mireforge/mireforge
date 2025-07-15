@@ -59,7 +59,7 @@ impl Application for FontGlyphExample {
 }
 
 fn main() {
-    run::<FontGlyphExample>(
+    let _ = run::<FontGlyphExample>(
         "Font Glyphs Example",
         VIRTUAL_SCREEN_SIZE,
         START_WINDOW_SIZE,
