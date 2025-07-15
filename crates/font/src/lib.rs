@@ -128,11 +128,11 @@ impl Font {
         let height = self.font.info.as_ref().unwrap().font_size;
         let mut glyphs = Vec::new();
         let factor = 1u16;
-        let y_offset = -(common.line_height as i16 - common.base as i16);
+        let y_offset = (common.base as i16) + 1;
         for ch in text.chars() {
             if let Some(bm_char) = self.font.chars.get(&(ch as u32)) {
                 let cx = x + bm_char.x_offset * factor as i16;
-                let cy = y + y_offset + height - (bm_char.height as i16) - bm_char.y_offset;
+                let cy = y + y_offset - (bm_char.height as i16) - bm_char.y_offset;
 
                 let glyph = Glyph {
                     relative_position: Vec2 { x: cx, y: cy },

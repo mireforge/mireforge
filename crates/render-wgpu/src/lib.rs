@@ -707,7 +707,7 @@ impl Render {
                         }
 
                         let y_offset = if params.anchor == Anchor::UpperLeft {
-                            (current_texture_size.y as  i16)
+                            current_texture_size.y as i16
                         } else {
                             0
                         };
