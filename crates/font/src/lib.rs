@@ -6,8 +6,8 @@ use bmf_parser::BMFont;
 use int_math::{URect, UVec2, Vec2};
 use limnus_app::prelude::{App, Plugin};
 use limnus_asset_registry::AssetRegistry;
-use limnus_assets::prelude::{Asset, AssetName, Id, RawWeakId, WeakId};
 use limnus_assets::Assets;
+use limnus_assets::prelude::{Asset, AssetName, Id, RawWeakId, WeakId};
 use limnus_assets_loader::{
     AssetLoader, ConversionError, ResourceStorage, WrappedAssetLoaderRegistry,
 };
@@ -114,7 +114,8 @@ impl Font {
         Self { font }
     }
 
-    #[must_use] pub fn info(&self) -> &BMFont {
+    #[must_use]
+    pub const fn info(&self) -> &BMFont {
         &self.font
     }
 

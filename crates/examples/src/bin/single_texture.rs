@@ -20,8 +20,8 @@ impl SingleTextureExample {
         let angle = (self.tick_count + offset) as f32 * 0.1 * speed;
         let sin_value = angle.sin();
 
-        let pos_sin = (sin_value + 1.0) / 2.0;
-        let pos_sin_int = (pos_sin * (max - min) as f32) as u16;
+        let pos_sin = f32::midpoint(sin_value, 1.0);
+        let pos_sin_int = (pos_sin * f32::from(max - min)) as u16;
 
         pos_sin_int as i16 + min
     }
@@ -89,7 +89,7 @@ impl Application for SingleTextureExample {
                         0.15,
                         10,
                         VIRTUAL_SCREEN_SIZE.y as i16,
-                        frame_index as u32 * 12,
+                        u32::from(frame_index) * 12,
                     ),
                     frame_index as i16,
                 )

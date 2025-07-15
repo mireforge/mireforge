@@ -1,4 +1,7 @@
-use crate::{FixedAtlas, FontAndMaterial, FrameLookup, MaterialRef, NineSliceAndMaterial, QuadParams, SpriteParams};
+use crate::{
+    FixedAtlas, FontAndMaterial, FrameLookup, MaterialRef, NineSliceAndMaterial, QuadParams,
+    SpriteParams,
+};
 use int_math::{URect, UVec2, Vec2, Vec3};
 use mireforge_render::{AspectRatio, Color, ViewportStrategy, VirtualScale};
 use monotonic_time_rs::Millis;

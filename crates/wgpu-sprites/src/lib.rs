@@ -868,7 +868,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
 }
 
 #[allow(unused)]
-pub const fn masked_texture_tinted_fragment_source() -> &'static str {
+#[must_use] pub const fn masked_texture_tinted_fragment_source() -> &'static str {
     r"
 // Masked Texture and tinted shader
 

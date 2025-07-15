@@ -35,8 +35,8 @@ fn fun_value(tick_count: u32, speed: f32, min: i16, max: i16, offset: u32) -> i1
     let angle = (tick_count + offset) as f32 * 0.1 * speed;
     let sin_value = angle.sin();
 
-    let pos_sin = (sin_value + 1.0) / 2.0;
-    let pos_sin_int = (pos_sin * (max - min) as f32) as u16;
+    let pos_sin = f32::midpoint(sin_value, 1.0);
+    let pos_sin_int = (pos_sin * f32::from(max - min)) as u16;
 
     pos_sin_int as i16 + min
 }
@@ -119,7 +119,7 @@ impl Application for TileMapExample {
         );
 
         let mut converted_zoom =
-            (self.scroll_wheel_zoom as u64 * 5 / SCROLL_WHEEL_MAX as u64) as u8;
+            (self.scroll_wheel_zoom as u64 * 5 / u64::from(SCROLL_WHEEL_MAX)) as u8;
         converted_zoom = converted_zoom.clamp(0, 5) + 1;
 
         gfx.tilemap_params(

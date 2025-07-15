@@ -52,7 +52,7 @@ impl FrameAnimationConfig {
         Self {
             start_frame,
             count,
-            frame_duration: MillisDuration::from_millis(1000) / (fps as u32),
+            frame_duration: MillisDuration::from_millis(1000) / u32::from(fps),
         }
     }
 }
@@ -98,15 +98,15 @@ impl FrameAnimation {
 
         match self.play_mode {
             PlayMode::Once => {
-                if frames_since_start >= self.config.count as u64 {
+                if frames_since_start >= u64::from(self.config.count) {
                     self.is_playing = false;
-                    self.relative_frame = (self.config.count as u16 - 1) as u8;
+                    self.relative_frame = (u16::from(self.config.count) - 1) as u8;
                 } else {
                     self.relative_frame = frames_since_start as u8;
                 }
             }
             PlayMode::Repeat => {
-                self.relative_frame = (frames_since_start % self.config.count as u64) as u8;
+                self.relative_frame = (frames_since_start % u64::from(self.config.count)) as u8;
             }
         }
     }
@@ -131,13 +131,13 @@ impl FrameAnimation {
         self.relative_frame as u16
     }
 
-    pub fn play(&mut self, now: Millis) {
+    pub const fn play(&mut self, now: Millis) {
         self.is_playing = true;
         self.play_mode = PlayMode::Once;
         self.started_at_time = now;
     }
 
-    pub fn play_repeat(&mut self, now: Millis) {
+    pub const fn play_repeat(&mut self, now: Millis) {
         self.is_playing = true;
         self.play_mode = PlayMode::Repeat;
         self.started_at_time = now;

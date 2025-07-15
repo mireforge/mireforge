@@ -13,7 +13,7 @@ use mireforge_material::MaterialPlugin;
 use mireforge_render_wgpu::plugin::RenderWgpuPlugin;
 
 // #[must_use] // TODO: should be able to convert AppReturnValue in the future
-pub fn run_advanced<L: ApplicationLogic, R: ApplicationRender<L>, A: ApplicationAudio<L>>(
+#[must_use] pub fn run_advanced<L: ApplicationLogic, R: ApplicationRender<L>, A: ApplicationAudio<L>>(
     title: &str,
     virtual_size: UVec2,
     requested_surface_size: UVec2,

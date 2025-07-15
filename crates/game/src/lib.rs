@@ -110,7 +110,7 @@ impl<G: Application> Game<G> {
                 }
                 InputMessage::MouseWheel(scroll_delta, _touch_phase) => {
                     if let MouseScrollDelta::LineDelta(delta) = scroll_delta {
-                        let game_scroll_y = (-delta.y as f32 * 120.0) as i16;
+                        let game_scroll_y = (f32::from(-delta.y) * 120.0) as i16;
                         self.game.mouse_wheel(game_scroll_y);
                     }
                 }
@@ -118,7 +118,7 @@ impl<G: Application> Game<G> {
         }
     }
 
-    pub fn virtual_position_from_physical(
+    #[must_use] pub fn virtual_position_from_physical(
         physical_position: UVec2,
         viewport: URect,
         virtual_surface_size: UVec2,
@@ -126,26 +126,26 @@ impl<G: Application> Game<G> {
         let relative_x = max(
             0,
             min(
-                physical_position.x as i64 - viewport.position.x as i64,
-                (viewport.size.x - 1) as i64,
+                i64::from(physical_position.x) - i64::from(viewport.position.x),
+                i64::from(viewport.size.x - 1),
             ),
         );
 
         let relative_y = max(
             0,
             min(
-                physical_position.y as i64 - viewport.position.y as i64,
-                (viewport.size.y - 1) as i64,
+                i64::from(physical_position.y) - i64::from(viewport.position.y),
+                i64::from(viewport.size.y - 1),
             ),
         );
 
         let clamped_to_viewport: UVec2 = UVec2::new(relative_x as u16, relative_y as u16);
 
         let virtual_position_x =
-            (clamped_to_viewport.x as u64 * virtual_surface_size.x as u64) / viewport.size.x as u64;
+            (u64::from(clamped_to_viewport.x) * u64::from(virtual_surface_size.x)) / u64::from(viewport.size.x);
 
         let virtual_position_y =
-            (clamped_to_viewport.y as u64 * virtual_surface_size.y as u64) / viewport.size.y as u64;
+            (u64::from(clamped_to_viewport.y) * u64::from(virtual_surface_size.y)) / u64::from(viewport.size.y);
 
         UVec2::new(virtual_position_x as u16, virtual_position_y as u16)
     }
@@ -277,11 +277,10 @@ pub fn gamepad_input_tick<G: Application>(
         match gamepad_message {
             GamepadMessage::Connected(_gamepad_id, _gamepad_name) => {}
             GamepadMessage::Disconnected(gamepad_id) => {
-                if let Some(gamepad) = gamepads.gamepad(*gamepad_id) {
-                    if gamepad.is_active {
+                if let Some(gamepad) = gamepads.gamepad(*gamepad_id)
+                    && gamepad.is_active {
                         internal_game.game.gamepad_disconnected(*gamepad_id);
                     }
-                }
             }
             GamepadMessage::Activated(gamepad_id) => {
                 if let Some(gamepad) = gamepads.gamepad(*gamepad_id) {
@@ -291,24 +290,22 @@ pub fn gamepad_input_tick<G: Application>(
                 }
             }
             GamepadMessage::ButtonChanged(gamepad_id, button, value) => {
-                if let Some(gamepad) = gamepads.gamepad(*gamepad_id) {
-                    if gamepad.is_active {
+                if let Some(gamepad) = gamepads.gamepad(*gamepad_id)
+                    && gamepad.is_active {
                         internal_game.game.gamepad_button_changed(
                             gamepad,
                             *button,
                             Fp::from(*value),
                         );
                     }
-                }
             }
             GamepadMessage::AxisChanged(gamepad_id, axis, value) => {
-                if let Some(gamepad) = gamepads.gamepad(*gamepad_id) {
-                    if gamepad.is_active {
+                if let Some(gamepad) = gamepads.gamepad(*gamepad_id)
+                    && gamepad.is_active {
                         internal_game
                             .game
                             .gamepad_axis_changed(gamepad, *axis, Fp::from(*value));
                     }
-                }
             }
         }
     }

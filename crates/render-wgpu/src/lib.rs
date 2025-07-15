@@ -248,7 +248,7 @@ impl Render {
         }
     }
 
-    pub fn create_virtual_texture(
+    #[must_use] pub fn create_virtual_texture(
         device: &Device,
         surface_texture_format: TextureFormat,
         virtual_surface_size: UVec2,
@@ -257,8 +257,8 @@ impl Render {
         let virtual_surface_texture = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("Render Texture"),
             size: wgpu::Extent3d {
-                width: virtual_surface_size.x as u32,
-                height: virtual_surface_size.y as u32,
+                width: u32::from(virtual_surface_size.x),
+                height: u32::from(virtual_surface_size.y),
                 depth_or_array_layers: 1,
             },
             mip_level_count: 1,
@@ -295,7 +295,7 @@ impl Render {
         self.last_render_at = now;
     }
 
-    pub const fn virtual_surface_size_with_scaling(&self) -> UVec2 {
+    #[must_use] pub const fn virtual_surface_size_with_scaling(&self) -> UVec2 {
         match self.viewport_strategy {
             ViewportStrategy::FitIntegerScaling | ViewportStrategy::FitFloatScaling => {
                 self.virtual_surface_size
@@ -304,11 +304,11 @@ impl Render {
         }
     }
 
-    pub const fn physical_surface_size(&self) -> UVec2 {
+    #[must_use] pub const fn physical_surface_size(&self) -> UVec2 {
         self.physical_surface_size
     }
 
-    pub const fn viewport(&self) -> URect {
+    #[must_use] pub const fn viewport(&self) -> URect {
         self.viewport
     }
 
@@ -355,7 +355,7 @@ impl Render {
 
         self.items.push(RenderItem {
             position,
-            material_ref: masked_material_ref.clone(),
+            material_ref: masked_material_ref,
             renderable: Renderable::Mask(texture_offset, color),
         });
     }
@@ -411,17 +411,17 @@ impl Render {
 
     #[must_use]
     pub fn viewport_from_float_scale(physical_size: UVec2, virtual_size: UVec2) -> URect {
-        let window_aspect = physical_size.x as f32 / physical_size.y as f32;
-        let virtual_aspect = virtual_size.x as f32 / virtual_size.y as f32;
+        let window_aspect = f32::from(physical_size.x) / f32::from(physical_size.y);
+        let virtual_aspect = f32::from(virtual_size.x) / f32::from(virtual_size.y);
 
         if physical_size.x < virtual_size.x || physical_size.y < virtual_size.y {
             return URect::new(0, 0, physical_size.x, physical_size.y);
         }
 
         let mut float_scale = if window_aspect > virtual_aspect {
-            physical_size.y as f32 / virtual_size.y as f32
+            f32::from(physical_size.y) / f32::from(virtual_size.y)
         } else {
-            physical_size.x as f32 / virtual_size.x as f32
+            f32::from(physical_size.x) / f32::from(virtual_size.x)
         };
 
         if float_scale < 0.01 {
@@ -429,8 +429,8 @@ impl Render {
         }
 
         let viewport_actual_size = UVec2::new(
-            (virtual_size.x as f32 * float_scale) as u16,
-            (virtual_size.y as f32 * float_scale) as u16,
+            (f32::from(virtual_size.x) * float_scale) as u16,
+            (f32::from(virtual_size.y) * float_scale) as u16,
         );
 
         let border_size = physical_size - viewport_actual_size;
@@ -445,7 +445,7 @@ impl Render {
         )
     }
 
-    pub fn resize(&mut self, physical_size: UVec2) {
+    pub const fn resize(&mut self, physical_size: UVec2) {
         self.physical_surface_size = physical_size;
     }
 
@@ -541,7 +541,11 @@ impl Render {
         self.items.push(RenderItem {
             position,
             material_ref: MaterialRef::from(material),
-            renderable: Renderable::QuadColor(QuadColor { size, color, params: QuadParams::default() }),
+            renderable: Renderable::QuadColor(QuadColor {
+                size,
+                color,
+                params: QuadParams::default(),
+            }),
         });
     }
 
@@ -554,7 +558,11 @@ impl Render {
         self.items.push(RenderItem {
             position,
             material_ref: MaterialRef::from(material),
-            renderable: Renderable::QuadColor(QuadColor { size, color, params }),
+            renderable: Renderable::QuadColor(QuadColor {
+                size,
+                color,
+                params,
+            }),
         });
     }
 
@@ -580,16 +588,16 @@ impl Render {
         });
     }
 
-    pub const fn clear_color(&self) -> wgpu::Color {
+    #[must_use] pub const fn clear_color(&self) -> wgpu::Color {
         self.clear_color
     }
 
     // first two is multiplier and second pair is offset
     fn calculate_texture_coords_mul_add(atlas_rect: URect, texture_size: UVec2) -> Vec4 {
-        let x = atlas_rect.position.x as f32 / texture_size.x as f32;
-        let y = atlas_rect.position.y as f32 / texture_size.y as f32;
-        let width = atlas_rect.size.x as f32 / texture_size.x as f32;
-        let height = atlas_rect.size.y as f32 / texture_size.y as f32;
+        let x = f32::from(atlas_rect.position.x) / f32::from(texture_size.x);
+        let y = f32::from(atlas_rect.position.y) / f32::from(texture_size.y);
+        let width = f32::from(atlas_rect.size.x) / f32::from(texture_size.x);
+        let height = f32::from(atlas_rect.size.y) / f32::from(texture_size.y);
         Vec4([width, height, x, y])
     }
 
@@ -625,8 +633,8 @@ impl Render {
 
         current_texture_size: UVec2,
     ) -> SpriteInstanceUniform {
-        let model_matrix = Matrix4::from_translation(position.x as f32, position.y as f32, 0.0)
-            * Matrix4::from_scale(quad_size.x as f32, quad_size.y as f32, 1.0);
+        let model_matrix = Matrix4::from_translation(f32::from(position.x), f32::from(position.y), 0.0)
+            * Matrix4::from_scale(f32::from(quad_size.x), f32::from(quad_size.y), 1.0);
 
         let tex_coords_mul_add =
             Self::calculate_texture_coords_mul_add(render_atlas, current_texture_size);
@@ -713,12 +721,12 @@ impl Render {
                         };
 
                         let model_matrix = Matrix4::from_translation(
-                            render_item.position.x as f32,
-                            (render_item.position.y - y_offset) as f32,
+                            f32::from(render_item.position.x),
+                            f32::from(render_item.position.y - y_offset),
                             0.0,
                         ) * Matrix4::from_scale(
-                            (size.x * params.scale as u16) as f32,
-                            (size.y * params.scale as u16) as f32,
+                            f32::from(size.x * u16::from(params.scale)),
+                            f32::from(size.y * u16::from(params.scale)),
                             1.0,
                         );
 
@@ -775,12 +783,12 @@ impl Render {
                         };
 
                         let model_matrix = Matrix4::from_translation(
-                            render_item.position.x as f32,
-                            render_item.position.y as f32,
+                            f32::from(render_item.position.x),
+                            f32::from(render_item.position.y),
                             0.0,
                         ) * Matrix4::from_scale(
-                            (size.x * params.scale as u16) as f32,
-                            (size.y * params.scale as u16) as f32,
+                            f32::from(size.x * u16::from(params.scale)),
+                            f32::from(size.y * u16::from(params.scale)),
                             1.0,
                         );
 
@@ -825,10 +833,10 @@ impl Render {
                     Renderable::QuadColor(quad) => {
                         let model_matrix =
                             Matrix4::from_translation(
-                                render_item.position.x as f32 - quad.params.pivot.x as f32,
-                                render_item.position.y as f32 - quad.params.pivot.y as f32,
+                                f32::from(render_item.position.x) - f32::from(quad.params.pivot.x),
+                                f32::from(render_item.position.y) - f32::from(quad.params.pivot.y),
                                 0.0,
-                            ) * Matrix4::from_scale(quad.size.x as f32, quad.size.y as f32, 1.0);
+                            ) * Matrix4::from_scale(f32::from(quad.size.x), f32::from(quad.size.y), 1.0);
 
                         let tex_coords_mul_add = Vec4([
                             0.0, //x
@@ -859,10 +867,10 @@ impl Render {
                             let pos = render_item.position + Vec3::from(glyph.relative_position);
                             let texture_size = glyph.texture_rectangle.size;
                             let model_matrix =
-                                Matrix4::from_translation(pos.x as f32, pos.y as f32, 0.0)
+                                Matrix4::from_translation(f32::from(pos.x), f32::from(pos.y), 0.0)
                                     * Matrix4::from_scale(
-                                        texture_size.x as f32,
-                                        texture_size.y as f32,
+                                        f32::from(texture_size.x),
+                                        f32::from(texture_size.y),
                                         1.0,
                                     );
                             let tex_coords_mul_add = Self::calculate_texture_coords_mul_add(
@@ -884,10 +892,10 @@ impl Render {
                         for (index, tile) in tile_map.tiles.iter().enumerate() {
                             let cell_pos_x = (index as u16 % tile_map.tiles_data_grid_size.x)
                                 * tile_map.one_cell_size.x
-                                * tile_map.scale as u16;
+                                * u16::from(tile_map.scale);
                             let cell_pos_y = (index as u16 / tile_map.tiles_data_grid_size.x)
                                 * tile_map.one_cell_size.y
-                                * tile_map.scale as u16;
+                                * u16::from(tile_map.scale);
                             let cell_x = *tile % tile_map.cell_count_size.x;
                             let cell_y = *tile / tile_map.cell_count_size.x;
 
@@ -902,12 +910,12 @@ impl Render {
                             );
 
                             let cell_model_matrix = Matrix4::from_translation(
-                                (render_item.position.x + cell_pos_x as i16) as f32,
-                                (render_item.position.y + cell_pos_y as i16) as f32,
+                                f32::from(render_item.position.x + cell_pos_x as i16),
+                                f32::from(render_item.position.y + cell_pos_y as i16),
                                 0.0,
                             ) * Matrix4::from_scale(
-                                (tile_map.one_cell_size.x * tile_map.scale as u16) as f32,
-                                (tile_map.one_cell_size.y * tile_map.scale as u16) as f32,
+                                f32::from(tile_map.one_cell_size.x * u16::from(tile_map.scale)),
+                                f32::from(tile_map.one_cell_size.y * u16::from(tile_map.scale)),
                                 1.0,
                             );
 
@@ -1118,9 +1126,9 @@ impl Render {
         let base_center_y = atlas_origin.y + slices.top;
 
         // Calculate how many repetitions (quads) we need in each direction
-        let repeat_x_count = (world_edge_width as f32 / texture_edge_width as f32).ceil() as usize;
+        let repeat_x_count = (f32::from(world_edge_width) / f32::from(texture_edge_width)).ceil() as usize;
         let repeat_y_count =
-            (world_edge_height as f32 / texture_edge_height as f32).ceil() as usize;
+            (f32::from(world_edge_height) / f32::from(texture_edge_height)).ceil() as usize;
 
         for y in 0..repeat_y_count {
             for x in 0..repeat_x_count {
@@ -1302,7 +1310,7 @@ impl Render {
 
         let scale_matrix = Matrix4::from_scale(self.scale, self.scale, 0.0);
         let origin_translation_matrix =
-            Matrix4::from_translation(-self.origin.x as f32, -self.origin.y as f32, 0.0);
+            Matrix4::from_translation(f32::from(-self.origin.x), f32::from(-self.origin.y), 0.0);
 
         let total_matrix = scale_matrix * view_proj_matrix * origin_translation_matrix;
 
@@ -1338,8 +1346,8 @@ impl Render {
         render_pass.set_viewport(
             0.0,
             0.0,
-            self.virtual_surface_size.x as f32,
-            self.virtual_surface_size.y as f32,
+            f32::from(self.virtual_surface_size.x),
+            f32::from(self.virtual_surface_size.y),
             0.0,
             1.0,
         );
@@ -1465,10 +1473,10 @@ impl Render {
         };
 
         render_pass.set_viewport(
-            self.viewport.position.x as f32,
-            self.viewport.position.y as f32,
-            self.viewport.size.x as f32,
-            self.viewport.size.y as f32,
+            f32::from(self.viewport.position.x),
+            f32::from(self.viewport.position.y),
+            f32::from(self.viewport.size.x),
+            f32::from(self.viewport.size.y),
             0.0,
             1.0,
         );
@@ -1503,7 +1511,7 @@ impl Render {
 }
 
 fn create_view_projection_matrix_from_virtual(virtual_width: u16, virtual_height: u16) -> Matrix4 {
-    let (bottom, top) = (0.0, virtual_height as f32);
+    let (bottom, top) = (0.0, f32::from(virtual_height));
 
     // flip Z by swapping near/far if you want the opposite handedness
     // (e.g. for a left-handed vs right-handed depth axis)
@@ -1514,7 +1522,7 @@ fn create_view_projection_matrix_from_virtual(virtual_width: u16, virtual_height
 
     OrthoInfo {
         left: 0.0,
-        right: virtual_width as f32,
+        right: f32::from(virtual_width),
         bottom,
         top,
         near, // Maybe flipped? -1.0
@@ -1524,8 +1532,8 @@ fn create_view_projection_matrix_from_virtual(virtual_width: u16, virtual_height
 }
 
 fn create_view_uniform_view_projection_matrix(viewport_size: UVec2) -> Matrix4 {
-    let viewport_width = viewport_size.x as f32;
-    let viewport_height = viewport_size.y as f32;
+    let viewport_width = f32::from(viewport_size.x);
+    let viewport_height = f32::from(viewport_size.y);
 
     let viewport_aspect_ratio = viewport_width / viewport_height;
 
@@ -1555,7 +1563,7 @@ pub enum Rotation {
     Degrees270,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Anchor {
     LowerLeft,
     UpperLeft,
@@ -1604,7 +1612,6 @@ impl Default for QuadParams {
         }
     }
 }
-
 
 pub type BindGroupRef = Arc<BindGroup>;
 
@@ -1686,7 +1693,7 @@ pub enum MaterialKind {
 impl MaterialKind {}
 
 impl MaterialKind {
-    pub fn primary_texture(&self) -> Option<Id<Texture>> {
+    #[must_use] pub fn primary_texture(&self) -> Option<Id<Texture>> {
         match &self {
             Self::NormalSprite {
                 primary_texture, ..

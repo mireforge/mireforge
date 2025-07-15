@@ -37,13 +37,13 @@ impl Application for FontGlyphExample {
 
     fn render(&mut self, gfx: &mut impl Gfx) {
         const MAX_AMPLITUDE: i16 = 32;
-        let time_angle = (self.offset as f32) * 0.02;
+        let time_angle = f32::from(self.offset) * 0.02;
 
         if let Some(glyph_draw) = &self.glyphs {
             let start_x = (VIRTUAL_SCREEN_SIZE.x as i16) - (self.offset as i16);
             for glyph in &glyph_draw.glyphs {
-                let local_angle = (glyph.relative_position.x as f32) * 0.002;
-                let amplitude = ((time_angle + local_angle).sin() * MAX_AMPLITUDE as f32) as i16;
+                let local_angle = f32::from(glyph.relative_position.x) * 0.002;
+                let amplitude = ((time_angle + local_angle).sin() * f32::from(MAX_AMPLITUDE)) as i16;
                 gfx.sprite_atlas(
                     Vec3::new(
                         start_x + glyph.relative_position.x,

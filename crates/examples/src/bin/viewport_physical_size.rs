@@ -34,8 +34,8 @@ fn fun_value(tick_count: u32, speed: f32, min: i16, max: i16, offset: u32) -> i1
     let angle = (tick_count + offset) as f32 * 0.1 * speed;
     let sin_value = angle.sin();
 
-    let pos_sin = (sin_value + 1.0) / 2.0;
-    let pos_sin_int = (pos_sin * (max - min) as f32) as u16;
+    let pos_sin = f32::midpoint(sin_value, 1.0);
+    let pos_sin_int = (pos_sin * f32::from(max - min)) as u16;
 
     pos_sin_int as i16 + min
 }
@@ -43,7 +43,7 @@ impl ViewportPhysicalSizeExample {
     fn converted_zoom(scroll_wheel_zoom: i16) -> f32 {
         const MAX_ZOOM: f32 = 0.05;
 
-        let mut converted_zoom = scroll_wheel_zoom as f32 / SCROLL_WHEEL_MAX as f32;
+        let mut converted_zoom = f32::from(scroll_wheel_zoom) / f32::from(SCROLL_WHEEL_MAX);
         converted_zoom *= MAX_ZOOM;
 
         converted_zoom.clamp(0.001, MAX_ZOOM)

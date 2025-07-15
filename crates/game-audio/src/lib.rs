@@ -19,7 +19,7 @@ pub struct GameAudio<'a> {
 }
 
 impl<'a> GameAudio<'a> {
-    pub fn new(mixer: &'a mut AudioMixer, stereo_samples: &'a Assets<StereoSample>) -> Self {
+    pub const fn new(mixer: &'a mut AudioMixer, stereo_samples: &'a Assets<StereoSample>) -> Self {
         Self {
             mixer,
             stereo_samples,

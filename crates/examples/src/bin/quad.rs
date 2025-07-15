@@ -19,8 +19,8 @@ impl QuadExample {
         let angle = (self.tick_count + offset) as f32 * 0.1 * speed;
         let sin_value = angle.sin();
 
-        let pos_sin = (sin_value + 1.0) / 2.0;
-        let pos_sin_int = (pos_sin * (max - min) as f32) as u16;
+        let pos_sin = f32::midpoint(sin_value, 1.0);
+        let pos_sin_int = (pos_sin * f32::from(max - min)) as u16;
 
         pos_sin_int as i16 + min
     }
@@ -45,7 +45,7 @@ impl Application for QuadExample {
         let base_angle = self.tick_count as f32 / 30.0 % std::f32::consts::TAU;
 
         for i in 0..100 {
-            let angle = (i as f32 / 50.0) * std::f32::consts::TAU + base_angle;
+            let angle = (i as f32 / 50.0).mul_add(std::f32::consts::TAU, base_angle);
             let distance = i as f32 * 0.8;
             let size_distance = i as f32 * 1.5;
 
@@ -70,8 +70,8 @@ fn hsv_to_rgb(h: f32, s: f32, v: f32, a: f32) -> Color {
     let i = h.floor();
     let f = h - i;
     let p = v * (1.0 - s);
-    let q = v * (1.0 - f * s);
-    let t = v * (1.0 - (1.0 - f) * s);
+    let q = v * f.mul_add(-s, 1.0);
+    let t = v * (1.0 - f).mul_add(-s, 1.0);
 
     let (r, g, b) = match i as i32 % 6 {
         0 => (v, t, p),

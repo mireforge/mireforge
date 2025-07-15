@@ -39,7 +39,7 @@ impl AspectRatio {
             (21, 9) => Self::Ratio21By9,
             (16, 10) => Self::Ratio16By10,
             (4, 3) => Self::Ratio4By3,
-            _ => Self::Other(value.x as f32 / value.y as f32),
+            _ => Self::Other(f32::from(value.x) / f32::from(value.y)),
         }
     }
 }
@@ -99,7 +99,7 @@ impl Color {
     }
 
     #[must_use]
-    pub fn from_hex(value: u32) -> Self {
+    pub const fn from_hex(value: u32) -> Self {
         let r = ((value >> 24) & 0xFF) as u8;
         let g = ((value >> 16) & 0xFF) as u8;
         let b = ((value >> 8) & 0xFF) as u8;
@@ -110,10 +110,10 @@ impl Color {
     #[must_use]
     pub fn to_f32_slice(&self) -> [f32; 4] {
         [
-            self.r as f32 / 255.0,
-            self.g as f32 / 255.0,
-            self.b as f32 / 255.0,
-            self.a as f32 / 255.0,
+            f32::from(self.r) / 255.0,
+            f32::from(self.g) / 255.0,
+            f32::from(self.b) / 255.0,
+            f32::from(self.a) / 255.0,
         ]
     }
 
@@ -125,10 +125,10 @@ impl Color {
     #[must_use]
     pub fn to_f64(&self) -> (f64, f64, f64, f64) {
         (
-            self.r as f64 / 255.0,
-            self.g as f64 / 255.0,
-            self.b as f64 / 255.0,
-            self.a as f64 / 255.0,
+            f64::from(self.r) / 255.0,
+            f64::from(self.g) / 255.0,
+            f64::from(self.b) / 255.0,
+            f64::from(self.a) / 255.0,
         )
     }
 }
