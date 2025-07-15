@@ -541,7 +541,20 @@ impl Render {
         self.items.push(RenderItem {
             position,
             material_ref: MaterialRef::from(material),
-            renderable: Renderable::QuadColor(QuadColor { size, color }),
+            renderable: Renderable::QuadColor(QuadColor { size, color, params: QuadParams::default() }),
+        });
+    }
+
+    pub fn draw_quad_ex(&mut self, position: Vec3, size: UVec2, color: Color, params: QuadParams) {
+        let material = Material {
+            base: MaterialBase {},
+            kind: MaterialKind::Quad,
+        };
+
+        self.items.push(RenderItem {
+            position,
+            material_ref: MaterialRef::from(material),
+            renderable: Renderable::QuadColor(QuadColor { size, color, params }),
         });
     }
 
@@ -693,9 +706,15 @@ impl Render {
                             _ => {}
                         }
 
+                        let y_offset = if params.anchor == Anchor::UpperLeft {
+                            (current_texture_size.y as  i16)
+                        } else {
+                            0
+                        };
+
                         let model_matrix = Matrix4::from_translation(
                             render_item.position.x as f32,
-                            render_item.position.y as f32,
+                            (render_item.position.y - y_offset) as f32,
                             0.0,
                         ) * Matrix4::from_scale(
                             (size.x * params.scale as u16) as f32,
@@ -742,6 +761,7 @@ impl Render {
                             flip_y: false,
                             pivot: Vec2 { x: 0, y: 0 },
                             color: *color,
+                            anchor: Anchor::LowerLeft,
                         };
 
                         let mut size = params.texture_size;
@@ -805,8 +825,8 @@ impl Render {
                     Renderable::QuadColor(quad) => {
                         let model_matrix =
                             Matrix4::from_translation(
-                                render_item.position.x as f32,
-                                render_item.position.y as f32,
+                                render_item.position.x as f32 - quad.params.pivot.x as f32,
+                                render_item.position.y as f32 - quad.params.pivot.y as f32,
                                 0.0,
                             ) * Matrix4::from_scale(quad.size.x as f32, quad.size.y as f32, 1.0);
 
@@ -1535,6 +1555,12 @@ pub enum Rotation {
     Degrees270,
 }
 
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum Anchor {
+    LowerLeft,
+    UpperLeft,
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct SpriteParams {
     pub texture_size: UVec2,
@@ -1545,6 +1571,7 @@ pub struct SpriteParams {
     pub flip_y: bool,
     pub pivot: Vec2,
     pub color: Color,
+    pub anchor: Anchor,
 }
 
 impl Default for SpriteParams {
@@ -1558,9 +1585,26 @@ impl Default for SpriteParams {
             color: Color::from_octet(255, 255, 255, 255),
             scale: 1,
             rotation: Rotation::Degrees0,
+            anchor: Anchor::LowerLeft,
         }
     }
 }
+
+#[derive(Debug, Copy, Clone)]
+pub struct QuadParams {
+    pub scale: u8,
+    pub pivot: Vec2,
+}
+
+impl Default for QuadParams {
+    fn default() -> Self {
+        Self {
+            pivot: Vec2::new(0, 0),
+            scale: 1,
+        }
+    }
+}
+
 
 pub type BindGroupRef = Arc<BindGroup>;
 
@@ -1695,6 +1739,7 @@ pub struct Sprite {
 pub struct QuadColor {
     pub size: UVec2,
     pub color: Color,
+    pub params: QuadParams,
 }
 
 #[derive(Debug, Copy, Clone)]

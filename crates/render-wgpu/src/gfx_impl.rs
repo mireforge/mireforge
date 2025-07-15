@@ -1,8 +1,5 @@
 use crate::gfx::Gfx;
-use crate::{
-    FixedAtlas, FontAndMaterial, FrameLookup, MaterialRef, NineSliceAndMaterial, Render,
-    RenderItem, Renderable, SpriteParams, Text, TileMap, to_wgpu_color,
-};
+use crate::{FixedAtlas, FontAndMaterial, FrameLookup, MaterialRef, NineSliceAndMaterial, Render, RenderItem, Renderable, SpriteParams, Text, TileMap, to_wgpu_color, QuadParams};
 use int_math::{URect, UVec2, Vec2, Vec3};
 use mireforge_render::{AspectRatio, Color, ViewportStrategy, VirtualScale};
 use monotonic_time_rs::Millis;
@@ -33,6 +30,10 @@ impl Gfx for Render {
         self.draw_quad(position, size, color);
     }
 
+    fn quad_ex(&mut self, position: Vec3, size: UVec2, color: Color, params: QuadParams) {
+        self.draw_quad_ex(position, size, color, params);
+    }
+
     fn draw_with_mask(
         &mut self,
         position: Vec3,
@@ -40,7 +41,7 @@ impl Gfx for Render {
         color: Color,
         alpha_masked: &MaterialRef,
     ) {
-        self.push_mask(position, size, color, alpha_masked);
+        self.push_mask(position, size, color,  alpha_masked);
     }
 
     fn nine_slice(

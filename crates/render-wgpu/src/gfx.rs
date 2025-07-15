@@ -1,6 +1,4 @@
-use crate::{
-    FixedAtlas, FontAndMaterial, FrameLookup, MaterialRef, NineSliceAndMaterial, SpriteParams,
-};
+use crate::{FixedAtlas, FontAndMaterial, FrameLookup, MaterialRef, NineSliceAndMaterial, QuadParams, SpriteParams};
 use int_math::{URect, UVec2, Vec2, Vec3};
 use mireforge_render::{AspectRatio, Color, ViewportStrategy, VirtualScale};
 use monotonic_time_rs::Millis;
@@ -57,4 +55,5 @@ pub trait Gfx {
     fn set_scale(&mut self, scale_factor: VirtualScale);
 
     fn set_virtual_size(&mut self, virtual_size: UVec2);
+    fn quad_ex(&mut self, position: Vec3, size: UVec2, color: Color, params: QuadParams);
 }
