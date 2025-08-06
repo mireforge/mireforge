@@ -1,6 +1,6 @@
 [package]
 name = "mireforge-material"
-version = "0.0.24"
+version = "0.0.25"
 edition = "2024"
 repository = "https://github.com/mireforge/mireforge"
 license = "MIT"
@@ -9,8 +9,8 @@ description = "image asset loading and material creation"
 
 
 [dependencies]
-mireforge-wgpu-sprites = { path = "../wgpu-sprites", version = "0.0.24" }
-mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.24" }
+mireforge-wgpu-sprites = { path = "../wgpu-sprites", version = "0.0.25" }
+mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.25" }
 
 
 # Limnus

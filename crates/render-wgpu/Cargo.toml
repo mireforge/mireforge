@@ -1,6 +1,6 @@
 [package]
 name = "mireforge-render-wgpu"
-version = "0.0.24"
+version = "0.0.25"
 edition = "2024"
 license = "MIT"
 description = "render pixel perfect 2D sprites"
@@ -10,10 +10,10 @@ keywords = ["game", "render"]
 
 [dependencies]
 # Mireforge
-mireforge-font = { path = "../font", version = "0.0.24" }
-mireforge-wgpu-sprites = { path = "../wgpu-sprites", version = "0.0.24" }
-mireforge-render = { path = "../render", version = "0.0.24" }
-mireforge-wgpu = { path = "../wgpu", version = "0.0.24" }
+mireforge-font = { path = "../font", version = "0.0.25" }
+mireforge-wgpu-sprites = { path = "../wgpu-sprites", version = "0.0.25" }
+mireforge-render = { path = "../render", version = "0.0.25" }
+mireforge-wgpu = { path = "../wgpu", version = "0.0.25" }
 
 # Limnus
 limnus-assets = "0.0.19"
