@@ -1,7 +1,7 @@
 use crate::gfx::Gfx;
 use crate::{
-    FixedAtlas, FontAndMaterial, FrameLookup, MaterialRef, NineSliceAndMaterial, QuadParams,
-    Render, RenderItem, Renderable, SpriteParams, Text, TileMap, to_wgpu_color,
+    to_wgpu_color, FixedAtlas, FontAndMaterial, FrameLookup, MaterialRef, NineSliceAndMaterial,
+    QuadParams, Render, RenderItem, Renderable, SpriteParams, Text, TileMap,
 };
 use int_math::{URect, UVec2, Vec2, Vec3};
 use mireforge_render::{AspectRatio, Color, ViewportStrategy, VirtualScale};
@@ -55,6 +55,16 @@ impl Gfx for Render {
         nine_slice: &NineSliceAndMaterial,
     ) {
         self.nine_slice(position, size, color, nine_slice);
+    }
+
+    fn nine_slice_stretch(
+        &mut self,
+        position: Vec3,
+        size: UVec2,
+        color: Color,
+        nine_slice: &NineSliceAndMaterial,
+    ) {
+        self.nine_slice_stretch(position, size, color, nine_slice);
     }
 
     fn set_origin(&mut self, position: Vec2) {

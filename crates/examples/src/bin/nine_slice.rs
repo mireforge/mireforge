@@ -4,7 +4,7 @@
  */
 use mireforge::prelude::*;
 
-const VIRTUAL_SCREEN_SIZE: UVec2 = UVec2::new(320, 240);
+const VIRTUAL_SCREEN_SIZE: UVec2 = UVec2::new(320*2, 240*2);
 const START_WINDOW_SIZE: UVec2 = UVec2::new(1280, 800);
 
 #[derive(Debug)]
@@ -53,6 +53,13 @@ impl Application for NineSliceExample {
 
         gfx.nine_slice(
             Vec3::new(3, 3, 0),
+            UVec2::new(width as u16, height as u16),
+            Color::from_f32(1.0, 1.0, 1.0, 1.0),
+            &self.nine_slice,
+        );
+
+        gfx.nine_slice_stretch(
+            Vec3::new(320, 3, 0),
             UVec2::new(width as u16, height as u16),
             Color::from_f32(1.0, 1.0, 1.0, 1.0),
             &self.nine_slice,

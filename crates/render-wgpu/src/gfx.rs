@@ -27,6 +27,15 @@ pub trait Gfx {
         color: Color,
         nine_slice: &NineSliceAndMaterial,
     );
+
+    fn nine_slice_stretch(
+        &mut self,
+        position: Vec3,
+        size: UVec2,
+        color: Color,
+        nine_slice: &NineSliceAndMaterial,
+    );
+
     fn set_origin(&mut self, position: Vec2);
     fn set_clear_color(&mut self, color: Color);
 
