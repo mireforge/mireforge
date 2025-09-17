@@ -1,6 +1,6 @@
 [package]
 name = "mireforge-font"
-version = "0.0.25"
+version = "0.0.26"
 edition = "2024"
 repository = "https://github.com/mireforge/mireforge"
 license = "MIT"

@@ -11,7 +11,7 @@ Add mireforge-wgpu to your project's `Cargo.toml`:
 
 ```toml
 [dependencies]
-mireforge-wgpu = "0.0.25"
+mireforge-wgpu = "0.0.26"
 ```
 
 ## License

@@ -1,6 +1,6 @@
 [package]
 name = "mireforge-game-assets"
-version = "0.0.25"
+version = "0.0.26"
 edition = "2024"
 repository = "https://github.com/mireforge/mireforge"
 license = "MIT"
@@ -8,8 +8,8 @@ categories = ["game-development"]
 description = "Game asset loading"
 
 [dependencies]
-mireforge-font = { path = "../font", version = "0.0.25" }
-mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.25" }
+mireforge-font = { path = "../font", version = "0.0.26" }
+mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.26" }
 
 # Limnus
 limnus-assets = "0.0.20"
