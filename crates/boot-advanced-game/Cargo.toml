@@ -16,7 +16,7 @@ mireforge-font = { path = "../font", version = "0.0.25" }
 int_math = "0.0.2"
 
 # Limnus
-# limnus-app = "0.0.19"
-# limnus-screen = "0.0.19"
+# limnus-app = "0.0.20"
+# limnus-screen = "0.0.20"
 
-limnus = { version = "0.0.19", default-features = false } # # TODO: Move DefaultPlugins
+limnus = { version = "0.0.20", default-features = false } # # TODO: Move DefaultPlugins

@@ -12,11 +12,11 @@ mireforge-font = { path = "../font", version = "0.0.25" }
 mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.25" }
 
 # Limnus
-limnus-assets = "0.0.19"
-limnus-asset-registry = "0.0.19"
-limnus-resource = "0.0.19"
-limnus-asset-id = "0.0.19"
-limnus-audio-mixer = "0.0.19"
+limnus-assets = "0.0.20"
+limnus-asset-registry = "0.0.20"
+limnus-resource = "0.0.20"
+limnus-asset-id = "0.0.20"
+limnus-audio-mixer = "0.0.20"
 
 int_math = "0.0.2"
 monotonic-time-rs = "0.0.9"

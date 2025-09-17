@@ -11,7 +11,7 @@ keywords = ["game", "render", "sprites"]
 [dependencies]
 mireforge-wgpu = { path = "../wgpu", version = "0.0.25" }
 
-limnus-wgpu-math = "0.0.19"
+limnus-wgpu-math = "0.0.20"
 
 bytemuck = "1.19.0"
 image = "0.25.5"

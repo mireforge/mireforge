@@ -16,4 +16,4 @@ mireforge-font = { path = "../font", version = "0.0.25" }
 int_math = "0.0.2"
 
 # Limnus
-limnus = { version = "0.0.19", default-features = false } ## // TODO: Should have a more minimal dependency
+limnus = { version = "0.0.20", default-features = false } ## // TODO: Should have a more minimal dependency
