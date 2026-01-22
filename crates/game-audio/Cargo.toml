@@ -1,6 +1,6 @@
 [package]
 name = "mireforge-game-audio"
-version = "0.0.26"
+version = "0.0.27"
 edition = "2024"
 repository = "https://github.com/mireforge/mireforge"
 license = "MIT"
@@ -8,7 +8,7 @@ categories = ["game-development"]
 description = "Game audio"
 
 [dependencies]
-limnus-audio-mixer = "0.0.20"
-limnus-assets = "0.0.20"
+limnus-audio-mixer = "0.1.0"
+limnus-assets = "0.1.0"
 
 tracing = "0.1.40"

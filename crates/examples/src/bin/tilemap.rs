@@ -88,7 +88,7 @@ impl Application for TileMapExample {
     fn render(&mut self, gfx: &mut impl Gfx) {
         const SCALE: u16 = 2;
 
-        let tile: u16 = if ((self.tick_count / 40) % 2) == 0 {
+        let tile: u16 = if (self.tick_count / 40).is_multiple_of(2) {
             CHEST
         } else {
             FLOOR_A

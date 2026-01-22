@@ -1,6 +1,6 @@
 [package]
 name = "mireforge-render-wgpu"
-version = "0.0.26"
+version = "0.0.27"
 edition = "2024"
 license = "MIT"
 description = "render pixel perfect 2D sprites"
@@ -10,25 +10,25 @@ keywords = ["game", "render"]
 
 [dependencies]
 # Mireforge
-mireforge-font = { path = "../font", version = "0.0.26" }
-mireforge-wgpu-sprites = { path = "../wgpu-sprites", version = "0.0.26" }
-mireforge-render = { path = "../render", version = "0.0.26" }
-mireforge-wgpu = { path = "../wgpu", version = "0.0.26" }
+mireforge-font = { path = "../font", version = "0.0.27" }
+mireforge-wgpu-sprites = { path = "../wgpu-sprites", version = "0.0.27" }
+mireforge-render = { path = "../render", version = "0.0.27" }
+mireforge-wgpu = { path = "../wgpu", version = "0.0.27" }
 
 # Limnus
-limnus-assets = "0.0.20"
-limnus-app = "0.0.20"
-limnus-resource = "0.0.20"
-limnus-wgpu-math = "0.0.20"
-limnus-system-params = "0.0.20"
-limnus-screen = "0.0.20"
-limnus-wgpu-window = "0.0.20"
-limnus-clock ="0.0.20"
-limnus-default-stages = "0.0.20"
-limnus-local-resource = "0.0.20"
+limnus-assets = "0.1.0"
+limnus-app = "0.1.0"
+limnus-resource = "0.1.0"
+limnus-wgpu-math = "0.1.0"
+limnus-system-params = "0.1.0"
+limnus-screen = "0.1.0"
+limnus-wgpu-window = "0.1.0"
+limnus-clock ="0.1.0"
+limnus-default-stages = "0.1.0"
+limnus-local-resource = "0.1.0"
 
 tracing = "0.1.40"
-wgpu = "26.0.1"
+wgpu = "28.0"
 bytemuck = "1.19.0"
 monotonic-time-rs = "0.0.9"
 int_math = "0.0.2"

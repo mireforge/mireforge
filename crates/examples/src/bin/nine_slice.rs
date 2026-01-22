@@ -4,7 +4,7 @@
  */
 use mireforge::prelude::*;
 
-const VIRTUAL_SCREEN_SIZE: UVec2 = UVec2::new(320*2, 240*2);
+const VIRTUAL_SCREEN_SIZE: UVec2 = UVec2::new(320 * 2, 240 * 2);
 const START_WINDOW_SIZE: UVec2 = UVec2::new(1280, 800);
 
 #[derive(Debug)]

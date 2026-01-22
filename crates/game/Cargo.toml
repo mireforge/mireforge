@@ -1,6 +1,6 @@
 [package]
 name = "mireforge-game"
-version = "0.0.26"
+version = "0.0.27"
 edition = "2024"
 repository = "https://github.com/mireforge/mireforge"
 license = "MIT"
@@ -9,23 +9,23 @@ description = "common mireforge game types"
 
 
 [dependencies]
-mireforge-render = { path = "../render", version = "0.0.26" }
-mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.26" }
-mireforge-game-assets = { path = "../game-assets", version = "0.0.26" }
-mireforge-game-audio = { path = "../game-audio", version = "0.0.26" }
+mireforge-render = { path = "../render", version = "0.0.27" }
+mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.27" }
+mireforge-game-assets = { path = "../game-assets", version = "0.0.27" }
+mireforge-game-audio = { path = "../game-audio", version = "0.0.27" }
 
 # Limnus
-limnus-assets = "0.0.20"
-limnus-app = "0.0.20"
-limnus-resource = "0.0.20"
-limnus-local-resource = "0.0.20"
-limnus-system-params =  "0.0.20"
-limnus-screen = "0.0.20"
-limnus-audio-mixer = "0.0.20"
-limnus-basic-input = "0.0.20"
-limnus-message = "0.0.20"
-limnus-gamepad = "0.0.20"
-limnus-default-stages = "0.0.20"
+limnus-assets = "0.1.0"
+limnus-app = "0.1.0"
+limnus-resource = "0.1.0"
+limnus-local-resource = "0.1.0"
+limnus-system-params =  "0.1.0"
+limnus-screen = "0.1.0"
+limnus-audio-mixer = "0.1.0"
+limnus-basic-input = "0.1.0"
+limnus-message = "0.1.0"
+limnus-gamepad = "0.1.0"
+limnus-default-stages = "0.1.0"
 
 fixed32 = "0.0.18"
 tracing = "0.1.40"

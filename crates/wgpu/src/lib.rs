@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See LICENSE in the project root for license information.
  */
 use wgpu::{
-    AddressMode, Device, FilterMode, Sampler, SamplerDescriptor, ShaderModule,
+    AddressMode, Device, FilterMode, MipmapFilterMode, Sampler, SamplerDescriptor, ShaderModule,
     ShaderModuleDescriptor, ShaderSource,
 };
 
@@ -24,7 +24,7 @@ pub fn create_nearest_sampler(device: &Device, label: &str) -> Sampler {
         address_mode_w: AddressMode::Repeat,
         mag_filter: FilterMode::Nearest,
         min_filter: FilterMode::Nearest,
-        mipmap_filter: FilterMode::Nearest,
+        mipmap_filter: MipmapFilterMode::Nearest,
         compare: None,
         anisotropy_clamp: 1,
         lod_min_clamp: 0.0,

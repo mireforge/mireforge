@@ -43,7 +43,8 @@ impl Application for FontGlyphExample {
             let start_x = (VIRTUAL_SCREEN_SIZE.x as i16) - (self.offset as i16);
             for glyph in &glyph_draw.glyphs {
                 let local_angle = f32::from(glyph.relative_position.x) * 0.002;
-                let amplitude = ((time_angle + local_angle).sin() * f32::from(MAX_AMPLITUDE)) as i16;
+                let amplitude =
+                    ((time_angle + local_angle).sin() * f32::from(MAX_AMPLITUDE)) as i16;
                 gfx.sprite_atlas(
                     Vec3::new(
                         start_x + glyph.relative_position.x,

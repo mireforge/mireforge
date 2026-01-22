@@ -1,6 +1,6 @@
 [package]
 name = "mireforge-font"
-version = "0.0.26"
+version = "0.0.27"
 edition = "2024"
 repository = "https://github.com/mireforge/mireforge"
 license = "MIT"
@@ -14,8 +14,8 @@ tracing = "0.1.40"
 int_math = "0.0.2"
 
 # Limnus
-limnus-assets = "0.0.20"
-limnus-app = "0.0.20"
-limnus-assets-loader = "0.0.20"
-limnus-asset-registry = "0.0.20"
-limnus-local-resource = "0.0.20"
+limnus-assets = "0.1.0"
+limnus-app = "0.1.0"
+limnus-assets-loader = "0.1.0"
+limnus-asset-registry = "0.1.0"
+limnus-local-resource = "0.1.0"

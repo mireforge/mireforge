@@ -104,7 +104,7 @@ impl Application for ViewportPhysicalSizeExample {
 
         gfx.set_scale(VirtualScale::FloatScale(converted_zoom));
 
-        let tile: u16 = if ((self.tick_count / 40) % 2) == 0 {
+        let tile: u16 = if (self.tick_count / 40).is_multiple_of(2) {
             CHEST
         } else {
             FLOOR_A

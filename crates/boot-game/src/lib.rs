@@ -13,7 +13,8 @@ use mireforge_material::MaterialPlugin;
 use mireforge_render_wgpu::plugin::RenderWgpuPlugin;
 
 // #[must_use] // TODO: should be able to convert AppReturnValue in the future
-#[must_use] pub fn run<T: Application>(
+#[must_use]
+pub fn run<T: Application>(
     title: &str,
     virtual_size: UVec2,
     requested_surface_size: UVec2,

@@ -1,6 +1,6 @@
 [package]
 name = "mireforge-material"
-version = "0.0.26"
+version = "0.0.27"
 edition = "2024"
 repository = "https://github.com/mireforge/mireforge"
 license = "MIT"
@@ -9,19 +9,19 @@ description = "image asset loading and material creation"
 
 
 [dependencies]
-mireforge-wgpu-sprites = { path = "../wgpu-sprites", version = "0.0.26" }
-mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.26" }
+mireforge-wgpu-sprites = { path = "../wgpu-sprites", version = "0.0.27" }
+mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.27" }
 
 
 # Limnus
-limnus-assets = "0.0.20"
-limnus-asset-registry = "0.0.20"
-limnus-assets-loader = "0.0.20"
-limnus-app = "0.0.20"
-limnus-resource = "0.0.20"
-limnus-local-resource = "0.0.20"
-limnus-wgpu-window = "0.0.20"
-limnus-asset-id = "0.0.20"
+limnus-assets = "0.1.0"
+limnus-asset-registry = "0.1.0"
+limnus-assets-loader = "0.1.0"
+limnus-app = "0.1.0"
+limnus-resource = "0.1.0"
+limnus-local-resource = "0.1.0"
+limnus-wgpu-window = "0.1.0"
+limnus-asset-id = "0.1.0"
 
 tracing = "0.1.40"
 image = "0.25.5"

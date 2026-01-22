@@ -1,6 +1,6 @@
 [package]
 name = "mireforge-boot-game"
-version = "0.0.26"
+version = "0.0.27"
 edition = "2024"
 repository = "https://github.com/mireforge/mireforge"
 license = "MIT"
@@ -8,12 +8,12 @@ categories = ["game-development"]
 description = "Plugin to boot a mireforge-game"
 
 [dependencies]
-mireforge-game = { path = "../game", version = "0.0.26" }
-mireforge-material = { path = "../material", version = "0.0.26" }
-mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.26" }
-mireforge-font = { path = "../font", version = "0.0.26" }
+mireforge-game = { path = "../game", version = "0.0.27" }
+mireforge-material = { path = "../material", version = "0.0.27" }
+mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.27" }
+mireforge-font = { path = "../font", version = "0.0.27" }
 
 int_math = "0.0.2"
 
 # Limnus
-limnus = { version = "0.0.20", default-features = false } ## // TODO: Should have a more minimal dependency
+limnus = { version = "0.1.0", default-features = false } ## // TODO: Should have a more minimal dependency

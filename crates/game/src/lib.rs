@@ -118,7 +118,8 @@ impl<G: Application> Game<G> {
         }
     }
 
-    #[must_use] pub fn virtual_position_from_physical(
+    #[must_use]
+    pub fn virtual_position_from_physical(
         physical_position: UVec2,
         viewport: URect,
         virtual_surface_size: UVec2,
@@ -141,11 +142,13 @@ impl<G: Application> Game<G> {
 
         let clamped_to_viewport: UVec2 = UVec2::new(relative_x as u16, relative_y as u16);
 
-        let virtual_position_x =
-            (u64::from(clamped_to_viewport.x) * u64::from(virtual_surface_size.x)) / u64::from(viewport.size.x);
+        let virtual_position_x = (u64::from(clamped_to_viewport.x)
+            * u64::from(virtual_surface_size.x))
+            / u64::from(viewport.size.x);
 
-        let virtual_position_y =
-            (u64::from(clamped_to_viewport.y) * u64::from(virtual_surface_size.y)) / u64::from(viewport.size.y);
+        let virtual_position_y = (u64::from(clamped_to_viewport.y)
+            * u64::from(virtual_surface_size.y))
+            / u64::from(viewport.size.y);
 
         UVec2::new(virtual_position_x as u16, virtual_position_y as u16)
     }
@@ -278,9 +281,10 @@ pub fn gamepad_input_tick<G: Application>(
             GamepadMessage::Connected(_gamepad_id, _gamepad_name) => {}
             GamepadMessage::Disconnected(gamepad_id) => {
                 if let Some(gamepad) = gamepads.gamepad(*gamepad_id)
-                    && gamepad.is_active {
-                        internal_game.game.gamepad_disconnected(*gamepad_id);
-                    }
+                    && gamepad.is_active
+                {
+                    internal_game.game.gamepad_disconnected(*gamepad_id);
+                }
             }
             GamepadMessage::Activated(gamepad_id) => {
                 if let Some(gamepad) = gamepads.gamepad(*gamepad_id) {
@@ -291,21 +295,21 @@ pub fn gamepad_input_tick<G: Application>(
             }
             GamepadMessage::ButtonChanged(gamepad_id, button, value) => {
                 if let Some(gamepad) = gamepads.gamepad(*gamepad_id)
-                    && gamepad.is_active {
-                        internal_game.game.gamepad_button_changed(
-                            gamepad,
-                            *button,
-                            Fp::from(*value),
-                        );
-                    }
+                    && gamepad.is_active
+                {
+                    internal_game
+                        .game
+                        .gamepad_button_changed(gamepad, *button, Fp::from(*value));
+                }
             }
             GamepadMessage::AxisChanged(gamepad_id, axis, value) => {
                 if let Some(gamepad) = gamepads.gamepad(*gamepad_id)
-                    && gamepad.is_active {
-                        internal_game
-                            .game
-                            .gamepad_axis_changed(gamepad, *axis, Fp::from(*value));
-                    }
+                    && gamepad.is_active
+                {
+                    internal_game
+                        .game
+                        .gamepad_axis_changed(gamepad, *axis, Fp::from(*value));
+                }
             }
         }
     }

@@ -687,7 +687,7 @@ fn create_pipeline_layout(
     device.create_pipeline_layout(&PipelineLayoutDescriptor {
         label: Some(label),
         bind_group_layouts: layouts,
-        push_constant_ranges: &[],
+        immediate_size: 0, // TODO: how much is allocated in the shader
     })
 }
 
@@ -733,8 +733,8 @@ fn create_pipeline_with_buffers(
 
         depth_stencil: None,
         multisample: MultisampleState::default(),
-        multiview: None,
         cache: None,
+        multiview_mask: None,
     })
 }
 
@@ -855,12 +855,10 @@ struct VertexOutput {
 // Fragment shader entry point
 @fragment
 fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
-    var final_color: vec4<f32>;
-
     // Sample the texture using the texture coordinates
     let texture_color = textureSample(diffuse_texture, sampler_diffuse, input.tex_coords);
 
-    return  texture_color * input.color;;
+    return texture_color * input.color;
 }
 
 ";
@@ -868,7 +866,8 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
 }
 
 #[allow(unused)]
-#[must_use] pub const fn masked_texture_tinted_fragment_source() -> &'static str {
+#[must_use]
+pub const fn masked_texture_tinted_fragment_source() -> &'static str {
     r"
 // Masked Texture and tinted shader
 

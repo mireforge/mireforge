@@ -8,8 +8,8 @@ pub mod plugin;
 pub mod prelude;
 
 use int_math::{URect, UVec2, Vec2, Vec3};
-use limnus_assets::prelude::{Asset, Id, WeakId};
 use limnus_assets::Assets;
+use limnus_assets::prelude::{Asset, Id, WeakId};
 use limnus_resource::prelude::Resource;
 use limnus_wgpu_math::{Matrix4, OrthoInfo, Vec4};
 use mireforge_font::Font;
@@ -18,8 +18,8 @@ use mireforge_font::WeakFontRef;
 use mireforge_render::prelude::*;
 use mireforge_wgpu::create_nearest_sampler;
 use mireforge_wgpu_sprites::{
-    create_texture_and_sampler_bind_group_ex, create_texture_and_sampler_group_layout, ShaderInfo, SpriteInfo,
-    SpriteInstanceUniform,
+    ShaderInfo, SpriteInfo, SpriteInstanceUniform, create_texture_and_sampler_bind_group_ex,
+    create_texture_and_sampler_group_layout,
 };
 use monotonic_time_rs::Millis;
 use std::cmp::Ordering;
@@ -1185,19 +1185,21 @@ impl Render {
 
         for y in 0..repeat_y_count {
             for x in 0..repeat_x_count {
-                let this_quad_width =
-                    if x == repeat_x_count - 1 && world_edge_width % texture_edge_width != 0 {
-                        world_edge_width % texture_edge_width
-                    } else {
-                        texture_edge_width
-                    };
+                let this_quad_width = if x == repeat_x_count - 1
+                    && !world_edge_width.is_multiple_of(texture_edge_width)
+                {
+                    world_edge_width % texture_edge_width
+                } else {
+                    texture_edge_width
+                };
 
-                let this_quad_height =
-                    if y == repeat_y_count - 1 && world_edge_height % texture_edge_height != 0 {
-                        world_edge_height % texture_edge_height
-                    } else {
-                        texture_edge_height
-                    };
+                let this_quad_height = if y == repeat_y_count - 1
+                    && !world_edge_height.is_multiple_of(texture_edge_height)
+                {
+                    world_edge_height % texture_edge_height
+                } else {
+                    texture_edge_height
+                };
 
                 let quad_pos = Vec3::new(
                     position_offset.x + slices.left as i16 + (x as u16 * texture_edge_width) as i16,
@@ -1654,6 +1656,7 @@ impl Render {
             depth_stencil_attachment: None,
             timestamp_writes: None,
             occlusion_query_set: None,
+            multiview_mask: None,
         });
 
         render_pass.set_viewport(
@@ -1755,6 +1758,7 @@ impl Render {
             depth_stencil_attachment: None,
             timestamp_writes: None,
             occlusion_query_set: None,
+            multiview_mask: None,
         });
 
         /*

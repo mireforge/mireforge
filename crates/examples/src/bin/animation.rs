@@ -76,7 +76,7 @@ impl Application for AnimationExample {
             self.bat_atlas.take();
         }
 
-        if self.tick_count % 60 == 0 && self.attack_anim.is_done() {
+        if self.tick_count.is_multiple_of(60) && self.attack_anim.is_done() {
             self.attack_anim.play(now);
         }
     }

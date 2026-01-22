@@ -1,6 +1,6 @@
 [package]
 name = "mireforge-boot-advanced-game"
-version = "0.0.26"
+version = "0.0.27"
 edition = "2024"
 license = "MIT"
 description = "boot up an advanced game (logic, render, audio)"
@@ -8,15 +8,15 @@ repository = "https://github.com/mireforge/mireforge"
 categories = ["game-development"]
 
 [dependencies]
-mireforge-advanced-game = { path = "../advanced-game", version = "0.0.26" }
-mireforge-material = { path = "../material", version = "0.0.26" }
-mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.26" }
-mireforge-font = { path = "../font", version = "0.0.26" }
+mireforge-advanced-game = { path = "../advanced-game", version = "0.0.27" }
+mireforge-material = { path = "../material", version = "0.0.27" }
+mireforge-render-wgpu = { path = "../render-wgpu", version = "0.0.27" }
+mireforge-font = { path = "../font", version = "0.0.27" }
 
 int_math = "0.0.2"
 
 # Limnus
-# limnus-app = "0.0.20"
-# limnus-screen = "0.0.20"
+# limnus-app = "0.1.0"
+# limnus-screen = "0.1.0"
 
-limnus = { version = "0.0.20", default-features = false } # # TODO: Move DefaultPlugins
+limnus = { version = "0.1.0", default-features = false } # # TODO: Move DefaultPlugins
